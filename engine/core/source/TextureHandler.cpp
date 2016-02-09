@@ -1,0 +1,57 @@
+#include "../headers/TextureHandler.h"
+
+namespace ENGINE_NAMESPACE {
+    namespace Textures {
+
+        std::vector<GLuint> registeredTextures;
+
+        GLuint loadPNGTexture(const char* filename) {
+            std::vector<unsigned char> image;
+            unsigned width, height;
+            unsigned error = lodepng::decode(image, width, height, filename);
+
+            if(error != 0) {
+                char errorMsg[256];
+                sprintf(errorMsg, "'%s': %s", filename, lodepng_error_text(error));
+                Logging::Log(LOGGING_ERROR, "Textures", errorMsg);
+                return 0;
+            }
+
+            GLuint textureID;
+            glGenTextures(1, &textureID);
+
+            glBindTexture(GL_TEXTURE_2D, textureID);
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexImage2D(GL_TEXTURE_2D, 0, 4, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, &image[0]);
+            glGenerateMipmap(GL_TEXTURE_2D); // Is this really needed?
+
+            glBindTexture(GL_TEXTURE_2D, 0);
+
+            registerTexture(textureID);
+            return textureID;
+        }
+
+        void registerTexture(GLuint textureID)
+        {
+            for(int i = 0; i < registeredTextures.size(); i++)
+            {
+                if( registeredTextures[i] == textureID ) return;
+            }
+            registeredTextures.push_back(textureID);
+
+            char logString[256];
+            sprintf(logString, "Texture ID Registered: %i", textureID);
+            Logging::Log(LOGGING_INFO, "Textures", logString);
+        }
+
+        void cleanupTextures()
+        {
+            for(int i = 0; i < registeredTextures.size(); i++)
+            {
+                glDeleteTextures(1, &registeredTextures[i]);
+            }
+        }
+    }
+}
