@@ -39,9 +39,9 @@ namespace ENGINE_NAMESPACE {
         void init();
         void cleanup();
 
-        void ChangeShader(Swarm::Shaders::ShaderData & newShader);
-        void Render(Swarm::Models::Model & object);
-        void Render(Swarm::Models::Model & object, glm::mat4 modelMatrix);
+        void ChangeShader(ENGINE_NAMESPACE::Shaders::Program *newProgram);
+        void Render(ENGINE_NAMESPACE::Models::Model & object);
+        void Render(ENGINE_NAMESPACE::Models::Model & object, glm::mat4 modelMatrix);
 
     }
 }

@@ -42,6 +42,8 @@ namespace ENGINE_NAMESPACE {
         bool init(int logLevel, int logType, const char * windowName);
         bool init(int logLevel, int logType, const char * windowName, int windowX, int windowY);
 
+        void cleanup();
+
     }
 }
 

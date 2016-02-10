@@ -1,6 +1,6 @@
 #include "../headers/Rendering.h"
 
-ENGINE_NAMESPACE::Shaders::ShaderData currentShader;
+ENGINE_NAMESPACE::Shaders::Program *currentProgram;
 
 namespace ENGINE_NAMESPACE {
     namespace Rendering{
@@ -24,10 +24,10 @@ namespace ENGINE_NAMESPACE {
             glDeleteVertexArrays(1, &VertexArrayID);
         }
 
-        void ChangeShader(Shaders::ShaderData & newShader)
+        void ChangeShader(Shaders::Program *newProgram)
         {
-            currentShader = newShader;
-            glUseProgram(currentShader.getProgramID());
+            currentProgram = newProgram;
+            if(currentProgram != NULL) glUseProgram(currentProgram->getProgramID());
         }
 
         void Render(Models::Model & object)
@@ -38,24 +38,28 @@ namespace ENGINE_NAMESPACE {
             glm::mat4 ModelMatrix = glm::mat4(1.0); // Likely needs to be different
             glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
 
+            if(currentProgram == NULL) return; // Safety check
+
+            // TODO: Tweak Uniforms
+
             // Shader Uniforms
-            GLuint MVPID = currentShader.getUniformID(SHADER_UNIFORM_MVP);
-            GLuint ModelID = currentShader.getUniformID(SHADER_UNIFORM_MODEL);
-            GLuint ViewID = currentShader.getUniformID(SHADER_UNIFORM_VIEW);
+            GLuint MVPID = currentProgram->getUniformID(SHADER_UNIFORM_MVP);
+            GLuint ModelID = currentProgram->getUniformID(SHADER_UNIFORM_MODEL);
+            GLuint ViewID = currentProgram->getUniformID(SHADER_UNIFORM_VIEW);
             glUniformMatrix4fv(MVPID, 1, GL_FALSE, &MVP[0][0]);
             glUniformMatrix4fv(ModelID, 1, GL_FALSE, &ModelMatrix[0][0]);
             glUniformMatrix4fv(ViewID, 1, GL_FALSE, &ViewMatrix[0][0]);
 
             //NOTE: This should probably be in a seperate function
             glm::vec3 lightPos = glm::vec3(4,4,4);
-            GLuint LightID = currentShader.getUniformID(SHADER_UNIFORM_LIGHT_POS);
+            GLuint LightID = currentProgram->getUniformID(SHADER_UNIFORM_LIGHT_POS);
             glUniform3f(LightID, lightPos.x, lightPos.y, lightPos.z);
 
             // Texture Binding
             glActiveTexture(GL_TEXTURE0);
             GLuint TexID = object.getTexture();
             glBindTexture(GL_TEXTURE_2D, TexID);
-            GLuint TexUniID = currentShader.getUniformID(SHADER_UNIFORM_TEXTURE);
+            GLuint TexUniID = currentProgram->getUniformID(SHADER_UNIFORM_TEXTURE);
             glUniform1i(TexUniID, 0);
 
             // 1rst attribute buffer : bones
@@ -119,23 +123,23 @@ namespace ENGINE_NAMESPACE {
             glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
 
             // Shader Uniforms
-            GLuint MVPID = currentShader.getUniformID(SHADER_UNIFORM_MVP);
-            GLuint ModelID = currentShader.getUniformID(SHADER_UNIFORM_MODEL);
-            GLuint ViewID = currentShader.getUniformID(SHADER_UNIFORM_VIEW);
+            GLuint MVPID = currentProgram->getUniformID(SHADER_UNIFORM_MVP);
+            GLuint ModelID = currentProgram->getUniformID(SHADER_UNIFORM_MODEL);
+            GLuint ViewID = currentProgram->getUniformID(SHADER_UNIFORM_VIEW);
             glUniformMatrix4fv(MVPID, 1, GL_FALSE, &MVP[0][0]);
             glUniformMatrix4fv(ModelID, 1, GL_FALSE, &ModelMatrix[0][0]);
             glUniformMatrix4fv(ViewID, 1, GL_FALSE, &ViewMatrix[0][0]);
 
             //NOTE: This should probably be in a seperate function
             glm::vec3 lightPos = glm::vec3(4,4,4);
-            GLuint LightID = currentShader.getUniformID(SHADER_UNIFORM_LIGHT_POS);
+            GLuint LightID = currentProgram->getUniformID(SHADER_UNIFORM_LIGHT_POS);
             glUniform3f(LightID, lightPos.x, lightPos.y, lightPos.z);
 
             // Texture Binding
             glActiveTexture(GL_TEXTURE0);
             GLuint TexID = object.getTexture();
             glBindTexture(GL_TEXTURE_2D, TexID);
-            GLuint TexUniID = currentShader.getUniformID(SHADER_UNIFORM_TEXTURE);
+            GLuint TexUniID = currentProgram->getUniformID(SHADER_UNIFORM_TEXTURE);
             glUniform1i(TexUniID, 0);
 
             // 1rst attribute buffer : bones

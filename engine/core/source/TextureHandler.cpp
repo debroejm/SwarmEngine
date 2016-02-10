@@ -50,6 +50,7 @@ namespace ENGINE_NAMESPACE {
         {
             for(int i = 0; i < registeredTextures.size(); i++)
             {
+                // Yes, thats formatted properly. Pointers...
                 glDeleteTextures(1, &registeredTextures[i]);
             }
         }

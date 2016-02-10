@@ -50,35 +50,34 @@ using namespace glm;
 namespace ENGINE_NAMESPACE {
     namespace Shaders {
 
-        struct UniformID{
-            GLuint ID;
-            bool used;
-        };
-
-        class ShaderData{
+        class Shader{
         public:
-            ShaderData();
-            ShaderData(const char * vertex_shader_path, const char * fragment_shader_path);
-            ~ShaderData();
+            Shader(const char * shaderPath, GLenum shaderType);
+            ~Shader();
 
-            void operator=(const ShaderData &rhs);
+            void operator=(const Shader &rhs);
 
-            void setUniformID(int uniformType, bool useIt);
-            GLuint getUniformID(int uniformType);
-            GLuint getProgramID();
-        private:
-            GLuint ShaderID;
-            UniformID MatrixID;
-            UniformID ViewMatrixID;
-            UniformID ModelMatrixID;
-            UniformID TextureID;
-            UniformID LightPositionID;
-            UniformID LightColorID;
-            UniformID LightPowerID;
-            UniformID ScreenSizeID;
-
-            bool loaded;
+            GLuint getShaderID();
+            GLenum getShaderType();
+        protected:
+            GLuint shaderID;
+            GLenum shaderType;
         };
+
+        class Program {
+        public:
+            Program(Shader *shaders[], int shaderCount);
+            ~Program();
+
+            void operator=(const Program &rhs);
+
+            GLuint getProgramID();
+        protected:
+            GLuint programID;
+        };
+
+        void cleanupShaders();
+        void cleanupPrograms();
 
     }
 }

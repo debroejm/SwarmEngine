@@ -32,9 +32,12 @@ int main() {
     glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
 
     // Load our Shaders
-    Shaders::ShaderData DefaultShader("Resources/Shaders/TextureVShader.glsl", "Resources/Shaders/TextureFShader.glsl");
+    Shaders::Shader vertexShader("Resources/Shaders/TextureVShader.glsl", GL_VERTEX_SHADER);
+    Shaders::Shader fragmentShader("Resources/Shaders/TextureFShader.glsl", GL_FRAGMENT_SHADER);
+    Shaders::Shader* shaders[] { &vertexShader, &fragmentShader };
+    Shaders::Program program(shaders, 2);
 
-    Rendering::ChangeShader(DefaultShader);
+    Rendering::ChangeShader(&program);
 
     Models::Model testModel;
     testModel.loadMMD("Resources/Models/BasicMinion.mmd");
@@ -69,8 +72,7 @@ int main() {
         glfwPollEvents();
     }
 
-    Textures::cleanupTextures();
-    Rendering::cleanup();
+    Init::cleanup();
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
