@@ -9,11 +9,16 @@ namespace ENGINE_NAMESPACE {
             //fputs(description, stderr);
         }
 
-        static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+        void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
         {
+            /*
             if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
                 glfwSetWindowShouldClose(window, GL_TRUE);
+                */
+
             // Send keycode and other info to the input processing part of mEng
+            if(action == GLFW_PRESS) Configuration::setPressed(key, true);
+            if(action == GLFW_RELEASE) Configuration::setPressed(key, false);
         }
 
         void framebuffer_size_callback(GLFWwindow* window, int width, int height)

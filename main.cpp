@@ -43,6 +43,10 @@ int main() {
     testModel.loadMMD("Resources/Models/BasicMinion.mmd");
     testModel.setTexture(Textures::AnimatedTexture("Resources/Models/BasicMinion.png"));
 
+    Configuration::RawConfigData keybindingConfig("keybinding.config");
+    Configuration::Keybinding EXIT("Exit", GLFW_KEY_ESCAPE, keybindingConfig);
+    Configuration::addKeybinding(EXIT);
+
     //Models::Model cube;
     //cube.loadOBJ("cube.obj");
     //cube.setTexture(Textures::AnimatedTexture("DSD_Block_Buildable.png"));
@@ -65,7 +69,7 @@ int main() {
         //Rendering::Render(cube, transMat);
         Rendering::Render(testModel);
 
-        if (glfwGetKey( window, GLFW_KEY_ESCAPE ) == GLFW_PRESS)
+        if (EXIT.isPressed())
             glfwSetWindowShouldClose( window, GL_TRUE );
 
         glfwSwapBuffers(window);
@@ -75,5 +79,8 @@ int main() {
     Init::cleanup();
     glfwDestroyWindow(window);
     glfwTerminate();
+
+    keybindingConfig.writeConfigData();
+
     return 0;
 }

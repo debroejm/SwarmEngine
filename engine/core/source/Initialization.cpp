@@ -29,6 +29,8 @@ namespace ENGINE_NAMESPACE {
             }
             glfwMakeContextCurrent(window);
 
+            glfwSetKeyCallback(window, GLFW::key_callback);
+
             Controls::setWindow(window);
 
             // Initialize GLEW
