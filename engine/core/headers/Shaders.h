@@ -21,6 +21,7 @@ using namespace std;
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
+
 using namespace glm;
 
 // Internal Libraries
@@ -67,13 +68,45 @@ namespace ENGINE_NAMESPACE {
         class Program {
         public:
             Program(Shader *shaders[], int shaderCount);
+            Program(Shader *shaders[], int shaderCount, bool vertices, bool uvs, bool normals);
             ~Program();
 
             void operator=(const Program &rhs);
 
             GLuint getProgramID();
+
+            bool usesVertices() { return vertices; }
+            bool usesUVs() { return uvs; }
+            bool usesNormals() { return normals; }
+
+            GLint getAttribID_vertex() { return attribID_vertex; }
+            GLint getAttribID_uv() { return attribID_uv; }
+            GLint getAttribID_normal() { return attribID_normal; }
+
+            GLint getUniformID_model() { return uniformID_model; }
+            GLint getUniformID_view() { return uniformID_view; }
+            GLint getUniformID_projection() { return uniformID_projection; }
+
+            GLint getUniformID_texture() { return uniformID_texture; }
+
+            void findIDs();
+
         protected:
             GLuint programID;
+
+            bool vertices;
+            bool uvs;
+            bool normals;
+
+            GLint attribID_vertex;
+            GLint attribID_uv;
+            GLint attribID_normal;
+
+            GLint uniformID_model;
+            GLint uniformID_view;
+            GLint uniformID_projection;
+
+            GLint uniformID_texture;
         };
 
         void cleanupShaders();

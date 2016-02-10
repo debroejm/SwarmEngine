@@ -6,7 +6,7 @@ set(ENGINE_HEADERS
     core/Definitions.h
     core/headers/Initialization.h
     core/headers/Logging.h
-    core/headers/ShaderHandler.h
+        core/headers/Shaders.h
     core/headers/Controls.h
     core/headers/Rendering.h
     core/headers/TextureHandler.h
@@ -24,7 +24,7 @@ set(ENGINE_SOURCE
         core/source/Logging.cpp
         core/source/ModelLoading.cpp
         core/source/Rendering.cpp
-        core/source/ShaderHandler.cpp
+        core/source/Shaders.cpp
         core/source/TextureHandler.cpp
 )
 

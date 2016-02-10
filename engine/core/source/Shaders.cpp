@@ -1,4 +1,4 @@
-#include "../headers/ShaderHandler.h"
+#include "../headers/Shaders.h"
 
 
 namespace ENGINE_NAMESPACE {
@@ -165,7 +165,15 @@ namespace ENGINE_NAMESPACE {
         // -------------
 
         Program::Program(Shader *shaders[], int shaderCount) {
+            Program(shaders, shaderCount, true, true, true);
+        }
+
+        Program::Program(Shader *shaders[], int shaderCount, bool vertices, bool uvs, bool normals) {
             programID = compileProgram(shaders, shaderCount);
+            this->vertices = vertices;
+            this->uvs = uvs;
+            this->normals = normals;
+            findIDs();
         }
 
         Program::~Program() {
@@ -179,5 +187,16 @@ namespace ENGINE_NAMESPACE {
             this->programID = rhs.programID;
         }
 
+        void Program::findIDs() {
+            attribID_vertex =   glGetAttribLocation(programID, "vertex");
+            attribID_uv =       glGetAttribLocation(programID, "uv");
+            attribID_normal =   glGetAttribLocation(programID, "normal");
+
+            uniformID_model =       glGetUniformLocation(programID, "_m");
+            uniformID_view =        glGetUniformLocation(programID, "_v");
+            uniformID_projection =  glGetUniformLocation(programID, "_p");
+
+            uniformID_texture =     glGetUniformLocation(programID, "texturemap");
+        }
     }
 }

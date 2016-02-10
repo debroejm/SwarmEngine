@@ -22,7 +22,7 @@ using namespace glm;
 
 // Internal Libraries
 #include "Logging.h"
-#include "ShaderHandler.h"
+#include "Shaders.h"
 #include "ModelLoading.h"
 #include "Controls.h"
 

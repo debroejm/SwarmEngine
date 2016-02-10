@@ -46,7 +46,7 @@ using namespace std;
 
 // Base System
 #include "core/headers/Logging.h"
-#include "core/headers/ShaderHandler.h"
+#include "core/headers/Shaders.h"
 #include "core/headers/Controls.h"
 #include "core/headers/Rendering.h"
 
