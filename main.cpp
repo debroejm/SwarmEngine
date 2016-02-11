@@ -37,7 +37,7 @@ int main() {
     Shaders::Shader* shaders[] { &vertexShader, &fragmentShader };
     Shaders::Program program(shaders, 2);
 
-    Rendering::ChangeShader(&program);
+    Rendering::ChangeShader(program);
 
     Models::Model testModel;
     testModel.loadMMD("Resources/Models/BasicMinion.mmd");
@@ -56,6 +56,7 @@ int main() {
     // Main runtime loop
     while (!glfwWindowShouldClose(window))
     {
+
         // Clear the screen
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 

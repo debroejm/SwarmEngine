@@ -1,6 +1,6 @@
 #include "../headers/Rendering.h"
 
-ENGINE_NAMESPACE::Shaders::Program *currentProgram;
+ENGINE_NAMESPACE::Shaders::Program currentProgram;
 
 namespace ENGINE_NAMESPACE {
     namespace Rendering{
@@ -24,10 +24,10 @@ namespace ENGINE_NAMESPACE {
             glDeleteVertexArrays(1, &VertexArrayID);
         }
 
-        void ChangeShader(Shaders::Program *newProgram)
+        void ChangeShader(Shaders::Program &newProgram)
         {
             currentProgram = newProgram;
-            if(currentProgram != NULL) glUseProgram(currentProgram->getProgramID());
+            glUseProgram(currentProgram.getProgramID());
         }
 
         void Render(Models::Model & object) { Render(object, glm::mat4(1.0)); }
@@ -39,11 +39,7 @@ namespace ENGINE_NAMESPACE {
             //glm::mat4 ModelMatrix = glm::mat4(1.0); // Likely needs to be different
             //glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
 
-            if(currentProgram == NULL) return; // Safety check
-
-            // TODO: Tweak Uniforms
-
-            currentProgram->findIDs();
+            if(!currentProgram.isLinked()) return; // Safety Check
 
             // Shader Uniforms
             /*
@@ -54,19 +50,19 @@ namespace ENGINE_NAMESPACE {
             glUniformMatrix4fv(ModelID, 1, GL_FALSE, &ModelMatrix[0][0]);
             glUniformMatrix4fv(ViewID, 1, GL_FALSE, &ViewMatrix[0][0]);
              */
-            glUniformMatrix4fv(currentProgram->getUniformID_model(), 1, GL_FALSE, &modelMatrix[0][0]);
-            glUniformMatrix4fv(currentProgram->getUniformID_view(), 1, GL_FALSE, &ViewMatrix[0][0]);
-            glUniformMatrix4fv(currentProgram->getUniformID_projection(), 1, GL_FALSE, &ProjectionMatrix[0][0]);
+            glUniformMatrix4fv(currentProgram.getUniformID_model(), 1, GL_FALSE, &modelMatrix[0][0]);
+            glUniformMatrix4fv(currentProgram.getUniformID_view(), 1, GL_FALSE, &ViewMatrix[0][0]);
+            glUniformMatrix4fv(currentProgram.getUniformID_projection(), 1, GL_FALSE, &ProjectionMatrix[0][0]);
 
             // Texture Binding
             glActiveTexture(GL_TEXTURE0);
             GLuint TexID = object.getTexture();
             glBindTexture(GL_TEXTURE_2D, TexID);
-            glUniform1i(currentProgram->getUniformID_texture(), 0);
+            glUniform1i(currentProgram.getUniformID_texture(), 0);
 
             // 1rst attribute buffer : bones
-            if(currentProgram->usesVertices()) {
-                glEnableVertexAttribArray(currentProgram->getAttribID_vertex());
+            if(currentProgram.usesVertices()) {
+                glEnableVertexAttribArray(currentProgram.getAttribID_vertex());
                 glBindBuffer(GL_ARRAY_BUFFER, object.getBoneBuffer());
                 glVertexAttribPointer(
                         0,                  // attribute
@@ -79,8 +75,8 @@ namespace ENGINE_NAMESPACE {
             }
 
             // 2nd attribute buffer : UVs
-            if(currentProgram->usesUVs()) {
-                glEnableVertexAttribArray(currentProgram->getAttribID_uv());
+            if(currentProgram.usesUVs()) {
+                glEnableVertexAttribArray(currentProgram.getAttribID_uv());
                 glBindBuffer(GL_ARRAY_BUFFER, object.getUVBuffer());
                 glVertexAttribPointer(
                         1,                                // attribute
@@ -93,8 +89,8 @@ namespace ENGINE_NAMESPACE {
             }
 
             // 3rd attribute buffer : normals
-            if(currentProgram->usesNormals()) {
-                glEnableVertexAttribArray(currentProgram->getAttribID_normal());
+            if(currentProgram.usesNormals()) {
+                glEnableVertexAttribArray(currentProgram.getAttribID_normal());
                 glBindBuffer(GL_ARRAY_BUFFER, object.getNormalBuffer());
                 glVertexAttribPointer(
                         2,                                // attribute
@@ -117,9 +113,9 @@ namespace ENGINE_NAMESPACE {
                     (void*)0           // element array buffer offset
             );
 
-            if(currentProgram->usesVertices()) glDisableVertexAttribArray(currentProgram->getAttribID_vertex());
-            if(currentProgram->usesUVs()) glDisableVertexAttribArray(currentProgram->getAttribID_uv());
-            if(currentProgram->usesNormals()) glDisableVertexAttribArray(currentProgram->getAttribID_normal());
+            if(currentProgram.usesVertices()) glDisableVertexAttribArray(currentProgram.getAttribID_vertex());
+            if(currentProgram.usesUVs()) glDisableVertexAttribArray(currentProgram.getAttribID_uv());
+            if(currentProgram.usesNormals()) glDisableVertexAttribArray(currentProgram.getAttribID_normal());
         }
     }
 }

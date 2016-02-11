@@ -72,7 +72,6 @@ namespace ENGINE_NAMESPACE {
                     if(splitIndex == string::npos) continue;
                     string key = line.substr(0, splitIndex);
                     string value = line.substr(splitIndex+1, line.size()-splitIndex-1);
-                    Logging::Log(LOGGING_INFO, "Configuration", (line+" | "+key+" | "+value).c_str());
                     int testInt;
                     if(stringstream(value)>>testInt) {
                         dataMap_int[key] = testInt;

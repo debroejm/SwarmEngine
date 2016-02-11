@@ -67,6 +67,7 @@ namespace ENGINE_NAMESPACE {
 
         class Program {
         public:
+            Program();
             Program(Shader *shaders[], int shaderCount);
             Program(Shader *shaders[], int shaderCount, bool vertices, bool uvs, bool normals);
             ~Program();
@@ -91,8 +92,11 @@ namespace ENGINE_NAMESPACE {
 
             void findIDs();
 
+            bool isLinked() { return linked; }
+
         protected:
             GLuint programID;
+            bool linked;
 
             bool vertices;
             bool uvs;

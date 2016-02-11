@@ -122,6 +122,10 @@ namespace ENGINE_NAMESPACE {
                 return 0;
             }
 
+            for(int i = 0; i < shaderCount; i++) {
+                if(shaders[i] != NULL) glDetachShader(programID, shaders[i]->getShaderID());
+            }
+
             Logging::Log(LOGGING_INFO, "Shaders", "Done!");
             return programID;
         }
@@ -164,16 +168,24 @@ namespace ENGINE_NAMESPACE {
         // Program Class
         // -------------
 
+        Program::Program() { linked = false; }
+
         Program::Program(Shader *shaders[], int shaderCount) {
-            Program(shaders, shaderCount, true, true, true);
+            this->programID = compileProgram(shaders, shaderCount);
+            this->vertices = true;
+            this->uvs = true;
+            this->normals = true;
+            findIDs();
+            linked = true;
         }
 
         Program::Program(Shader *shaders[], int shaderCount, bool vertices, bool uvs, bool normals) {
-            programID = compileProgram(shaders, shaderCount);
+            this->programID = compileProgram(shaders, shaderCount);
             this->vertices = vertices;
             this->uvs = uvs;
             this->normals = normals;
             findIDs();
+            linked = true;
         }
 
         Program::~Program() {
@@ -185,6 +197,17 @@ namespace ENGINE_NAMESPACE {
         void Program::operator =(const Program &rhs)
         {
             this->programID = rhs.programID;
+            this->vertices = rhs.vertices;
+            this->uvs = rhs.uvs;
+            this->normals = rhs.normals;
+            this->attribID_vertex = rhs.attribID_vertex;
+            this->attribID_uv = rhs.attribID_uv;
+            this->attribID_normal = rhs.attribID_normal;
+            this->uniformID_model = rhs.uniformID_model;
+            this->uniformID_view = rhs.uniformID_view;
+            this->uniformID_projection = rhs.uniformID_projection;
+            this->uniformID_texture = rhs.uniformID_texture;
+            this->linked = rhs.linked;
         }
 
         void Program::findIDs() {
