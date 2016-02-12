@@ -23,9 +23,9 @@ namespace ENGINE_NAMESPACE {
         // Initial position : on +Z
         glm::vec3 position = glm::vec3( 0, 0, 20 );
         // Initial horizontal angle : toward -Z
-        float horizontalAngle = 0.0f;
+        float horizontalAngle = 3.14f;
         // Initial vertical angle : none
-        float verticalAngle = 3.14f;
+        float verticalAngle = 0.0f;
         // Initial Field of View
         float initialFoV = 45.0f;
 
@@ -46,12 +46,18 @@ namespace ENGINE_NAMESPACE {
             double xpos, ypos;
             glfwGetCursorPos(windowHandle, &xpos, &ypos);
 
+            int width, height;
+            glfwGetWindowSize(windowHandle, &width, &height);
+
             // Reset mouse position for next frame
-            glfwSetCursorPos(windowHandle, 1920/2, 1080/2);
+            glfwSetCursorPos(windowHandle, width/2, height/2);
 
             // Compute new orientation
-            horizontalAngle += mouseSpeed * float(1920/2 - xpos );
-            verticalAngle   += mouseSpeed * float(1080/2 - ypos );
+            horizontalAngle += mouseSpeed * float(width/2 - xpos );
+            verticalAngle   += mouseSpeed * float(height/2 - ypos );
+
+            if(verticalAngle > 1.57f) verticalAngle = 1.57f;
+            if(verticalAngle < -1.57f) verticalAngle = -1.57f;
 
             // Direction : Spherical coordinates to Cartesian coordinates conversion
             glm::vec3 direction(
@@ -68,7 +74,8 @@ namespace ENGINE_NAMESPACE {
             );
 
             // Up vector
-            glm::vec3 up = glm::cross( right, direction );
+            //glm::vec3 up = glm::cross( right, direction );
+            vec3 up(0.0f, 1.0f, 0.0f);
 
 
             // Move forward
@@ -91,11 +98,12 @@ namespace ENGINE_NAMESPACE {
             float FoV = initialFoV; // - 5 * glfwGetMouseWheel();
 
             // Projection matrix : 45� Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
-            ProjectionMatrix = glm::perspective(FoV, 16.0f / 9.0f, 0.1f, 1000.0f);
+            ProjectionMatrix = glm::perspective(FoV, (float)width / (float)height, 0.1f, 1000.0f);
             // Camera matrix
             ViewMatrix       = glm::lookAt(
                     position,           // Camera is here
                     position+direction, // and looks here : at the same position, plus "direction"
+                    //vec3(0.0f, 0.0f, 0.0f),
                     up                  // Head is up (set to 0,-1,0 to look upside-down)
             );
 

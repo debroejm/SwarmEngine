@@ -43,14 +43,18 @@ int main() {
     testModel.loadMMD("Resources/Models/BasicMinion.mmd");
     testModel.setTexture(Textures::AnimatedTexture("Resources/Models/BasicMinion.png"));
     //testModel.getStringData();
+    //char infoMsg[256];
+    //vec3 bonePos = testModel.getBonePosition(0);
+    //sprintf(infoMsg, "(%f, %f, %f)", bonePos.x, bonePos.y, bonePos.z);
+    //Logging::Log(LOGGING_INFO, "Main", infoMsg);
 
     Configuration::RawConfigData keybindingConfig("keybinding.config");
     Configuration::Keybinding EXIT("Exit", GLFW_KEY_ESCAPE, keybindingConfig);
     Configuration::addKeybinding(EXIT);
 
-    //Models::Model cube;
-    //cube.loadOBJ("cube.obj");
-    //cube.setTexture(Textures::AnimatedTexture("DSD_Block_Buildable.png"));
+    Models::Model cube;
+    cube.loadOBJ("Resources/Models/Cube.obj");
+    cube.setTexture(Textures::AnimatedTexture("Resources/Models/Sample.png"));
 
     GLFWwindow * window = Controls::getWindow();
 
@@ -63,13 +67,13 @@ int main() {
 
         Controls::computeMatricesFromInputs();
 
-        vec3 tPos(0.05f, 0.0f, 0.0f);
-        testModel.addBonePosition(0, tPos);
-        testModel.setBonePosition(1, vec3(0, 0, 10));
-        testModel.updateBoneBuffer();
+        vec3 tPos(0.0f, 0.05f, 0.0f);
+        //testModel.addBonePosition(1, tPos);
+        //testModel.setBonePosition(1, vec3(0, 0, 10));
+        //testModel.updateBoneBuffer();
 
-        //glm::mat4 transMat = glm::translate( vec3(0.0f, 2.0f, 0.0f) );
-        //Rendering::Render(cube, transMat);
+        glm::mat4 transMat = glm::translate( vec3(0.0f, 0.0f, 1.0f) );
+        Rendering::Render(cube, transMat);
         Rendering::Render(testModel);
 
         if (EXIT.isPressed())

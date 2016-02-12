@@ -137,7 +137,7 @@ namespace ENGINE_NAMESPACE {
                 vector<unsigned short> &out_indices,
                 vector<PreBoneData> &out_bones,
                 vector<vec2> &out_uvs,
-                vector<vec3> &out_normals
+                vector<PreVertexData> &out_normals
         ){
             std::map<PackedVertex,unsigned short> BoneToOutIndex;
 
@@ -165,7 +165,7 @@ namespace ENGINE_NAMESPACE {
                 }else{ // If not, it needs to be added in the output data.
                     out_bones.push_back( in_bones[in_vertices[i].boneID] );
                     out_uvs     .push_back( in_uvs[i]);
-                    out_normals .push_back( in_normals[i]);
+                    out_normals .push_back({ in_normals[i], in_vertices[i].boneID });
                     unsigned short newindex = (unsigned short)out_bones.size() - 1;
                     out_indices .push_back( newindex );
                     BoneToOutIndex[ packed ] = newindex;
@@ -358,7 +358,7 @@ namespace ENGINE_NAMESPACE {
                     }
                     else if( (bIndex > 0) && (bIndex < readBones.size() + 1) )
                     {
-                        readBones.push_back({ bonePos, bIndex-1});
+                        readBones.push_back({ bonePos, bIndex-1 });
                     }
                     else
                     {
@@ -421,7 +421,7 @@ namespace ENGINE_NAMESPACE {
             vector<unsigned short> indices;
             vector<PreBoneData> indexed_bones;
             vector<glm::vec2> indexed_uvs;
-            vector<glm::vec3> indexed_normals;
+            vector<PreVertexData> indexed_normals;
 
             indexVBO(out_vertices, readBones, out_uvs, indices, indexed_bones, indexed_uvs, indexed_normals);
 
@@ -432,7 +432,10 @@ namespace ENGINE_NAMESPACE {
                 skeleton[i] = Bone(readBones[i].position);
             }
             for(int i = 0; i < boneCount; i++) {
-                if(readBones[i].parentID > -1) skeleton[i].setParent(skeleton[readBones[i].parentID]);
+                if(readBones[i].parentID > -1) {
+                    skeleton[i].setParent(skeleton[readBones[i].parentID]);
+                    skeleton[readBones[i].parentID].addChild(skeleton[i]);
+                }
             }
 
             // Compile Element Arrays
@@ -441,7 +444,9 @@ namespace ENGINE_NAMESPACE {
             normals = new vec3[elementCount];
             for(int i = 0; i < elementCount; i++) {
                 bonePositions[i] = indexed_bones[i].position;
-                normals[i] = indexed_normals[i];
+                normals[i] = indexed_normals[i].position;
+                skeleton[indexed_normals[i].boneID].addBonePosition(bonePositions[i]);
+                skeleton[indexed_normals[i].boneID].addNormal(normals[i]);
             }
 
             indexCount = indices.size();
@@ -590,7 +595,7 @@ namespace ENGINE_NAMESPACE {
             vector<unsigned short> indices;
             vector<PreBoneData> indexed_bones;
             vector<glm::vec2> indexed_uvs;
-            vector<glm::vec3> indexed_normals;
+            vector<PreVertexData> indexed_normals;
 
             indexVBO(out_vertices, out_bones, out_uvs, indices, indexed_bones, indexed_uvs, indexed_normals);
 
@@ -601,7 +606,10 @@ namespace ENGINE_NAMESPACE {
                 skeleton[i] = Bone(out_bones[i].position);
             }
             for(int i = 0; i < boneCount; i++) {
-                if(out_bones[i].parentID > -1) skeleton[i].setParent(skeleton[out_bones[i].parentID]);
+                if(out_bones[i].parentID > -1) {
+                    skeleton[i].setParent(skeleton[out_bones[i].parentID]);
+                    skeleton[out_bones[i].parentID].addChild(skeleton[i]);
+                }
             }
 
             // Compile Element Arrays
@@ -610,7 +618,9 @@ namespace ENGINE_NAMESPACE {
             normals = new vec3[elementCount];
             for(int i = 0; i < elementCount; i++) {
                 bonePositions[i] = indexed_bones[i].position;
-                normals[i] = indexed_normals[i];
+                normals[i] = indexed_normals[i].position;
+                skeleton[indexed_normals[i].boneID].addBonePosition(bonePositions[i]);
+                skeleton[indexed_normals[i].boneID].addNormal(normals[i]);
             }
 
             indexCount = indices.size();

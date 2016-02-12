@@ -31,6 +31,8 @@ namespace ENGINE_NAMESPACE {
 
             glfwSetKeyCallback(window, GLFW::key_callback);
 
+            glfwSetCursorPos(window, windowX/2, windowY/2);
+
             Controls::setWindow(window);
 
             // Initialize GLEW
