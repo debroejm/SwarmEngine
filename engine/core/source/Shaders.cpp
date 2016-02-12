@@ -91,6 +91,7 @@ namespace ENGINE_NAMESPACE {
 
         GLuint compileProgram(Shader *shaders[], int shaderCount) {
             GLuint programID = glCreateProgram();
+            registeredPrograms.push_back(programID);
             char infoMsg[256];
             sprintf(infoMsg, "Attempting to Link Program [%i]", programID);
             Logging::Log(LOGGING_INFO, "Shaders", infoMsg);

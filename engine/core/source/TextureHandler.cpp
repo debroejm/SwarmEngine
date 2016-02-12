@@ -50,6 +50,9 @@ namespace ENGINE_NAMESPACE {
         {
             for(int i = 0; i < registeredTextures.size(); i++)
             {
+                char infoMsg[256];
+                sprintf(infoMsg, "Deleting Texture [%i]", registeredTextures[i]);
+                Logging::Log(LOGGING_INFO, "Cleanup", infoMsg);
                 // Yes, thats formatted properly. Pointers...
                 glDeleteTextures(1, &registeredTextures[i]);
             }
