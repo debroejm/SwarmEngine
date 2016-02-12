@@ -114,11 +114,13 @@ namespace ENGINE_NAMESPACE {
             int infoLogLength;
             glGetProgramiv(programID, GL_LINK_STATUS, &result);
             glGetProgramiv(programID, GL_INFO_LOG_LENGTH, &infoLogLength);
-            std::vector<char> errorMessage( std::max(infoLogLength, int(1)) );
+            //std::vector<char> errorMessage( std::max(infoLogLength, int(1)) );
+            //vector<char> errorMessage( infoLogLength );
+            char errorMessage[infoLogLength+1];
             glGetProgramInfoLog(programID, infoLogLength, NULL, &errorMessage[0]);
-            if(errorMessage.size() > 3) {
+            if(infoLogLength > 3) {
                 char errorMsg[1000];
-                sprintf(errorMsg, "Program Error: %s", &errorMessage);
+                sprintf(errorMsg, "Program Error: %s", errorMessage);
                 Logging::Log(LOGGING_ERROR, "Shaders", errorMsg);
                 return 0;
             }

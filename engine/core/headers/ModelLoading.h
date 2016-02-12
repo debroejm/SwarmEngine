@@ -40,49 +40,52 @@ using namespace glm;
 namespace ENGINE_NAMESPACE {
     namespace Models {
 
+        void cleanupBuffers();
+
         class Bone
         {
         public:
+            Bone();
             Bone(vec3 pos);
-            Bone(vec3 pos, int PID);
+            Bone(vec3 pos, Bone &parent);
             ~Bone();
 
-            bool addChild(int childID);
             void revertPosition();
-            void changePosition(vec3 newPos);
+            void addPosition(vec3 newPos);
+            void setPosition(vec3 newPos);
 
-            bool addLinkedBonePos(int BonePosIndex);
-            bool addLinkedNormalPos(int NormalPosIndex);
+            void setParent(Bone &parent) { this->parent = &parent; }
+            Bone* getParent() { return parent; }
 
-            void setModelBonesPointer(vector<vec3> * mBones);
-            void setModelNormalsPointer(vector<vec3> * mNormals);
-            void setSkeletonPointer(vector<Bone> * mSkeleton);
+            void addChild(Bone &child);
+            void addBonePosition(vec3 &bonePos);
+            void addNormal(vec3 &normal);
 
             glm::vec3 getPosition();
+
+            void operator=(const Bone &rhs);
 
         private:
             vec3 originalPos;
             vec3 position;
-            vector<int> children;
-            int parentID;
-            vector<vec3> * modelBones;
-            vector<vec3> * modelNormals;
-            vector<Bone> * modelSkeleton;
-            vector<int> boneIndices;
-            vector<int> normalIndices;
+            Bone* parent;
+            vector<Bone*> children;
+            vector<vec3*> bonePositions;
+            vector<vec3*> normals;
         };
 
         struct bVert{
             float x;
             float y;
             float z;
-            Bone *modifier;
+            Bone* modifier;
         };
 
         class Model
         {
         public:
             Model();
+            Model(string name);
             ~Model();
             bool loadOBJ(const char * path);
             bool loadMMD(const char * path);
@@ -99,17 +102,22 @@ namespace ENGINE_NAMESPACE {
             GLuint getTexture();
 
             bool isLoaded();
+            string getName() { return name; }
 
             vec3 getMaxDimensions();
             vec3 getMinDimensions();
 
             vec3 getBonePosition(int index);
-            void changeBonePosition(int index, vec3 pos);
+            void addBonePosition(int index, vec3 pos);
+            void setBonePosition(int index, vec3 pos);
 
             void updateBoneBuffer();
 
+            string getStringData();
+
         private:
             bool loaded;
+            string name;
 
             GLuint bonebuffer;
             GLuint uvbuffer;
@@ -117,9 +125,15 @@ namespace ENGINE_NAMESPACE {
             GLuint elementbuffer;
             int indexCount;
 
-            vector<Bone> skeleton;
-            vector<vec3> bones;
-            vector<vec3> normals;
+            Bone* skeleton;
+            int boneCount;
+            vec3* bonePositions;
+            vec3* normals;
+            int elementCount;
+
+            //vector<Bone> skeleton;
+            //vector<vec3> bones;
+            //vector<vec3> normals;
 
             vec3 maxDim;
             vec3 minDim;

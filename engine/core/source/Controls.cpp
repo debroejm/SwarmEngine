@@ -21,7 +21,7 @@ namespace ENGINE_NAMESPACE {
 
 
         // Initial position : on +Z
-        glm::vec3 position = glm::vec3( 0, 0, 5 );
+        glm::vec3 position = glm::vec3( 0, 0, 20 );
         // Initial horizontal angle : toward -Z
         float horizontalAngle = 0.0f;
         // Initial vertical angle : none

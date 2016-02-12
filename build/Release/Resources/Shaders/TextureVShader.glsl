@@ -18,7 +18,8 @@ void main(){
     // Specialized bone shader
 	vec3 vertexPosition_modelspace = vertex + normal;
 	
-	gl_Position = _m * _v * _p * vec4(vertexPosition_modelspace,1);
+	gl_Position = _p * _v * _m * vec4(vertexPosition_modelspace,1);
+	//gl_Position = vec4(vertexPosition_modelspace,1);
 	
 	pos_worldspace = (_m * vec4(vertexPosition_modelspace,1)).xyz;
 	

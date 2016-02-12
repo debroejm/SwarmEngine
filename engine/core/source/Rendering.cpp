@@ -41,6 +41,14 @@ namespace ENGINE_NAMESPACE {
 
             if(!currentProgram->isLinked()) return; // Safety Check
 
+            /*
+            char infoMsg[256];
+            sprintf(infoMsg, "%i-%i-%i-%i-%i-%i",
+                currentProgram->getUniformID_model(), currentProgram->getUniformID_view(), currentProgram->getUniformID_projection(),
+                currentProgram->getAttribID_vertex(), currentProgram->getAttribID_uv(), currentProgram->getAttribID_normal());
+            Logging::Log(LOGGING_INFO, "Rendering", infoMsg);
+             */
+
             // Shader Uniforms
             /*
             GLuint MVPID = currentProgram->getUniformID(SHADER_UNIFORM_MVP);

@@ -42,6 +42,7 @@ int main() {
     Models::Model testModel;
     testModel.loadMMD("Resources/Models/BasicMinion.mmd");
     testModel.setTexture(Textures::AnimatedTexture("Resources/Models/BasicMinion.png"));
+    //testModel.getStringData();
 
     Configuration::RawConfigData keybindingConfig("keybinding.config");
     Configuration::Keybinding EXIT("Exit", GLFW_KEY_ESCAPE, keybindingConfig);
@@ -62,11 +63,12 @@ int main() {
 
         Controls::computeMatricesFromInputs();
 
-        vec3 tPos(0.0f, 0.05f, 0.0f);
-        testModel.changeBonePosition(0, tPos);
+        vec3 tPos(0.05f, 0.0f, 0.0f);
+        testModel.addBonePosition(0, tPos);
+        testModel.setBonePosition(1, vec3(0, 0, 10));
         testModel.updateBoneBuffer();
 
-        glm::mat4 transMat = glm::translate( vec3(0.0f, 2.0f, 0.0f) );
+        //glm::mat4 transMat = glm::translate( vec3(0.0f, 2.0f, 0.0f) );
         //Rendering::Render(cube, transMat);
         Rendering::Render(testModel);
 

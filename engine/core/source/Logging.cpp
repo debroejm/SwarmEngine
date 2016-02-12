@@ -7,6 +7,8 @@
   #define _WIN32_WINNT   0x0500
 #endif
 #include <Windows.h>
+#include <GLFW/glfw3.h>
+
 #endif
 
 namespace ENGINE_NAMESPACE {
@@ -60,20 +62,22 @@ namespace ENGINE_NAMESPACE {
 
             // Convert our #define to a C String :P
             char * tS;
-            if( severity == LOGGING_ERROR ) tS = "[ERROR]";
-            else if( severity == LOGGING_WARNING ) tS = "[WARNING]";
-            else if( severity == LOGGING_INFO ) tS = "[INFO]";
+            if( severity == LOGGING_ERROR ) tS = "ERROR";
+            else if( severity == LOGGING_WARNING ) tS = "WARNING";
+            else if( severity == LOGGING_INFO ) tS = "INFO";
+
+            double time = glfwGetTime();
 
             //char * completeMessage;
             //sprintf(completeMessage, "%s%s %s\n", tS, category, message);
 
             if( (logType == LOGGING_TYPE_CONSOLE) || (logType == LOGGING_TYPE_FILE_AND_CONSOLE) )
             {
-                fprintf( stdout, "%s[%s] %s\n", tS, category, message);
+                fprintf( stdout, "[%f][%s][%s] %s\n", time, tS, category, message);
             }
             if( (logType == LOGGING_TYPE_FILE) || (logType == LOGGING_TYPE_FILE_AND_CONSOLE) )
             {
-                fprintf( logFile, "%s[%s] %s\n", tS, category, message);
+                fprintf( logFile, "[%f][%s][%s] %s\n", time, tS, category, message);
             }
         }
 

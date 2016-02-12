@@ -3,6 +3,17 @@
 namespace ENGINE_NAMESPACE {
     namespace Models {
 
+        vector<GLuint> registeredBuffers;
+
+        void cleanupBuffers() {
+            for(int i = 0; i < registeredBuffers.size(); i++) {
+                char infoMsg[256];
+                sprintf(infoMsg, "Deleting Buffer [%i]", registeredBuffers[i]);
+                Logging::Log(LOGGING_INFO, "Cleanup", infoMsg);
+                glDeleteBuffers(1, &registeredBuffers[i]);
+            }
+        }
+
         struct PackedVertex{
             glm::vec3 position;
             glm::vec2 uv;
@@ -21,18 +32,23 @@ namespace ENGINE_NAMESPACE {
             };
         };
 
-        struct BoneLinkedVertex{
-            vec3 vertex;
-            Models::Bone *linkedBone;
+        struct PreBoneData {
+            vec3 position;
+            int parentID;
         };
 
-        Models::Bone *getClosestBone(std::vector<Models::Bone> & in_bones, glm::vec3 in_vertex)
+        struct PreVertexData {
+            vec3 position;
+            int boneID;
+        };
+
+        int getClosestBoneID(vec3 in_vertex, vector<PreBoneData> &bones)
         {
             int closestID = -1;
-            double closeDist;
-            for(int i = 0; i < in_bones.size(); i++)
+            double closeDist = 0.0;
+            for(int i = 0; i < bones.size(); i++)
             {
-                vec3 bPos = in_bones[i].getPosition();
+                vec3 bPos = bones[i].position;
                 double newDist = sqrt( pow(bPos.x - in_vertex.x, 2) + pow(bPos.y - in_vertex.y, 2) + pow(bPos.z - in_vertex.z, 2) );
                 if(closestID == -1)
                 {
@@ -46,7 +62,7 @@ namespace ENGINE_NAMESPACE {
                 }
             }
 
-            return &in_bones[closestID];
+            return closestID;
         }
 
         bool getSimilarVertexIndex_fast(
@@ -114,44 +130,42 @@ namespace ENGINE_NAMESPACE {
         }
 
         void indexVBO(
-                std::vector<BoneLinkedVertex> & in_vertices,
-                std::vector<glm::vec2> & in_uvs,
+                vector<PreVertexData> &in_vertices,
+                vector<PreBoneData> &in_bones,
+                vector<vec2> &in_uvs,
 
-                std::vector<unsigned short> & out_indices,
-                std::vector<glm::vec2> & out_uvs,
-                std::vector<glm::vec3> & out_normals,
-                std::vector<glm::vec3> & out_bones
+                vector<unsigned short> &out_indices,
+                vector<PreBoneData> &out_bones,
+                vector<vec2> &out_uvs,
+                vector<vec3> &out_normals
         ){
-            std::map<PackedBone,unsigned short> BoneToOutIndex;
+            std::map<PackedVertex,unsigned short> BoneToOutIndex;
 
             std::vector<glm::vec3> in_normals;
 
             for( unsigned int i=0; i<in_vertices.size(); i++ )
             {
-                glm::vec3 bonePos = (*in_vertices[i].linkedBone).getPosition();
-                in_normals.push_back( vec3(in_vertices[i].vertex.x - bonePos.x,
-                                           in_vertices[i].vertex.y - bonePos.y,
-                                           in_vertices[i].vertex.z - bonePos.z) );
+                glm::vec3 bonePos = in_bones[in_vertices[i].boneID].position;
+                in_normals.push_back( vec3(in_vertices[i].position.x - bonePos.x,
+                                           in_vertices[i].position.y - bonePos.y,
+                                           in_vertices[i].position.z - bonePos.z) );
             }
 
             // For each input vertex
             for ( unsigned int i=0; i<in_vertices.size(); i++ ){
 
-                PackedBone packed = {in_vertices[i].vertex, in_uvs[i], in_normals[i]};
-
+                PackedVertex packed = {in_bones[in_vertices[i].boneID].position, in_uvs[i], in_normals[i]};
 
                 // Try to find a similar vertex in out_XXXX
                 unsigned short index;
-                bool found = getSimilarBoneIndex_fast( packed, BoneToOutIndex, index);
+                bool found = getSimilarVertexIndex_fast( packed, BoneToOutIndex, index);
 
                 if ( found ){ // A similar vertex is already in the VBO, use it instead !
                     out_indices.push_back( index );
                 }else{ // If not, it needs to be added in the output data.
-                    out_bones.push_back( (*in_vertices[i].linkedBone).getPosition() );
+                    out_bones.push_back( in_bones[in_vertices[i].boneID] );
                     out_uvs     .push_back( in_uvs[i]);
                     out_normals .push_back( in_normals[i]);
-                    (*in_vertices[i].linkedBone).addLinkedBonePos(out_bones.size()-1);
-                    (*in_vertices[i].linkedBone).addLinkedNormalPos(out_normals.size()-1);
                     unsigned short newindex = (unsigned short)out_bones.size() - 1;
                     out_indices .push_back( newindex );
                     BoneToOutIndex[ packed ] = newindex;
@@ -159,107 +173,102 @@ namespace ENGINE_NAMESPACE {
             }
         }
 
-        Models::Bone::Bone(vec3 pos)
+        Bone::Bone() {
+            parent = NULL;
+        }
+
+        Bone::Bone(vec3 pos)
         {
             originalPos = pos;
             position = pos;
-            parentID = -1;
+            parent = NULL;
         }
 
-        Models::Bone::Bone(vec3 pos, int PID)
+        Bone::Bone(vec3 pos, Bone &parent)
         {
-            parentID = PID;
             originalPos = pos;
             position = pos;
+            this->parent = &parent;
         }
 
-        Models::Bone::~Bone()
+        Bone::~Bone()
         {
 
         }
 
-        bool Models::Bone::addChild(int childID)
-        {
-            children.push_back(childID);
-            return true;
-        }
-
-        void Models::Bone::revertPosition()
+        void Bone::revertPosition()
         {
             position = originalPos;
         }
 
-        void Models::Bone::changePosition(vec3 newPos)
+        void Bone::addPosition(vec3 newPos) { setPosition(position+newPos); }
+        void Bone::setPosition(vec3 newPos)
         {
-            position = position+newPos;
-            for(int i = 0; i < boneIndices.size(); i++)
+            position = newPos;
+            for(int i = 0; i < bonePositions.size(); i++)
             {
-                (*modelBones)[boneIndices[i]] = position;
+                bonePositions[i]->operator=(position);
             }
             for(int i = 0; i < children.size(); i++)
             {
-                (*modelSkeleton)[children[i]].changePosition(newPos);
+                children[i]->setPosition(newPos);
             }
         }
 
-        bool Models::Bone::addLinkedBonePos(int BonePosIndex)
-        {
-            if(BonePosIndex < 0)
-                return false;
-            boneIndices.push_back(BonePosIndex);
-            return true;
+        void Bone::addChild(Bone &child) {
+            children.push_back(&child);
         }
 
-        bool Models::Bone::addLinkedNormalPos(int NormalPosIndex)
-        {
-            if(NormalPosIndex < 0)
-                return false;
-            normalIndices.push_back(NormalPosIndex);
-            return true;
+        void Bone::addBonePosition(vec3 &bonePos) {
+            bonePositions.push_back(&bonePos);
         }
 
-        void Models::Bone::setModelBonesPointer(vector<vec3> * mBones) { modelBones = mBones; }
-        void Models::Bone::setModelNormalsPointer(vector<vec3> * mNormals) { modelNormals = mNormals; }
-        void Models::Bone::setSkeletonPointer(vector<Bone> * mSkeleton) { modelSkeleton = mSkeleton; }
+        void Bone::addNormal(vec3 &normal) {
+            normals.push_back(&normal);
+        }
 
-        glm::vec3 Models::Bone::getPosition()
+        glm::vec3 Bone::getPosition()
         {
             return position;
         }
 
-        Models::Model::Model()
+        void Bone::operator =(const Bone &rhs)
+        {
+            position = rhs.position;
+            originalPos = position;
+            parent = rhs.parent;
+            children = rhs.children;
+            bonePositions = rhs.bonePositions;
+            normals = rhs.normals;
+        }
+
+        Model::Model()
         {
             loaded = false;
             minDim = vec3(0.0f, 0.0f, 0.0f);
             maxDim = vec3(0.0f, 0.0f, 0.0f);
+            name = "Unnamned";
         }
 
-        Models::Model::~Model()
+        Model::Model(string name) {
+            loaded = false;
+            minDim = vec3(0.0f, 0.0f, 0.0f);
+            maxDim = vec3(0.0f, 0.0f, 0.0f);
+            this->name = name;
+        }
+
+        Model::~Model()
         {
-            if(loaded)
-            {
-                glDeleteBuffers(1, &bonebuffer);
-                glDeleteBuffers(1, &uvbuffer);
-                glDeleteBuffers(1, &normalbuffer);
-                glDeleteBuffers(1, &elementbuffer);
-            }
+            delete [] skeleton;
+            delete [] bonePositions;
+            delete [] normals;
         }
 
-        void Models::Model::addTexture(const char *textureName) { texture.addTexture(textureName); }
-        void Models::Model::addTexture(GLuint textureID) { texture.addTexture(textureID); }
-        void Models::Model::setTexture(Textures::AnimatedTexture other) { texture = other; }
+        void Model::addTexture(const char *textureName) { texture.addTexture(textureName); }
+        void Model::addTexture(GLuint textureID) { texture.addTexture(textureID); }
+        void Model::setTexture(Textures::AnimatedTexture other) { texture = other; }
 
-        bool intInVector(int item, vector<int> & list)
-        {
-            for(int i = 0; i < list.size(); i++)
-            {
-                if( list[i] == item )
-                    return true;
-            }
-            return false;
-        }
-
-        bool Models::Model::loadMMD(const char *path)
+        bool Model::loadMMD(const char *path)
         {
             if (loaded) return false;
 
@@ -267,19 +276,15 @@ namespace ENGINE_NAMESPACE {
             sprintf(fileLoadBuff, "Loading MMD file: %s", path);
             Logging::Log(LOGGING_INFO, "Models", fileLoadBuff);
 
-            std::vector<unsigned int> vertexIndices, uvIndices, normalIndices;
-            std::vector<glm::vec3> temp_vertices;
-            std::vector<glm::vec2> temp_uvs;
-            std::vector<glm::vec3> temp_normals;
-            std::vector<int> temp_boneIDs;
+            vector<unsigned int> vertexIndices, uvIndices, normalIndices;
+            vector<glm::vec3> temp_vertices;
+            vector<glm::vec2> temp_uvs;
+            vector<glm::vec3> temp_normals;
+            vector<int> temp_boneIDs;
 
-            std::vector<BoneLinkedVertex> out_vertices;
-            std::vector<glm::vec2> out_uvs;
-            std::vector<glm::vec3> out_normals;
+            vector<PreBoneData> readBones;
 
-            std::vector<Bone> out_bones;
-
-            std::vector<int> usedBoneIDs;
+            //vector<int> usedBoneIDs;
 
 
             FILE * file = fopen(path, "r");
@@ -289,6 +294,8 @@ namespace ENGINE_NAMESPACE {
                 return false;
             }
 
+            int lineNum = -1;
+
             while( 1 ){
 
                 char lineHeader[128];
@@ -296,6 +303,8 @@ namespace ENGINE_NAMESPACE {
                 int res = fscanf(file, "%s", lineHeader);
                 if (res == EOF)
                     break; // EOF = End Of File. Quit the loop.
+
+                lineNum++;
 
                 // else : parse lineHeader
 
@@ -311,8 +320,9 @@ namespace ENGINE_NAMESPACE {
                     if( vertex.x < minDim.x ) minDim.x = vertex.x;
                     if( vertex.y < minDim.y ) minDim.y = vertex.y;
                     if( vertex.z < minDim.z ) minDim.z = vertex.z;
-                    // Vertex with Bone ID : [x y z ID]
-                }else if (strcmp( lineHeader, "vb" ) == 0 ){
+                }
+                // Vertex with Bone ID : [x y z ID]
+                else if (strcmp( lineHeader, "vb" ) == 0 ){
                     glm::vec3 vertex;
                     int BID;
                     fscanf(file, "%f %f %f %i\n", &vertex.x, &vertex.y, &vertex.z, &BID);
@@ -324,37 +334,37 @@ namespace ENGINE_NAMESPACE {
                     if( vertex.x < minDim.x ) minDim.x = vertex.x;
                     if( vertex.y < minDim.y ) minDim.y = vertex.y;
                     if( vertex.z < minDim.z ) minDim.z = vertex.z;
-                    // UV : [u v]
-                }else if ( strcmp( lineHeader, "vt" ) == 0 ){
+                }
+                // UV : [u v]
+                else if ( strcmp( lineHeader, "vt" ) == 0 ){
                     glm::vec2 uv;
                     fscanf(file, "%f %f\n", &uv.x, &uv.y );
                     temp_uvs.push_back(uv);
-                    // Normal : [x y z]
-                }else if ( strcmp( lineHeader, "vn" ) == 0 ){
+                }
+                // Normal : [x y z]
+                else if ( strcmp( lineHeader, "vn" ) == 0 ){
                     glm::vec3 normal;
                     fscanf(file, "%f %f %f\n", &normal.x, &normal.y, &normal.z );
                     temp_normals.push_back(normal);
-                    // Bone : [x y z parent]
-                }else if ( strcmp( lineHeader, "j" ) == 0 ){
+                }
+                // Bone : [x y z parent]
+                else if ( strcmp( lineHeader, "j" ) == 0 ){
                     vec3 bonePos;
                     int bIndex;
                     fscanf(file, "%f %f %f %i\n", &bonePos.x, &bonePos.y, &bonePos.z, &bIndex );
                     if(bIndex == 0)
                     {
-                        Bone tBone(bonePos);
-                        skeleton.push_back(tBone);
+                        readBones.push_back({ bonePos, -1 });
                     }
-                    else if( (bIndex > 0) && (bIndex < skeleton.size()+1) )
+                    else if( (bIndex > 0) && (bIndex < readBones.size() + 1) )
                     {
-                        Bone tBone(bonePos, bIndex-1);
-                        skeleton.push_back(tBone);
-                        skeleton[bIndex-1].addChild(skeleton.size()-1);
+                        readBones.push_back({ bonePos, bIndex-1});
                     }
                     else
                     {
                         char logString[256];
-                        sprintf(logString, "Error in reading bones; invalid index: %i", bIndex);
-                        Logging::Log(LOGGING_WARNING, "ModelLoading", logString);
+                        sprintf(logString, "[%i] Invalid Bone index: %i", lineNum, bIndex);
+                        Logging::Log(LOGGING_ERROR, "MMDLoading", logString);
                         return false;
                     }
                     // Face : [v0 u0 n0 v1 u1 n1 v2 u2 n2]
@@ -383,62 +393,83 @@ namespace ENGINE_NAMESPACE {
 
             }
 
+            vector<PreVertexData> out_vertices;
+            vector<glm::vec2> out_uvs;
+
             // For each vertex of each triangle
             for( unsigned int i=0; i<vertexIndices.size(); i++ ){
 
                 // Get the indices of its attributes
                 unsigned int vertexIndex = vertexIndices[i];
                 unsigned int uvIndex = uvIndices[i];
-                unsigned int normalIndex = normalIndices[i];
 
                 // Get the attributes thanks to the index
                 glm::vec3 vertex = temp_vertices[ vertexIndex-1 ];
                 int BID = temp_boneIDs[ vertexIndex-1 ];
                 glm::vec2 uv = temp_uvs[ uvIndex-1 ];
-                glm::vec3 normal = temp_normals[ normalIndex-1 ];
 
                 // Put the attributes in buffers
-                BoneLinkedVertex tVert; tVert.vertex = vertex;
+                PreVertexData tVert; tVert.position = vertex;
                 if(BID < 0)
-                    tVert.linkedBone = getClosestBone(skeleton, vertex);
+                    tVert.boneID = getClosestBoneID(vertex, readBones);
                 else
-                    tVert.linkedBone = &(skeleton[BID]);
+                    tVert.boneID = BID;
                 out_vertices.push_back(tVert);
                 out_uvs     .push_back(uv);
-                out_normals .push_back(normal);
-
             }
 
-            std::vector<unsigned short> indices;
-            std::vector<glm::vec3> indexed_bones;
-            std::vector<glm::vec2> indexed_uvs;
-            std::vector<glm::vec3> indexed_normals;
+            vector<unsigned short> indices;
+            vector<PreBoneData> indexed_bones;
+            vector<glm::vec2> indexed_uvs;
+            vector<glm::vec3> indexed_normals;
 
-            indexVBO(out_vertices, out_uvs, indices, indexed_uvs, normals, bones);
+            indexVBO(out_vertices, readBones, out_uvs, indices, indexed_bones, indexed_uvs, indexed_normals);
 
-            for(int i = 0; i < skeleton.size(); i++)
-            {
-                skeleton[i].setModelBonesPointer(&bones);
-                skeleton[i].setModelNormalsPointer(&normals);
-                skeleton[i].setSkeletonPointer(&skeleton);
+            // Compile Final Skeleton Array
+            boneCount = readBones.size();
+            skeleton = new Bone[boneCount];
+            for(int i = 0; i < boneCount; i++) {
+                skeleton[i] = Bone(readBones[i].position);
             }
+            for(int i = 0; i < boneCount; i++) {
+                if(readBones[i].parentID > -1) skeleton[i].setParent(skeleton[readBones[i].parentID]);
+            }
+
+            // Compile Element Arrays
+            elementCount = indexed_bones.size();
+            bonePositions = new vec3[elementCount];
+            normals = new vec3[elementCount];
+            for(int i = 0; i < elementCount; i++) {
+                bonePositions[i] = indexed_bones[i].position;
+                normals[i] = indexed_normals[i];
+            }
+
+            indexCount = indices.size();
 
             glGenBuffers(1, &bonebuffer);
             glBindBuffer(GL_ARRAY_BUFFER, bonebuffer);
-            glBufferData(GL_ARRAY_BUFFER, bones.size() * sizeof(glm::vec3), &bones[0], GL_DYNAMIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, elementCount * sizeof(glm::vec3), &bonePositions[0], GL_DYNAMIC_DRAW);
 
             glGenBuffers(1, &uvbuffer);
             glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
-            glBufferData(GL_ARRAY_BUFFER, indexed_uvs.size() * sizeof(glm::vec2), &indexed_uvs[0], GL_STATIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, elementCount * sizeof(glm::vec2), &indexed_uvs[0], GL_STATIC_DRAW);
 
             glGenBuffers(1, &normalbuffer);
             glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
-            glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), &normals[0], GL_DYNAMIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, elementCount * sizeof(glm::vec3), &normals[0], GL_DYNAMIC_DRAW);
 
             glGenBuffers(1, &elementbuffer);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbuffer);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned short), &indices[0], GL_STATIC_DRAW);
-            indexCount = indices.size();
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexCount * sizeof(unsigned short), &indices[0], GL_STATIC_DRAW);
+
+            registeredBuffers.push_back(bonebuffer);
+            registeredBuffers.push_back(uvbuffer);
+            registeredBuffers.push_back(normalbuffer);
+            registeredBuffers.push_back(elementbuffer);
+
+            char successMsg[256];
+            sprintf(successMsg, "Model Loaded: '%s' [B-%i|U-%i|N-%i|E-%i]", name.c_str(), bonebuffer, uvbuffer, normalbuffer, elementbuffer);
+            Logging::Log(LOGGING_INFO, "Models", successMsg);
 
             loaded = true;
             return true;
@@ -457,7 +488,7 @@ namespace ENGINE_NAMESPACE {
             std::vector<glm::vec2> temp_uvs;
             std::vector<glm::vec3> temp_normals;
 
-            std::vector<BoneLinkedVertex> out_vertices;
+            std::vector<PreVertexData> out_vertices;
             std::vector<glm::vec2> out_uvs;
             std::vector<glm::vec3> out_normals;
 
@@ -531,8 +562,6 @@ namespace ENGINE_NAMESPACE {
             tBPos.y = (maxDim.y + minDim.y) / 2;
             tBPos.z = (maxDim.z + minDim.z) / 2;
             Bone newBone(tBPos);
-            skeleton.clear();
-            skeleton.push_back(newBone);
 
             // For each vertex of each triangle
             for( unsigned int i=0; i<vertexIndices.size(); i++ ){
@@ -548,82 +577,123 @@ namespace ENGINE_NAMESPACE {
                 glm::vec3 normal = temp_normals[ normalIndex-1 ];
 
                 // Put the attributes in buffers
-                BoneLinkedVertex tVert; tVert.vertex = vertex;
-                tVert.linkedBone = &skeleton[0];
+                PreVertexData tVert; tVert.position = vertex;
+                tVert.boneID = 0;
                 out_vertices.push_back(tVert);
                 out_uvs     .push_back(uv);
                 out_normals .push_back(normal);
 
             }
 
-            std::vector<unsigned short> indices;
-            std::vector<glm::vec3> indexed_bones;
-            std::vector<glm::vec2> indexed_uvs;
-            std::vector<glm::vec3> indexed_normals;
+            PreBoneData bData = { newBone.getPosition(), -1 };
+            vector<PreBoneData> out_bones; out_bones.push_back(bData);
+            vector<unsigned short> indices;
+            vector<PreBoneData> indexed_bones;
+            vector<glm::vec2> indexed_uvs;
+            vector<glm::vec3> indexed_normals;
 
-            indexVBO(out_vertices, out_uvs, indices, indexed_uvs, normals, bones);
+            indexVBO(out_vertices, out_bones, out_uvs, indices, indexed_bones, indexed_uvs, indexed_normals);
 
-            for(int i = 0; i < skeleton.size(); i++)
-            {
-                skeleton[i].setModelBonesPointer(&bones);
-                skeleton[i].setModelNormalsPointer(&normals);
-                skeleton[i].setSkeletonPointer(&skeleton);
+            // Compile Final Skeleton Array
+            boneCount = out_bones.size();
+            skeleton = new Bone[boneCount];
+            for(int i = 0; i < boneCount; i++) {
+                skeleton[i] = Bone(out_bones[i].position);
             }
+            for(int i = 0; i < boneCount; i++) {
+                if(out_bones[i].parentID > -1) skeleton[i].setParent(skeleton[out_bones[i].parentID]);
+            }
+
+            // Compile Element Arrays
+            elementCount = indexed_bones.size();
+            bonePositions = new vec3[elementCount];
+            normals = new vec3[elementCount];
+            for(int i = 0; i < elementCount; i++) {
+                bonePositions[i] = indexed_bones[i].position;
+                normals[i] = indexed_normals[i];
+            }
+
+            indexCount = indices.size();
+
 
             glGenBuffers(1, &bonebuffer);
             glBindBuffer(GL_ARRAY_BUFFER, bonebuffer);
-            glBufferData(GL_ARRAY_BUFFER, bones.size() * sizeof(glm::vec3), &bones[0], GL_DYNAMIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, elementCount * sizeof(glm::vec3), &bonePositions[0], GL_DYNAMIC_DRAW);
 
             glGenBuffers(1, &uvbuffer);
             glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
-            glBufferData(GL_ARRAY_BUFFER, indexed_uvs.size() * sizeof(glm::vec2), &indexed_uvs[0], GL_STATIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, elementCount * sizeof(glm::vec2), &indexed_uvs[0], GL_STATIC_DRAW);
 
             glGenBuffers(1, &normalbuffer);
             glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
-            glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), &normals[0], GL_DYNAMIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, elementCount * sizeof(glm::vec3), &normals[0], GL_DYNAMIC_DRAW);
 
             glGenBuffers(1, &elementbuffer);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbuffer);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned short), &indices[0], GL_STATIC_DRAW);
-            indexCount = indices.size();
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexCount * sizeof(unsigned short), &indices[0], GL_STATIC_DRAW);
+
+            registeredBuffers.push_back(bonebuffer);
+            registeredBuffers.push_back(uvbuffer);
+            registeredBuffers.push_back(normalbuffer);
+            registeredBuffers.push_back(elementbuffer);
+
+            char successMsg[256];
+            sprintf(successMsg, "Model Loaded: '%s' [B-%i|U-%i|N-%i|E-%i]", name.c_str(), bonebuffer, uvbuffer, normalbuffer, elementbuffer);
+            Logging::Log(LOGGING_INFO, "Models", successMsg);
 
             loaded = true;
             return true;
         }
 
-        void Models::Model::updateBoneBuffer()
+        void Model::updateBoneBuffer()
         {
             glBindBuffer(GL_ARRAY_BUFFER, bonebuffer);
-            glBufferSubData(GL_ARRAY_BUFFER, 0, bones.size() * sizeof(glm::vec3), &bones[0]);
+            glBufferSubData(GL_ARRAY_BUFFER, 0, elementCount * sizeof(glm::vec3), &bonePositions[0]);
         }
 
-        GLuint Models::Model::getBoneBuffer()	{ return bonebuffer; }
-        GLuint Models::Model::getUVBuffer()		{ return uvbuffer; }
-        GLuint Models::Model::getNormalBuffer() { return normalbuffer; }
-        GLuint Models::Model::getElementBuffer(){ return elementbuffer; }
-        int Models::Model::getElementCount()	{ return indexCount; }
-        GLuint Models::Model::getTexture()		{ return texture.getTexture(); }
+        GLuint Model::getBoneBuffer()	{ return bonebuffer; }
+        GLuint Model::getUVBuffer()		{ return uvbuffer; }
+        GLuint Model::getNormalBuffer() { return normalbuffer; }
+        GLuint Model::getElementBuffer(){ return elementbuffer; }
+        int Model::getElementCount()	{ return indexCount; }
+        GLuint Model::getTexture()		{ return texture.getTexture(); }
 
-        bool Models::Model::isLoaded()			{ return loaded; }
+        bool Model::isLoaded()			{ return loaded; }
 
-        vec3 Models::Model::getMaxDimensions()	{ return maxDim; }
-        vec3 Models::Model::getMinDimensions()	{ return minDim; }
+        vec3 Model::getMaxDimensions()	{ return maxDim; }
+        vec3 Model::getMinDimensions()	{ return minDim; }
 
-        vec3 Models::Model::getBonePosition(int index)
+        vec3 Model::getBonePosition(int index)
         {
-            if(index > -1 && index < skeleton.size())
+            if(index > -1 && index < boneCount)
             {
                 return skeleton[index].getPosition();
             }
             return vec3(0.0f, 0.0f, 0.0f);
         }
 
-        void Models::Model::changeBonePosition(int index, vec3 pos)
-        {
-            if(index > -1 && index < skeleton.size())
+        void Model::addBonePosition(int index, vec3 pos) {
+            if(index > -1 && index < boneCount)
             {
-                skeleton[index].changePosition(pos);
+                skeleton[index].addPosition(pos);
             }
+        }
+
+        void Model::setBonePosition(int index, vec3 pos)
+        {
+            if(index > -1 && index < boneCount)
+            {
+                skeleton[index].setPosition(pos);
+            }
+        }
+
+        string Model::getStringData() {
+            for(int i = 0; i < elementCount; i++) {
+                char infoMsg[256];
+                sprintf(infoMsg, "(%f, %f, %f)", normals[i].x, normals[i].y, normals[i].z);
+                Logging::Log(LOGGING_INFO, "Models", infoMsg);
+            }
+            return "";
         }
 
     }

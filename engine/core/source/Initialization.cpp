@@ -52,6 +52,7 @@ namespace ENGINE_NAMESPACE {
 
         void cleanup() {
             Textures::cleanupTextures();
+            Models::cleanupBuffers();
             Shaders::cleanupShaders();
             Shaders::cleanupPrograms();
             Rendering::cleanup();
