@@ -67,10 +67,10 @@ int main() {
 
         Controls::computeMatricesFromInputs();
 
-        vec3 tPos(0.0f, 0.05f, 0.0f);
-        //testModel.addBonePosition(1, tPos);
+        vec3 tPos(0.0f, 0.0f, 0.005f);
+        cube.addBonePosition(0, tPos);
         //testModel.setBonePosition(1, vec3(0, 0, 10));
-        //testModel.updateBoneBuffer();
+        cube.updateBoneBuffer();
 
         glm::mat4 transMat = glm::translate( vec3(0.0f, 0.0f, 1.0f) );
         Rendering::Render(cube, transMat);
