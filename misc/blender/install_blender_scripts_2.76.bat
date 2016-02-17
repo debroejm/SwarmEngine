@@ -1,0 +1,1 @@
+xcopy /s/e/y ".\scripts" "%appdata%\Blender Foundation\Blender\2.76\scripts\addons"
