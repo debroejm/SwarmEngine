@@ -13,6 +13,9 @@ using namespace std;
 
 #include <stdlib.h>
 
+#include <glm/glm.hpp>
+using namespace glm;
+
 #include "../Definitions.h"
 
 // -----------
@@ -52,6 +55,9 @@ namespace ENGINE_NAMESPACE {
 
         void Log(int level, const char * category, const char * message);
         //void Log(int level, const char * category, const char * message, std::vector< int > intInputs);
+
+        string formatVec3(vec3 pos);
+        string formatVec3(float x, float y, float z);
 
     }
 }

@@ -1,5 +1,7 @@
 #include "../headers/Logging.h"
 
+#define SSTR( x ) static_cast< std::ostringstream & >( \
+        ( std::ostringstream() << std::dec << x ) ).str()
 
 #ifdef _WIN32
 #if       _WIN32_WINNT < 0x0500
@@ -79,6 +81,11 @@ namespace ENGINE_NAMESPACE {
             {
                 fprintf( logFile, "[%f][%s][%s] %s\n", time, tS, category, message);
             }
+        }
+
+        string formatVec3(vec3 pos) { return formatVec3(pos.x, pos.y, pos.z); }
+        string formatVec3(float x, float y, float z) {
+            return SSTR("(" << x << ", " << y << ", " << z << ")");
         }
 
     }
