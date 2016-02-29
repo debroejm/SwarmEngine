@@ -1,9 +1,14 @@
+#include <glm/gtx/transform.hpp>
 #include "../headers/ModelLoading.h"
+
+#define SSTR( x ) static_cast< std::ostringstream & >( \
+        ( std::ostringstream() << std::dec << x ) ).str()
 
 namespace ENGINE_NAMESPACE {
     namespace Models {
 
         vector<GLuint> registeredBuffers;
+        vector<vec3*> registeredNormals;
 
         void cleanupBuffers() {
             for(int i = 0; i < registeredBuffers.size(); i++) {
@@ -11,6 +16,10 @@ namespace ENGINE_NAMESPACE {
                 sprintf(infoMsg, "Deleting Buffer [%i]", registeredBuffers[i]);
                 Logging::Log(LOGGING_INFO, "Cleanup", infoMsg);
                 glDeleteBuffers(1, &registeredBuffers[i]);
+            }
+
+            for(int i = 0; i < registeredNormals.size(); i++) {
+                delete [] registeredNormals[i];
             }
         }
 
@@ -173,7 +182,59 @@ namespace ENGINE_NAMESPACE {
             }
         }
 
+        Bone* constructNewSkeleton(Bone* oldSkeleton, int boneCount, vec3* oldBones, vec3* oldNormals, vec3* newBones, vec3* newNormals, int elementCount) {
+            Bone* newSkeleton = new Bone[boneCount];
+            for(int i = 0; i < boneCount; i++) {
+                //newSkeleton[i] = Bone(oldSkeleton[i], oldSkeleton[i].getName()+"_2");
+                newSkeleton[i] = oldSkeleton[i];
+
+                // Scan and find this bones' parent
+                for(int j = 0; j < boneCount; j++) {
+                    if(&oldSkeleton[j] == oldSkeleton[i].getParent()) {
+                        newSkeleton[i].setParent(newSkeleton[j]);
+                        break;
+                    }
+                }
+
+                // Scan and find this bones' children
+                vector<Bone*> children = oldSkeleton[i].getChildren();
+                for(int j = 0; j < children.size(); j++) {
+                    for(int k = 0; k < boneCount; k++) {
+                        if(&oldSkeleton[k] == children[j]) {
+                            newSkeleton[i].addChild(newSkeleton[k]);
+                            break;
+                        }
+                    }
+                }
+
+                // Scan and find this bones' positions
+                vector<vec3*> positions = oldSkeleton[i].getBonePositions();
+                for(int j = 0; j < positions.size(); j++) {
+                    for(int k = 0; k < elementCount; k++) {
+                        if(&oldBones[k] == positions[j]) {
+                            newSkeleton[i].addBonePosition(newBones[k]);
+                            break;
+                        }
+                    }
+                }
+
+                // Scan and find this bones' positions
+                vector<vec3*> normals = oldSkeleton[i].getNormals();
+                for(int j = 0; j < normals.size(); j++) {
+                    for(int k = 0; k < elementCount; k++) {
+                        if(&oldNormals[k] == normals[j]) {
+                            newSkeleton[i].addNormal(newNormals[k]);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            return newSkeleton;
+        }
+
         Bone::Bone() {
+            name = "Unnamned";
             parent = NULL;
         }
 
@@ -181,6 +242,15 @@ namespace ENGINE_NAMESPACE {
         {
             originalPos = pos;
             position = pos;
+            name = "Unnamned";
+            parent = NULL;
+        }
+
+        Bone::Bone(vec3 pos, string name)
+        {
+            originalPos = pos;
+            position = pos;
+            this->name = name;
             parent = NULL;
         }
 
@@ -188,7 +258,30 @@ namespace ENGINE_NAMESPACE {
         {
             originalPos = pos;
             position = pos;
+            name = "Unnamned";
             this->parent = &parent;
+        }
+
+        Bone::Bone(vec3 pos, string name, Bone &parent)
+        {
+            originalPos = pos;
+            position = pos;
+            this->name = name;
+            this->parent = &parent;
+        }
+
+        Bone::Bone(Bone &bone) {
+            originalPos = bone.originalPos;
+            position = bone.originalPos;
+            name = bone.name;
+            parent = NULL;
+        }
+
+        Bone::Bone(Bone &bone, string name) {
+            originalPos = bone.originalPos;
+            position = bone.originalPos;
+            this->name = name;
+            parent = NULL;
         }
 
         Bone::~Bone()
@@ -202,16 +295,21 @@ namespace ENGINE_NAMESPACE {
         }
 
         void Bone::addPosition(vec3 newPos) { setPosition(position+newPos); }
-        void Bone::setPosition(vec3 newPos)
-        {
-            position = newPos;
+        void Bone::setPosition(vec3 newPos) { position = newPos; }
+        void Bone::rotatePosition(float angle, vec3 amount) { rotatePosition(glm::rotate(angle, amount)); }
+        void Bone::rotatePosition(mat4 rotMatrix) {
+            rotationMatrix = rotMatrix;
+        }
+
+        void Bone::updateBoneBuffer() {
+            vec3 totalPos = getPosition();
             for(int i = 0; i < bonePositions.size(); i++)
             {
-                bonePositions[i]->operator=(position);
+                bonePositions[i]->operator=(totalPos);
             }
-            for(int i = 0; i < children.size(); i++)
-            {
-                children[i]->setPosition(newPos);
+            mat4 rotMat = getRotationMatrix();
+            for(int i = 0; i < normals.size(); i++) {
+                (*normals[i]) = vec3(rotMat * vec4((*normalsStatic[i]),1.0f));
             }
         }
 
@@ -227,19 +325,49 @@ namespace ENGINE_NAMESPACE {
             normals.push_back(&normal);
         }
 
-        glm::vec3 Bone::getPosition()
-        {
+        void Bone::addNormal(vec3 &normal, vec3 &normalStatic) {
+            normals.push_back(&normal);
+            normalsStatic.push_back(&normalStatic);
+        }
+
+        vec3 Bone::getPosition() {
+            if(parent == NULL) return vec3(getRotationMatrix() * vec4(position, 1.0f));
+            else return vec3(getRotationMatrix() * vec4(position, 1.0f)) + parent->getPosition();
+        }
+
+        vec3 Bone::getRelativePosition() {
             return position;
+        }
+
+        mat4 Bone::getRotationMatrix() {
+            if(parent == NULL) return rotationMatrix;
+            else return rotationMatrix * parent->getRotationMatrix();
+        }
+
+        string Bone::printHierarchy() {
+            string result = name + " Global:" + Logging::formatVec3(getPosition()) + " Relative:" + Logging::formatVec3(getRelativePosition());
+            for(int i = 0; i < children.size(); i++)
+            {
+                result += ("\n   - " + children[i]->printHierarchy("   - "));
+            }
+            return result;
+        }
+
+        string Bone::printHierarchy(string header) {
+            string result = name + " Global:" + Logging::formatVec3(getPosition()) + " Relative:" + Logging::formatVec3(getRelativePosition());
+            for(int i = 0; i < children.size(); i++)
+            {
+                result += ("\n     " + header + children[i]->printHierarchy("     " + header));
+            }
+            return result;
         }
 
         void Bone::operator =(const Bone &rhs)
         {
             position = rhs.position;
             originalPos = position;
-            parent = rhs.parent;
-            children = rhs.children;
-            bonePositions = rhs.bonePositions;
-            normals = rhs.normals;
+            normalsStatic = rhs.normalsStatic;
+            name = rhs.name;
         }
 
         Model::Model()
@@ -257,11 +385,52 @@ namespace ENGINE_NAMESPACE {
             this->name = name;
         }
 
+        Model::Model(Model &other) {
+            operator=(other);
+        }
+
         Model::~Model()
         {
             delete [] skeleton;
             delete [] bonePositions;
             delete [] normals;
+        }
+
+        void Model::operator=(Model &rhs) {
+            delete [] skeleton;
+            delete [] bonePositions;
+            delete [] normals;
+
+            name = rhs.name;
+            loaded = rhs.loaded;
+
+            if(loaded) {
+                uvbuffer = rhs.uvbuffer;
+                elementbuffer = rhs.elementbuffer;
+                indexCount = rhs.indexCount;
+                boneCount = rhs.boneCount;
+                elementCount = rhs.elementCount;
+                normalsStatic = rhs.normalsStatic;
+                maxDim = rhs.maxDim;
+                minDim = rhs.minDim;
+                texture = rhs.texture;
+
+                bonePositions = new vec3[elementCount];
+                normals = new vec3[elementCount];
+                for(int i = 0; i < elementCount; i++) {
+                    bonePositions[i] = vec3(rhs.bonePositions[i]);
+                    normals[i] = vec3(rhs.normals[i]);
+                }
+                skeleton = constructNewSkeleton(rhs.skeleton, rhs.boneCount, rhs.bonePositions, rhs.normals, bonePositions, normals, elementCount);
+
+                glGenBuffers(1, &bonebuffer);
+                glBindBuffer(GL_ARRAY_BUFFER, bonebuffer);
+                glBufferData(GL_ARRAY_BUFFER, elementCount * sizeof(glm::vec3), &bonePositions[0], GL_DYNAMIC_DRAW);
+
+                glGenBuffers(1, &normalbuffer);
+                glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
+                glBufferData(GL_ARRAY_BUFFER, elementCount * sizeof(glm::vec3), &normals[0], GL_DYNAMIC_DRAW);
+            }
         }
 
         void Model::addTexture(const char *textureName) { texture.addTexture(textureName); }
@@ -413,7 +582,7 @@ namespace ENGINE_NAMESPACE {
                 if(BID < 0)
                     tVert.boneID = getClosestBoneID(vertex, readBones);
                 else
-                    tVert.boneID = BID;
+                    tVert.boneID = BID-1;
                 out_vertices.push_back(tVert);
                 out_uvs     .push_back(uv);
             }
@@ -429,7 +598,8 @@ namespace ENGINE_NAMESPACE {
             boneCount = readBones.size();
             skeleton = new Bone[boneCount];
             for(int i = 0; i < boneCount; i++) {
-                skeleton[i] = Bone(readBones[i].position);
+                if(readBones[i].parentID > -1) skeleton[i] = Bone(readBones[i].position - readBones[readBones[i].parentID].position, SSTR("Bone " << i) );
+                else skeleton[i] = Bone(readBones[i].position, SSTR("Bone " << i) );
             }
             for(int i = 0; i < boneCount; i++) {
                 if(readBones[i].parentID > -1) {
@@ -442,12 +612,15 @@ namespace ENGINE_NAMESPACE {
             elementCount = indexed_bones.size();
             bonePositions = new vec3[elementCount];
             normals = new vec3[elementCount];
+            normalsStatic = new vec3[elementCount];
             for(int i = 0; i < elementCount; i++) {
                 bonePositions[i] = indexed_bones[i].position;
                 normals[i] = indexed_normals[i].position;
+                normalsStatic[i] = indexed_normals[i].position;
                 skeleton[indexed_normals[i].boneID].addBonePosition(bonePositions[i]);
-                skeleton[indexed_normals[i].boneID].addNormal(normals[i]);
+                skeleton[indexed_normals[i].boneID].addNormal(normals[i], normalsStatic[i]);
             }
+            registeredNormals.push_back(normalsStatic);
 
             indexCount = indices.size();
 
@@ -616,12 +789,15 @@ namespace ENGINE_NAMESPACE {
             elementCount = indexed_bones.size();
             bonePositions = new vec3[elementCount];
             normals = new vec3[elementCount];
+            normalsStatic = new vec3[elementCount];
             for(int i = 0; i < elementCount; i++) {
                 bonePositions[i] = indexed_bones[i].position;
                 normals[i] = indexed_normals[i].position;
+                normalsStatic[i] = indexed_normals[i].position;
                 skeleton[indexed_normals[i].boneID].addBonePosition(bonePositions[i]);
-                skeleton[indexed_normals[i].boneID].addNormal(normals[i]);
+                skeleton[indexed_normals[i].boneID].addNormal(normals[i], normalsStatic[i]);
             }
+            registeredNormals.push_back(normalsStatic);
 
             indexCount = indices.size();
 
@@ -657,8 +833,13 @@ namespace ENGINE_NAMESPACE {
 
         void Model::updateBoneBuffer()
         {
+            for(int i = 0; i < boneCount; i++) {
+                skeleton[i].updateBoneBuffer();
+            }
             glBindBuffer(GL_ARRAY_BUFFER, bonebuffer);
             glBufferSubData(GL_ARRAY_BUFFER, 0, elementCount * sizeof(glm::vec3), &bonePositions[0]);
+            glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
+            glBufferSubData(GL_ARRAY_BUFFER, 0, elementCount * sizeof(glm::vec3), &normals[0]);
         }
 
         GLuint Model::getBoneBuffer()	{ return bonebuffer; }
@@ -697,6 +878,12 @@ namespace ENGINE_NAMESPACE {
             }
         }
 
+        void Model::rotateBonePosition(int index, float angle, vec3 amount) {
+            if(index > -1 && index < boneCount) {
+                skeleton[index].rotatePosition(angle, amount);
+            }
+        }
+
         string Model::getStringData() {
             for(int i = 0; i < elementCount; i++) {
                 char infoMsg[256];
@@ -704,6 +891,10 @@ namespace ENGINE_NAMESPACE {
                 Logging::Log(LOGGING_INFO, "Models", infoMsg);
             }
             return "";
+        }
+
+        string Model::printDebug() {
+            return ("Name: "+name+"\nBones:\n"+skeleton[0].printHierarchy());
         }
 
     }

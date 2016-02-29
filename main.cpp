@@ -40,8 +40,10 @@ int main() {
     Rendering::ChangeShader(program);
 
     Models::Model testModel;
-    testModel.loadMMD("Resources/Models/BasicMinion.mmd");
+    //testModel.loadMMD("Resources/Models/BasicMinion.mmd");
+    testModel.loadMMD("Resources/Models/BlockPerson.mmd");
     testModel.setTexture(Textures::AnimatedTexture("Resources/Models/BasicMinion.png"));
+    Models::Model testModel2(testModel);
     //testModel.getStringData();
     //char infoMsg[256];
     //vec3 bonePos = testModel.getBonePosition(0);
@@ -51,10 +53,15 @@ int main() {
     Configuration::RawConfigData keybindingConfig("keybinding.config");
     Configuration::Keybinding EXIT("Exit", GLFW_KEY_ESCAPE, keybindingConfig);
     Configuration::addKeybinding(EXIT);
+    Configuration::Keybinding FORWARD("Forward", GLFW_KEY_O, keybindingConfig);
+    Configuration::addKeybinding(FORWARD);
 
     Models::Model cube;
     cube.loadOBJ("Resources/Models/Cube.obj");
     cube.setTexture(Textures::AnimatedTexture("Resources/Models/Sample.png"));
+
+    Logging::Log(LOGGING_INFO, "Debug", ("Model Info:\n"+testModel.printDebug()).c_str());
+    Logging::Log(LOGGING_INFO, "Debug", ("Model Info:\n"+testModel2.printDebug()).c_str());
 
     GLFWwindow * window = Controls::getWindow();
 
@@ -69,12 +76,17 @@ int main() {
 
         vec3 tPos(0.0f, 0.0f, 0.005f);
         cube.addBonePosition(0, tPos);
+        testModel.rotateBonePosition(1, glfwGetTime(), vec3(1.0f, 0.0f, 1.0f));
+        testModel2.rotateBonePosition(10, glfwGetTime(), vec3(0.0f, 1.0f, 0.0f));
         //testModel.setBonePosition(1, vec3(0, 0, 10));
         cube.updateBoneBuffer();
+        testModel.updateBoneBuffer();
+        testModel2.updateBoneBuffer();
 
-        glm::mat4 transMat = glm::translate( vec3(0.0f, 0.0f, 1.0f) );
+        glm::mat4 transMat = glm::translate( vec3(10.0f, 0.0f, 0.0f) );
         Rendering::Render(cube, transMat);
         Rendering::Render(testModel);
+        Rendering::Render(testModel2, transMat);
 
         if (EXIT.isPressed())
             glfwSetWindowShouldClose( window, GL_TRUE );
