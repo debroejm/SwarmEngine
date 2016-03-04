@@ -20,6 +20,7 @@
 
 import os
 import time
+import math
 
 import bpy
 import mathutils
@@ -71,7 +72,7 @@ def write_file(filepath, objects, scene,
     def findVertexGroupName(face, vWeightMap):
         """
         Searches the vertexDict to see what groups is assigned to a given face.
-        We use a frequency system in order to sort out the name because a given vetex can
+        We use a frequency system in order to sort out the name because a given vertex can
         belong to two or more groups at the same time. To find the right name for the face
         we list all the possible vertex group names with their frequency and then sort by
         frequency in descend order. The top element is the one shared by the highest number
@@ -118,6 +119,21 @@ def write_file(filepath, objects, scene,
             return (len(currentBone.children) + childCount)
         else:
             return 0
+
+    def findClosestBoneToVertex(currentVertex, boneList):
+        smallestDist = 1000000.0
+        foundIndex = 1
+        currentIndex = 0
+        for tB in boneList:
+            currentIndex = currentIndex + 1
+            xDist = abs(v.co[0] - tB.tail_local[0])
+            yDist = abs(v.co[1] - tB.tail_local[1])
+            zDist = abs(v.co[2] - tB.tail_local[2])
+            totalDist = math.sqrt(xDist*xDist + yDist*yDist + zDist*zDist)
+            if (totalDist < smallestDist):
+                smallestDist = totalDist
+                foundIndex = currentIndex
+        return foundIndex
             
     # Write Header
     fw('# Blender v%s MMD File: %r\n' % (bpy.app.version_string, os.path.basename(bpy.data.filepath)))
@@ -234,8 +250,11 @@ def write_file(filepath, objects, scene,
             # Vert
             for v in me_verts:
                 if EXPORT_BVERTS:
+                    armat = ob.find_armature().data
+                    armat.transform(EXPORT_GLOBAL_MATRIX * ob_mat)
+                    me_bones = armat.bones[:]
                     fw('vb %.6f %.6f %.6f' % v.co[:])
-                    fw('0 \n')
+                    fw(' %i\n' % findClosestBoneToVertex(v, me_bones))
                 else:
                     fw('v %.6f %.6f %.6f\n' % v.co[:])
 

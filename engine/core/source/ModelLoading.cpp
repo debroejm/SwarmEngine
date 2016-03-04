@@ -452,6 +452,7 @@ namespace ENGINE_NAMESPACE {
             vector<int> temp_boneIDs;
 
             vector<PreBoneData> readBones;
+            vector<string> readBoneNames;
 
             //vector<int> usedBoneIDs;
 
@@ -480,7 +481,11 @@ namespace ENGINE_NAMESPACE {
                 // Vertex : [x y z]
                 if ( strcmp( lineHeader, "v" ) == 0 ){
                     glm::vec3 vertex;
-                    fscanf(file, "%f %f %f\n", &vertex.x, &vertex.y, &vertex.z );
+                    int matches = fscanf(file, "%f %f %f\n", &vertex.x, &vertex.y, &vertex.z );
+                    if(matches != 3) {
+                        Logging::Log(LOGGING_ERROR, "MMDLoading", SSTR("[" << lineNum << "] Incorrect Argument Count").c_str());
+                        return false;
+                    }
                     temp_vertices.push_back(vertex);
                     temp_boneIDs.push_back(-1);
                     if( vertex.x > maxDim.x ) maxDim.x = vertex.x;
@@ -494,7 +499,11 @@ namespace ENGINE_NAMESPACE {
                 else if (strcmp( lineHeader, "vb" ) == 0 ){
                     glm::vec3 vertex;
                     int BID;
-                    fscanf(file, "%f %f %f %i\n", &vertex.x, &vertex.y, &vertex.z, &BID);
+                    int matches = fscanf(file, "%f %f %f %i\n", &vertex.x, &vertex.y, &vertex.z, &BID);
+                    if(matches != 4) {
+                        Logging::Log(LOGGING_ERROR, "MMDLoading", SSTR("[" << lineNum << "] Incorrect Argument Count").c_str());
+                        return false;
+                    }
                     temp_vertices.push_back(vertex);
                     temp_boneIDs.push_back(BID);
                     if( vertex.x > maxDim.x ) maxDim.x = vertex.x;
@@ -507,20 +516,33 @@ namespace ENGINE_NAMESPACE {
                 // UV : [u v]
                 else if ( strcmp( lineHeader, "vt" ) == 0 ){
                     glm::vec2 uv;
-                    fscanf(file, "%f %f\n", &uv.x, &uv.y );
+                    int matches = fscanf(file, "%f %f\n", &uv.x, &uv.y );
+                    if(matches != 2) {
+                        Logging::Log(LOGGING_ERROR, "MMDLoading", SSTR("[" << lineNum << "] Incorrect Argument Count").c_str());
+                        return false;
+                    }
                     temp_uvs.push_back(uv);
                 }
                 // Normal : [x y z]
                 else if ( strcmp( lineHeader, "vn" ) == 0 ){
                     glm::vec3 normal;
-                    fscanf(file, "%f %f %f\n", &normal.x, &normal.y, &normal.z );
+                    int matches = fscanf(file, "%f %f %f\n", &normal.x, &normal.y, &normal.z );
+                    if(matches != 3) {
+                        Logging::Log(LOGGING_ERROR, "MMDLoading", SSTR("[" << lineNum << "] Incorrect Argument Count").c_str());
+                        return false;
+                    }
                     temp_normals.push_back(normal);
                 }
                 // Bone : [x y z parent]
                 else if ( strcmp( lineHeader, "j" ) == 0 ){
                     vec3 bonePos;
                     int bIndex;
-                    fscanf(file, "%f %f %f %i\n", &bonePos.x, &bonePos.y, &bonePos.z, &bIndex );
+                    //int matches = fscanf(file, "%f %f %f %i %32s\n", &bonePos.x, &bonePos.y, &bonePos.z, &bIndex, boneName );
+                    int matches = fscanf(file, "%f %f %f %i\n", &bonePos.x, &bonePos.y, &bonePos.z, &bIndex);
+                    if(matches != 4) {
+                        Logging::Log(LOGGING_ERROR, "MMDLoading", SSTR("[" << lineNum << "] Incorrect Argument Count").c_str());
+                        return false;
+                    }
                     if(bIndex == 0)
                     {
                         readBones.push_back({ bonePos, -1 });
@@ -536,13 +558,42 @@ namespace ENGINE_NAMESPACE {
                         Logging::Log(LOGGING_ERROR, "MMDLoading", logString);
                         return false;
                     }
-                    // Face : [v0 u0 n0 v1 u1 n1 v2 u2 n2]
-                }else if ( strcmp( lineHeader, "f" ) == 0 ){
+                    readBoneNames.push_back(SSTR("Bone " << readBoneNames.size()));
+                }
+                // Bone, Named : [x y z parent name]
+                else if ( strcmp( lineHeader, "jn" ) == 0 ) {
+                    vec3 bonePos;
+                    int bIndex;
+                    char boneName[55];
+                    int matches = fscanf(file, "%f %f %f %i %50s\n", &bonePos.x, &bonePos.y, &bonePos.z, &bIndex, boneName );
+                    if(matches != 5) {
+                        Logging::Log(LOGGING_ERROR, "MMDLoading", SSTR("[" << lineNum << "] Incorrect Argument Count").c_str());
+                        return false;
+                    }
+                    if(bIndex == 0)
+                    {
+                        readBones.push_back({ bonePos, -1 });
+                    }
+                    else if( (bIndex > 0) && (bIndex < readBones.size() + 1) )
+                    {
+                        readBones.push_back({ bonePos, bIndex-1 });
+                    }
+                    else
+                    {
+                        char logString[256];
+                        sprintf(logString, "[%i] Invalid Bone index: %i", lineNum, bIndex);
+                        Logging::Log(LOGGING_ERROR, "MMDLoading", logString);
+                        return false;
+                    }
+                    readBoneNames.push_back(string(boneName));
+                }
+                // Face : [v0 u0 n0 v1 u1 n1 v2 u2 n2]
+                else if ( strcmp( lineHeader, "f" ) == 0 ){
                     std::string vertex1, vertex2, vertex3;
                     unsigned int vertexIndex[3], uvIndex[3], normalIndex[3];
                     int matches = fscanf(file, "%d/%d/%d %d/%d/%d %d/%d/%d\n", &vertexIndex[0], &uvIndex[0], &normalIndex[0], &vertexIndex[1], &uvIndex[1], &normalIndex[1], &vertexIndex[2], &uvIndex[2], &normalIndex[2] );
-                    if (matches != 9){
-                        printf("File can't be read by our simple parser :-( Try exporting with other options\n");
+                    if(matches != 9) {
+                        Logging::Log(LOGGING_ERROR, "MMDLoading", SSTR("[" << lineNum << "] Incorrect Argument Count").c_str());
                         return false;
                     }
                     vertexIndices.push_back(vertexIndex[0]);
@@ -598,8 +649,8 @@ namespace ENGINE_NAMESPACE {
             boneCount = readBones.size();
             skeleton = new Bone[boneCount];
             for(int i = 0; i < boneCount; i++) {
-                if(readBones[i].parentID > -1) skeleton[i] = Bone(readBones[i].position - readBones[readBones[i].parentID].position, SSTR("Bone " << i) );
-                else skeleton[i] = Bone(readBones[i].position, SSTR("Bone " << i) );
+                if(readBones[i].parentID > -1) skeleton[i] = Bone(readBones[i].position - readBones[readBones[i].parentID].position, readBoneNames[i] );
+                else skeleton[i] = Bone(readBones[i].position, readBoneNames[i] );
             }
             for(int i = 0; i < boneCount; i++) {
                 if(readBones[i].parentID > -1) {
@@ -840,6 +891,19 @@ namespace ENGINE_NAMESPACE {
             glBufferSubData(GL_ARRAY_BUFFER, 0, elementCount * sizeof(glm::vec3), &bonePositions[0]);
             glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
             glBufferSubData(GL_ARRAY_BUFFER, 0, elementCount * sizeof(glm::vec3), &normals[0]);
+        }
+
+        Bone* Model::getBone(int index) {
+            if(index > -1 && index < boneCount) {
+                return &skeleton[index];
+            } return NULL;
+        }
+
+        Bone* Model::getBone(string tag) {
+            // TODO: Make Case-Insensitive
+            for(int i = 0; i < boneCount; i++) {
+                if(skeleton[i].getName().find(tag) != string::npos) return &skeleton[i];
+            } return NULL;
         }
 
         GLuint Model::getBoneBuffer()	{ return bonebuffer; }

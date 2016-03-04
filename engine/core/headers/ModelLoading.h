@@ -126,6 +126,9 @@ namespace ENGINE_NAMESPACE {
             int getElementCount();
             GLuint getTexture();
 
+            Bone* getBone(int index);
+            Bone* getBone(string tag);
+
             bool isLoaded();
             string getName() { return name; }
 

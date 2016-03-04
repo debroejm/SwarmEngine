@@ -325,6 +325,34 @@ namespace ENGINE_NAMESPACE {
         };
     }
 
+    namespace Animation {
+        class Rigging {
+        public:
+            Rigging(Models::Model &input);
+            virtual ~Rigging() {}
+
+            virtual void apply() = 0;
+            virtual void update(float delta) = 0;
+
+        protected:
+            Models::Model* model = NULL;
+        };
+
+        class RiggingHumanoid: public Rigging {
+        public:
+            RiggingHumanoid(Models::Model &input);
+
+            void apply();
+            void update(float delta);
+
+        protected:
+            Models::Bone* leftKnee = NULL;
+            Models::Bone* rightKnee = NULL;
+            Models::Bone* leftFoot = NULL;
+            Models::Bone* rightFoot = NULL;
+        };
+    }
+
     namespace Shaders {
 
         class Shader{

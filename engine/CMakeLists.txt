@@ -1,19 +1,21 @@
 # CMake file for the Main Engine
 
 set(ENGINE_HEADERS
-    #../external/glew/include/GL/glew.h
-    SwarmEngine.h
-    core/Definitions.h
-    core/headers/Initialization.h
-    core/headers/Logging.h
-    core/headers/Shaders.h
-    core/headers/Controls.h
-    core/headers/Rendering.h
-    core/headers/TextureHandler.h
-    core/headers/ModelLoading.h
-    core/headers/AnimatedTexture.h
-    core/headers/GLFWCallbacks.h
-    core/headers/Configuration.h)
+        #../external/glew/include/GL/glew.h
+        SwarmEngine.h
+        core/Definitions.h
+        core/headers/Initialization.h
+        core/headers/Logging.h
+        core/headers/Shaders.h
+        core/headers/Controls.h
+        core/headers/Rendering.h
+        core/headers/TextureHandler.h
+        core/headers/ModelLoading.h
+        core/headers/AnimatedTexture.h
+        core/headers/GLFWCallbacks.h
+        core/headers/Configuration.h
+        core/headers/Animation.h
+        )
 
 set(ENGINE_SOURCE
         #../external/glew/src/glew.c
@@ -26,7 +28,9 @@ set(ENGINE_SOURCE
         core/source/Rendering.cpp
         core/source/Shaders.cpp
         core/source/TextureHandler.cpp
-        core/source/Configuration.cpp)
+        core/source/Configuration.cpp
+        core/source/Animation.cpp
+        )
 
 set(EXTERNAL_SOURCES
         ../external/glew/src/glew.c

@@ -44,6 +44,8 @@ int main() {
     testModel.loadMMD("Resources/Models/BlockPerson.mmd");
     testModel.setTexture(Textures::AnimatedTexture("Resources/Models/BasicMinion.png"));
     Models::Model testModel2(testModel);
+    Animation::RiggingHumanoid rigging(testModel2);
+    rigging.apply();
     //testModel.getStringData();
     //char infoMsg[256];
     //vec3 bonePos = testModel.getBonePosition(0);
