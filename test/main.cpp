@@ -17,7 +17,7 @@
 
 #include <glm/glm.hpp>
 
-#include "engine/SwarmEngine.h"
+#include "../engine/SwarmEngine.h"
 
 using namespace glm;
 using namespace Swarm;
@@ -32,8 +32,8 @@ int main() {
     glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
 
     // Load our Shaders
-    Shaders::Shader vertexShader("Resources/Shaders/TextureVShader.glsl", GL_VERTEX_SHADER);
-    Shaders::Shader fragmentShader("Resources/Shaders/TextureFShader.glsl", GL_FRAGMENT_SHADER);
+    Shaders::Shader vertexShader("resources/shaders/TextureVShader.glsl", GL_VERTEX_SHADER);
+    Shaders::Shader fragmentShader("resources/shaders/TextureFShader.glsl", GL_FRAGMENT_SHADER);
     Shaders::Shader* shaders[] { &vertexShader, &fragmentShader };
     Shaders::Program program(shaders, 2);
 

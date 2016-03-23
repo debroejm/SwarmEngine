@@ -48,9 +48,4 @@ set(ENGINE_LIBRARIES
 )
 
 add_subdirectory(engine)
-
-set(SOURCE_FILES
-        main.cpp
-        engine/SwarmEngine.h)
-add_executable(SwarmEngineTest ${SOURCE_FILES})
-target_link_libraries(SwarmEngineTest ${OPENGL_LIBRARIES} ${ENGINE_LIBRARIES} SwarmEngineCore)
+add_subdirectory(test)
