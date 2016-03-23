@@ -372,43 +372,39 @@ namespace ENGINE_NAMESPACE {
         class Program {
         public:
             Program();
-            Program(Shader *shaders[], int shaderCount);
-            Program(Shader *shaders[], int shaderCount, bool vertices, bool uvs, bool normals);
+            Program(Program &other);
+            Program(Shader *shaders[], int shaderCount,
+                    bool vertices = true, bool uvs = true, bool normals = true,
+                    const char * model = "_m", const char * view = "_v", const char * projection = "_p",
+                    const char * texMap = "texturemap");
             ~Program();
 
             void operator=(const Program &rhs);
 
-            GLuint getProgramID();
+            GLuint getProgramID() { return programID; }
 
             bool usesVertices() { return vertices; }
             bool usesUVs() { return uvs; }
             bool usesNormals() { return normals; }
 
-            GLint getAttribID_vertex() { return attribID_vertex; }
-            GLint getAttribID_uv() { return attribID_uv; }
-            GLint getAttribID_normal() { return attribID_normal; }
-
+            GLint getUniformID(const char * name);
             GLint getUniformID_model() { return uniformID_model; }
             GLint getUniformID_view() { return uniformID_view; }
             GLint getUniformID_projection() { return uniformID_projection; }
-
             GLint getUniformID_texture() { return uniformID_texture; }
-
-            void findIDs();
 
             bool isLinked() { return linked; }
 
         protected:
+            bool findUniformIDs(const char * model, const char * view, const char * projection,
+                                const char * texMap);
+
             GLuint programID;
             bool linked;
 
             bool vertices;
             bool uvs;
             bool normals;
-
-            GLint attribID_vertex;
-            GLint attribID_uv;
-            GLint attribID_normal;
 
             GLint uniformID_model;
             GLint uniformID_view;

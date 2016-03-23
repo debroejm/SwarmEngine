@@ -172,30 +172,19 @@ namespace ENGINE_NAMESPACE {
         // -------------
 
         Program::Program() { linked = false; }
-
-        Program::Program(Shader *shaders[], int shaderCount) {
+        Program::Program(Program &other) { *this = other; }
+        Program::Program(Shader *shaders[], int shaderCount,
+                         bool vertices, bool uvs, bool normals,
+                         const char * model, const char * view, const char * projection,
+                         const char * texMap) 
+                       : vertices(vertices), uvs(uvs), normals(normals) {
             this->programID = compileProgram(shaders, shaderCount);
-            this->vertices = true;
-            this->uvs = true;
-            this->normals = true;
-            findIDs();
-            linked = true;
-        }
-
-        Program::Program(Shader *shaders[], int shaderCount, bool vertices, bool uvs, bool normals) {
-            this->programID = compileProgram(shaders, shaderCount);
-            this->vertices = vertices;
-            this->uvs = uvs;
-            this->normals = normals;
-            findIDs();
-            linked = true;
+            linked = (programID > 0) && findUniformIDs(model, view, projection, texMap);
         }
 
         Program::~Program() {
             // Normally would delete program here, but its taken care of in cleanupPrograms()
         }
-
-        GLuint Program::getProgramID() { return programID; }
 
         void Program::operator =(const Program &rhs)
         {
@@ -203,26 +192,24 @@ namespace ENGINE_NAMESPACE {
             this->vertices = rhs.vertices;
             this->uvs = rhs.uvs;
             this->normals = rhs.normals;
-            this->attribID_vertex = rhs.attribID_vertex;
-            this->attribID_uv = rhs.attribID_uv;
-            this->attribID_normal = rhs.attribID_normal;
             this->uniformID_model = rhs.uniformID_model;
             this->uniformID_view = rhs.uniformID_view;
             this->uniformID_projection = rhs.uniformID_projection;
             this->uniformID_texture = rhs.uniformID_texture;
             this->linked = rhs.linked;
         }
+        
+        GLint Program::getUniformID(const char * name) {
+            return glGetUniformLocation(programID, name);
+        }
 
-        void Program::findIDs() {
-            attribID_vertex =   glGetAttribLocation(programID, "vertex");
-            attribID_uv =       glGetAttribLocation(programID, "uv");
-            attribID_normal =   glGetAttribLocation(programID, "normal");
-
-            uniformID_model =       glGetUniformLocation(programID, "_m");
-            uniformID_view =        glGetUniformLocation(programID, "_v");
-            uniformID_projection =  glGetUniformLocation(programID, "_p");
-
-            uniformID_texture =     glGetUniformLocation(programID, "texturemap");
+        bool Program::findUniformIDs(const char * model, const char * view, const char * projection,
+                                     const char * texMap) {
+            uniformID_model =       glGetUniformLocation(programID, model);
+            uniformID_view =        glGetUniformLocation(programID, view);
+            uniformID_projection =  glGetUniformLocation(programID, projection);
+            uniformID_texture =     glGetUniformLocation(programID, texMap);
+            return !(uniformID_model < 0 || uniformID_view < 0 || uniformID_projection < 0 || uniformID_texture < 0);
         }
     }
 }

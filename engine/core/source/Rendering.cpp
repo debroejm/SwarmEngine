@@ -70,7 +70,7 @@ namespace ENGINE_NAMESPACE {
 
             // 1rst attribute buffer : bones
             if(currentProgram->usesVertices()) {
-                glEnableVertexAttribArray(currentProgram->getAttribID_vertex());
+                glEnableVertexAttribArray(0);
                 glBindBuffer(GL_ARRAY_BUFFER, object.getBoneBuffer());
                 glVertexAttribPointer(
                         0,                  // attribute
@@ -84,7 +84,7 @@ namespace ENGINE_NAMESPACE {
 
             // 2nd attribute buffer : UVs
             if(currentProgram->usesUVs()) {
-                glEnableVertexAttribArray(currentProgram->getAttribID_uv());
+                glEnableVertexAttribArray(1);
                 glBindBuffer(GL_ARRAY_BUFFER, object.getUVBuffer());
                 glVertexAttribPointer(
                         1,                                // attribute
@@ -98,7 +98,7 @@ namespace ENGINE_NAMESPACE {
 
             // 3rd attribute buffer : normals
             if(currentProgram->usesNormals()) {
-                glEnableVertexAttribArray(currentProgram->getAttribID_normal());
+                glEnableVertexAttribArray(2);
                 glBindBuffer(GL_ARRAY_BUFFER, object.getNormalBuffer());
                 glVertexAttribPointer(
                         2,                                // attribute
@@ -121,9 +121,9 @@ namespace ENGINE_NAMESPACE {
                     (void*)0           // element array buffer offset
             );
 
-            if(currentProgram->usesVertices()) glDisableVertexAttribArray(currentProgram->getAttribID_vertex());
-            if(currentProgram->usesUVs()) glDisableVertexAttribArray(currentProgram->getAttribID_uv());
-            if(currentProgram->usesNormals()) glDisableVertexAttribArray(currentProgram->getAttribID_normal());
+            if(currentProgram->usesVertices()) glDisableVertexAttribArray(0);
+            if(currentProgram->usesUVs()) glDisableVertexAttribArray(1);
+            if(currentProgram->usesNormals()) glDisableVertexAttribArray(2);
         }
     }
 }
