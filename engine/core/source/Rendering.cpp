@@ -1,9 +1,9 @@
 #include "../headers/Rendering.h"
 
-ENGINE_NAMESPACE::Shaders::Program *currentProgram;
+ENGINE_NAMESPACE::ENGINE_NAMESPACE_SHADER::Program *currentProgram;
 
 namespace ENGINE_NAMESPACE {
-    namespace Rendering{
+    namespace ENGINE_NAMESPACE_RENDER {
 
         GLuint VertexArrayID;
 
@@ -24,18 +24,18 @@ namespace ENGINE_NAMESPACE {
             glDeleteVertexArrays(1, &VertexArrayID);
         }
 
-        void ChangeShader(Shaders::Program &newProgram)
+        void ChangeShader(ENGINE_NAMESPACE_SHADER::Program &newProgram)
         {
             currentProgram = &newProgram;
             glUseProgram(currentProgram->getProgramID());
         }
 
-        void Render(Models::Model & object) { Render(object, glm::mat4(1.0)); }
-        void Render(Models::Model & object, glm::mat4 modelMatrix)
+        void Render(ENGINE_NAMESPACE_MODEL::Model & object) { Render(object, glm::mat4(1.0)); }
+        void Render(ENGINE_NAMESPACE_MODEL::Model & object, glm::mat4 modelMatrix)
         {
             // MVP Matrices
-            glm::mat4 ProjectionMatrix = Controls::getProjectionMatrix(); // NEED
-            glm::mat4 ViewMatrix = Controls::getViewMatrix(); // NEED
+            glm::mat4 ProjectionMatrix = ENGINE_NAMESPACE_INPUT::getProjectionMatrix(); // NEED
+            glm::mat4 ViewMatrix = ENGINE_NAMESPACE_INPUT::getViewMatrix(); // NEED
             //glm::mat4 ModelMatrix = glm::mat4(1.0); // Likely needs to be different
             //glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
 

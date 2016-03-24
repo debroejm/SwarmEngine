@@ -1,14 +1,14 @@
 #include "../headers/Animation.h"
 
 namespace ENGINE_NAMESPACE {
-    namespace Animation {
+    namespace ENGINE_NAMESPACE_ANIM {
 
-        Rigging::Rigging(Model &input) {
+        Rigging::Rigging(ENGINE_NAMESPACE_MODEL::Model &input) {
             model = &input;
         }
 
 
-        RiggingHumanoid::RiggingHumanoid(Model &input): Rigging(input) {
+        RiggingHumanoid::RiggingHumanoid(ENGINE_NAMESPACE_MODEL::Model &input): Rigging(input) {
             leftKnee = input.getBone("KneeL");
             leftFoot = input.getBone("FootL");
             rightKnee = input.getBone("KneeR");

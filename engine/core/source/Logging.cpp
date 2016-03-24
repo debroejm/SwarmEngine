@@ -14,7 +14,7 @@
 #endif
 
 namespace ENGINE_NAMESPACE {
-    namespace Logging {
+    namespace ENGINE_NAMESPACE_LOG {
 
         const char * LOG_FILENAME = "SwarmLogging.log";
         FILE * logFile;

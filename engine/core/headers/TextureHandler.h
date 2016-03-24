@@ -30,7 +30,7 @@ using namespace std;
 // --------------------
 
 namespace ENGINE_NAMESPACE {
-    namespace Textures {
+    namespace ENGINE_NAMESPACE_TEXTURE {
 
         GLuint loadPNGTexture(const char* filename);
         void registerTexture(GLuint textureID);

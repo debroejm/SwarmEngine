@@ -32,19 +32,19 @@ int main() {
     glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
 
     // Load our Shaders
-    Shaders::Shader vertexShader("resources/shaders/TextureVShader.glsl", GL_VERTEX_SHADER);
-    Shaders::Shader fragmentShader("resources/shaders/TextureFShader.glsl", GL_FRAGMENT_SHADER);
-    Shaders::Shader* shaders[] { &vertexShader, &fragmentShader };
-    Shaders::Program program(shaders, 2);
+    Shader::Shader vertexShader("resources/shaders/TextureVShader.glsl", GL_VERTEX_SHADER);
+    Shader::Shader fragmentShader("resources/shaders/TextureFShader.glsl", GL_FRAGMENT_SHADER);
+    Shader::Shader* shaders[] { &vertexShader, &fragmentShader };
+    Shader::Program program(shaders, 2);
 
-    Rendering::ChangeShader(program);
+    Render::ChangeShader(program);
 
-    Models::Model testModel;
+    Model::Model testModel;
     //testModel.loadMMD("Resources/Models/BasicMinion.mmd");
     testModel.loadMMD("Resources/Models/BlockPerson.mmd");
-    testModel.setTexture(Textures::AnimatedTexture("Resources/Models/BasicMinion.png"));
-    Models::Model testModel2(testModel);
-    Animation::RiggingHumanoid rigging(testModel2);
+    testModel.setTexture(Texture::AnimatedTexture("Resources/Models/BasicMinion.png"));
+    Model::Model testModel2(testModel);
+    Anim::RiggingHumanoid rigging(testModel2);
     rigging.apply();
     //testModel.getStringData();
     //char infoMsg[256];
@@ -52,20 +52,20 @@ int main() {
     //sprintf(infoMsg, "(%f, %f, %f)", bonePos.x, bonePos.y, bonePos.z);
     //Logging::Log(LOGGING_INFO, "Main", infoMsg);
 
-    Configuration::RawConfigData keybindingConfig("keybinding.config");
-    Configuration::Keybinding EXIT("Exit", GLFW_KEY_ESCAPE, keybindingConfig);
-    Configuration::addKeybinding(EXIT);
-    Configuration::Keybinding FORWARD("Forward", GLFW_KEY_O, keybindingConfig);
-    Configuration::addKeybinding(FORWARD);
+    Config::RawConfigData keybindingConfig("keybinding.config");
+    Config::Keybinding EXIT("Exit", GLFW_KEY_ESCAPE, keybindingConfig);
+    Config::addKeybinding(EXIT);
+    Config::Keybinding FORWARD("Forward", GLFW_KEY_O, keybindingConfig);
+    Config::addKeybinding(FORWARD);
 
-    Models::Model cube;
+    Model::Model cube;
     cube.loadOBJ("Resources/Models/Cube.obj");
-    cube.setTexture(Textures::AnimatedTexture("Resources/Models/Sample.png"));
+    cube.setTexture(Texture::AnimatedTexture("Resources/Models/Sample.png"));
 
     Logging::Log(LOGGING_INFO, "Debug", ("Model Info:\n"+testModel.printDebug()).c_str());
     Logging::Log(LOGGING_INFO, "Debug", ("Model Info:\n"+testModel2.printDebug()).c_str());
 
-    GLFWwindow * window = Controls::getWindow();
+    GLFWwindow * window = Input::getWindow();
 
     // Main runtime loop
     while (!glfwWindowShouldClose(window))
@@ -74,7 +74,7 @@ int main() {
         // Clear the screen
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        Controls::computeMatricesFromInputs();
+        Input::computeMatricesFromInputs();
 
         vec3 tPos(0.0f, 0.0f, 0.005f);
         cube.addBonePosition(0, tPos);
@@ -86,9 +86,9 @@ int main() {
         testModel2.updateBoneBuffer();
 
         glm::mat4 transMat = glm::translate( vec3(10.0f, 0.0f, 0.0f) );
-        Rendering::Render(cube, transMat);
-        Rendering::Render(testModel);
-        Rendering::Render(testModel2, transMat);
+        Render::Render(cube, transMat);
+        Render::Render(testModel);
+        Render::Render(testModel2, transMat);
 
         if (EXIT.isPressed())
             glfwSetWindowShouldClose( window, GL_TRUE );

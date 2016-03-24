@@ -37,7 +37,7 @@ using namespace glm;
 // -------------------
 
 namespace ENGINE_NAMESPACE {
-    namespace Models {
+    namespace ENGINE_NAMESPACE_MODEL {
 
         void cleanupBuffers();
 
@@ -117,7 +117,7 @@ namespace ENGINE_NAMESPACE {
 
             void addTexture(const char * textureName);
             void addTexture(GLuint textureID);
-            void setTexture(Textures::AnimatedTexture other);
+            void setTexture(ENGINE_NAMESPACE_TEXTURE::AnimatedTexture other);
 
             GLuint getBoneBuffer();
             GLuint getUVBuffer();
@@ -169,7 +169,7 @@ namespace ENGINE_NAMESPACE {
             vec3 maxDim;
             vec3 minDim;
 
-            Textures::AnimatedTexture texture;
+            ENGINE_NAMESPACE_TEXTURE::AnimatedTexture texture;
         };
 
 

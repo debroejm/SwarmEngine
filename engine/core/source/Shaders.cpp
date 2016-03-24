@@ -1,8 +1,9 @@
 #include "../headers/Shaders.h"
 
+using namespace ENGINE_NAMESPACE::ENGINE_NAMESPACE_LOG;
 
 namespace ENGINE_NAMESPACE {
-    namespace Shaders {
+    namespace ENGINE_NAMESPACE_SHADER {
 
 
 // Shader Uniform Names
@@ -34,7 +35,7 @@ namespace ENGINE_NAMESPACE {
             if(shaderTypeName == NULL) {
                 char errorMsg[256];
                 sprintf(errorMsg, "Unknown Shader Type '%i': %s", shaderType, shaderPath);
-                Logging::Log(LOGGING_ERROR, "Shaders", errorMsg);
+                Log(LOGGING_ERROR, "Shaders", errorMsg);
                 return 0;
             }
 
@@ -48,14 +49,14 @@ namespace ENGINE_NAMESPACE {
             } else {
                 char errorMsg[256];
                 sprintf(errorMsg, "Failed to open '%s'", shaderPath);
-                Logging::Log(LOGGING_ERROR, "Shaders", errorMsg);
+                Log(LOGGING_ERROR, "Shaders", errorMsg);
                 return 0;
             }
 
             GLuint shaderID = glCreateShader(shaderType);
             registeredShaders.push_back(shaderID);
             sprintf(infoMsg, "Attempting to compile %s Shader [%i]: %s", shaderTypeName, shaderID, shaderPath);
-            Logging::Log(LOGGING_INFO, "Shaders", infoMsg);
+            Log(LOGGING_INFO, "Shaders", infoMsg);
 
             // Attempt to compile shader
             const char* sourcePointer = shaderSource.c_str();
@@ -72,11 +73,11 @@ namespace ENGINE_NAMESPACE {
             if(shaderErrorMessage.size() > 3) {
                 char errorMsg[1000];
                 sprintf(errorMsg, "%s Shader Error: %s", shaderTypeName, &shaderErrorMessage[0]);
-                Logging::Log(LOGGING_ERROR, "Shaders", errorMsg);
+                Log(LOGGING_ERROR, "Shaders", errorMsg);
                 return 0;
             }
 
-            Logging::Log(LOGGING_INFO, "Shaders", "Done!");
+            Log(LOGGING_INFO, "Shaders", "Done!");
             return shaderID;
         }
 
@@ -84,7 +85,7 @@ namespace ENGINE_NAMESPACE {
             for(int i = 0; i < registeredShaders.size(); i++) {
                 char infoMsg[256];
                 sprintf(infoMsg, "Deleting Shader [%i]", registeredShaders[i]);
-                Logging::Log(LOGGING_INFO, "Cleanup", infoMsg);
+                Log(LOGGING_INFO, "Cleanup", infoMsg);
                 glDeleteShader(registeredShaders[i]);
             }
         }
@@ -94,7 +95,7 @@ namespace ENGINE_NAMESPACE {
             registeredPrograms.push_back(programID);
             char infoMsg[256];
             sprintf(infoMsg, "Attempting to Link Program [%i]", programID);
-            Logging::Log(LOGGING_INFO, "Shaders", infoMsg);
+            Log(LOGGING_INFO, "Shaders", infoMsg);
 
             // Attach Shaders
             for(int i = 0; i < shaderCount; i++) {
@@ -102,9 +103,9 @@ namespace ENGINE_NAMESPACE {
                     glAttachShader(programID, shaders[i]->getShaderID());
                     char infoMsg2[256];
                     sprintf(infoMsg2, "Attaching %s Shader [%i]", getShaderName(shaders[i]->getShaderType()), shaders[i]->getShaderID());
-                    Logging::Log(LOGGING_INFO, "Shaders", infoMsg2);
+                    Log(LOGGING_INFO, "Shaders", infoMsg2);
                 } else {
-                    Logging::Log(LOGGING_WARNING, "Shaders", "Found NULL Shader Object");
+                    Log(LOGGING_WARNING, "Shaders", "Found NULL Shader Object");
                 }
             }
             glLinkProgram(programID);
@@ -121,7 +122,7 @@ namespace ENGINE_NAMESPACE {
             if(infoLogLength > 3) {
                 char errorMsg[1000];
                 sprintf(errorMsg, "Program Error: %s", errorMessage);
-                Logging::Log(LOGGING_ERROR, "Shaders", errorMsg);
+                Log(LOGGING_ERROR, "Shaders", errorMsg);
                 return 0;
             }
 
@@ -129,7 +130,7 @@ namespace ENGINE_NAMESPACE {
                 if(shaders[i] != NULL) glDetachShader(programID, shaders[i]->getShaderID());
             }
 
-            Logging::Log(LOGGING_INFO, "Shaders", "Done!");
+            Log(LOGGING_INFO, "Shaders", "Done!");
             return programID;
         }
 
@@ -137,7 +138,7 @@ namespace ENGINE_NAMESPACE {
             for(int i = 0; i < registeredPrograms.size(); i++) {
                 char infoMsg[256];
                 sprintf(infoMsg, "Deleting Program [%i]", registeredPrograms[i]);
-                Logging::Log(LOGGING_INFO, "Cleanup", infoMsg);
+                Log(LOGGING_INFO, "Cleanup", infoMsg);
                 glDeleteProgram(registeredPrograms[i]);
             }
         }

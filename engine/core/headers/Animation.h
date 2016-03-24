@@ -5,35 +5,33 @@
 
 #include "ModelLoading.h"
 
-using namespace ENGINE_NAMESPACE::Models;
-
 namespace ENGINE_NAMESPACE {
-    namespace Animation {
+    namespace ENGINE_NAMESPACE_ANIM {
 
         class Rigging {
         public:
-            Rigging(Model &input);
+            Rigging(ENGINE_NAMESPACE_MODEL::Model &input);
             virtual ~Rigging() {}
 
             virtual void apply() = 0;
             virtual void update(float delta) = 0;
 
         protected:
-            Model* model = NULL;
+            ENGINE_NAMESPACE_MODEL::Model* model = NULL;
         };
 
         class RiggingHumanoid: public Rigging {
         public:
-            RiggingHumanoid(Model &input);
+            RiggingHumanoid(ENGINE_NAMESPACE_MODEL::Model &input);
 
             void apply();
             void update(float delta);
 
         protected:
-            Bone* leftKnee = NULL;
-            Bone* rightKnee = NULL;
-            Bone* leftFoot = NULL;
-            Bone* rightFoot = NULL;
+            ENGINE_NAMESPACE_MODEL::Bone* leftKnee = NULL;
+            ENGINE_NAMESPACE_MODEL::Bone* rightKnee = NULL;
+            ENGINE_NAMESPACE_MODEL::Bone* leftFoot = NULL;
+            ENGINE_NAMESPACE_MODEL::Bone* rightFoot = NULL;
         };
 
     }

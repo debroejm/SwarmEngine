@@ -1,7 +1,9 @@
 #include "../headers/Initialization.h"
 
+using namespace ENGINE_NAMESPACE::ENGINE_NAMESPACE_LOG;
+
 namespace ENGINE_NAMESPACE {
-    namespace Init {
+    namespace ENGINE_NAMESPACE_INIT {
 
         bool init() { return init( LOGGING_LEVEL_NORMAL, LOGGING_TYPE_FILE_AND_CONSOLE, "Swarm Engine Instance", 1600, 900 ); }
         bool init(const char * windowName) { return init( LOGGING_LEVEL_NORMAL, LOGGING_TYPE_FILE_AND_CONSOLE, windowName, 1600, 900 ); }
@@ -13,11 +15,11 @@ namespace ENGINE_NAMESPACE {
 
             GLFWwindow* window;
 
-            Logging::initLogging(logLevel, logType);
+            initLogging(logLevel, logType);
 
             // Initialize GLFW
-            Logging::Log(LOGGING_INFO, "GLFW", "Initializing GLFW");
-            glfwSetErrorCallback(GLFW::error_callback);
+            Log(LOGGING_INFO, "GLFW", "Initializing GLFW");
+            glfwSetErrorCallback(ENGINE_NAMESPACE_GLFW::error_callback);
             if (!glfwInit()) exit(EXIT_FAILURE);
 
             // Create our GLFW window, and make its context current
@@ -29,11 +31,11 @@ namespace ENGINE_NAMESPACE {
             }
             glfwMakeContextCurrent(window);
 
-            glfwSetKeyCallback(window, GLFW::key_callback);
+            glfwSetKeyCallback(window, ENGINE_NAMESPACE_GLFW::key_callback);
 
             glfwSetCursorPos(window, windowX/2, windowY/2);
 
-            Controls::setWindow(window);
+            ENGINE_NAMESPACE_INPUT::setWindow(window);
 
             // Initialize GLEW
             glewExperimental = true; // Needed for core profile
@@ -46,18 +48,18 @@ namespace ENGINE_NAMESPACE {
             glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
 
-            Rendering::init();
+            ENGINE_NAMESPACE_RENDER::init();
 
             return true;
 
         }
 
         void cleanup() {
-            Textures::cleanupTextures();
-            Models::cleanupBuffers();
-            Shaders::cleanupShaders();
-            Shaders::cleanupPrograms();
-            Rendering::cleanup();
+            ENGINE_NAMESPACE_TEXTURE::cleanupTextures();
+            ENGINE_NAMESPACE_MODEL::cleanupBuffers();
+            ENGINE_NAMESPACE_SHADER::cleanupShaders();
+            ENGINE_NAMESPACE_SHADER::cleanupPrograms();
+            ENGINE_NAMESPACE_RENDER::cleanup();
         }
 
 

@@ -42,6 +42,17 @@ using namespace glm;
 
 #define ENGINE_NAMESPACE Swarm
 
+#define ENGINE_NAMESPACE_ANIM Anim
+#define ENGINE_NAMESPACE_CONFIG Config
+#define ENGINE_NAMESPACE_GLFW GLFW
+#define ENGINE_NAMESPACE_INIT Init
+#define ENGINE_NAMESPACE_INPUT Input
+#define ENGINE_NAMESPACE_LOG Logging
+#define ENGINE_NAMESPACE_MODEL Model
+#define ENGINE_NAMESPACE_RENDER Render
+#define ENGINE_NAMESPACE_SHADER Shader
+#define ENGINE_NAMESPACE_TEXTURE Texture
+
 // Logging Level
 #define LOGGING_LEVEL_MIN 1 // Just Errors
 #define LOGGING_LEVEL_NORMAL 2 // Errors + Warnings
@@ -80,7 +91,7 @@ using namespace glm;
 // Structures
 
 namespace ENGINE_NAMESPACE {
-    namespace Textures {
+    namespace ENGINE_NAMESPACE_TEXTURE {
         class AnimatedTexture
         {
         public:
@@ -105,7 +116,7 @@ namespace ENGINE_NAMESPACE {
         };
     }
 
-    namespace Configuration {
+    namespace ENGINE_NAMESPACE_CONFIG {
         class RawConfigData {
         public:
             RawConfigData(const char * filepath);
@@ -156,7 +167,7 @@ namespace ENGINE_NAMESPACE {
         void addKeybinding(Keybinding &binding);
     }
 
-    namespace Controls {
+    namespace ENGINE_NAMESPACE_INPUT {
         void computeMatricesFromInputs();
         glm::mat4 getViewMatrix();
         glm::mat4 getProjectionMatrix();
@@ -164,13 +175,13 @@ namespace ENGINE_NAMESPACE {
         GLFWwindow* getWindow();
     }
 
-    namespace GLFW {
+    namespace ENGINE_NAMESPACE_GLFW {
         void error_callback(int error, const char* description);
         void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
         void framebuffer_size_callback(GLFWwindow* window, int width, int height);
     }
 
-    namespace Init {
+    namespace ENGINE_NAMESPACE_INIT {
         bool init();
         bool init(const char * windowName);
         bool init(const char * windowName, int windowX, int windowY);
@@ -181,7 +192,7 @@ namespace ENGINE_NAMESPACE {
         void cleanup();
     }
 
-    namespace Logging {
+    namespace ENGINE_NAMESPACE_LOG {
         void ChangeLoggingLevel(int newLoggingLevel);
         void ChangeLoggingType(int newLoggingType);
 
@@ -195,7 +206,7 @@ namespace ENGINE_NAMESPACE {
         string formatVec3(float x, float y, float z);
     }
 
-    namespace Models {
+    namespace ENGINE_NAMESPACE_MODEL {
         void cleanupBuffers();
 
         class Bone
@@ -272,7 +283,7 @@ namespace ENGINE_NAMESPACE {
 
             void addTexture(const char * textureName);
             void addTexture(GLuint textureID);
-            void setTexture(Textures::AnimatedTexture other);
+            void setTexture(ENGINE_NAMESPACE_TEXTURE::AnimatedTexture other);
 
             GLuint getBoneBuffer();
             GLuint getUVBuffer();
@@ -321,39 +332,39 @@ namespace ENGINE_NAMESPACE {
             vec3 maxDim;
             vec3 minDim;
 
-            Textures::AnimatedTexture texture;
+            ENGINE_NAMESPACE_TEXTURE::AnimatedTexture texture;
         };
     }
 
-    namespace Animation {
+    namespace ENGINE_NAMESPACE_ANIM {
         class Rigging {
         public:
-            Rigging(Models::Model &input);
+            Rigging(ENGINE_NAMESPACE_MODEL::Model &input);
             virtual ~Rigging() {}
 
             virtual void apply() = 0;
             virtual void update(float delta) = 0;
 
         protected:
-            Models::Model* model = NULL;
+            ENGINE_NAMESPACE_MODEL::Model* model = NULL;
         };
 
         class RiggingHumanoid: public Rigging {
         public:
-            RiggingHumanoid(Models::Model &input);
+            RiggingHumanoid(ENGINE_NAMESPACE_MODEL::Model &input);
 
             void apply();
             void update(float delta);
 
         protected:
-            Models::Bone* leftKnee = NULL;
-            Models::Bone* rightKnee = NULL;
-            Models::Bone* leftFoot = NULL;
-            Models::Bone* rightFoot = NULL;
+            ENGINE_NAMESPACE_MODEL::Bone* leftKnee = NULL;
+            ENGINE_NAMESPACE_MODEL::Bone* rightKnee = NULL;
+            ENGINE_NAMESPACE_MODEL::Bone* leftFoot = NULL;
+            ENGINE_NAMESPACE_MODEL::Bone* rightFoot = NULL;
         };
     }
 
-    namespace Shaders {
+    namespace ENGINE_NAMESPACE_SHADER {
 
         class Shader{
         public:
@@ -417,16 +428,16 @@ namespace ENGINE_NAMESPACE {
         void cleanupPrograms();
     }
 
-    namespace Rendering {
+    namespace ENGINE_NAMESPACE_RENDER {
         void init();
         void cleanup();
 
-        void ChangeShader(ENGINE_NAMESPACE::Shaders::Program &newProgram);
-        void Render(ENGINE_NAMESPACE::Models::Model & object);
-        void Render(ENGINE_NAMESPACE::Models::Model & object, glm::mat4 modelMatrix);
+        void ChangeShader(ENGINE_NAMESPACE::ENGINE_NAMESPACE_SHADER::Program &newProgram);
+        void Render(ENGINE_NAMESPACE::ENGINE_NAMESPACE_MODEL::Model & object);
+        void Render(ENGINE_NAMESPACE::ENGINE_NAMESPACE_MODEL::Model & object, glm::mat4 modelMatrix);
     }
 
-    namespace Textures {
+    namespace ENGINE_NAMESPACE_TEXTURE {
         GLuint loadPNGTexture(const char* filename);
         void registerTexture(GLuint textureID);
         void cleanupTextures();

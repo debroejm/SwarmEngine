@@ -33,7 +33,7 @@ using namespace std;
 // ----------------
 
 namespace ENGINE_NAMESPACE {
-    namespace Init{
+    namespace ENGINE_NAMESPACE_INIT {
 
         bool init();
         bool init(const char * windowName);

@@ -44,7 +44,7 @@ using namespace glm;
 // -------------------
 
 namespace ENGINE_NAMESPACE {
-    namespace Logging {
+    namespace ENGINE_NAMESPACE_LOG {
 
         void ChangeLoggingLevel(int newLoggingLevel);
         void ChangeLoggingType(int newLoggingType);

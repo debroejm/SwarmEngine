@@ -1,7 +1,9 @@
 #include "../headers/TextureHandler.h"
 
+using namespace ENGINE_NAMESPACE::ENGINE_NAMESPACE_LOG;
+
 namespace ENGINE_NAMESPACE {
-    namespace Textures {
+    namespace ENGINE_NAMESPACE_TEXTURE {
 
         std::vector<GLuint> registeredTextures;
 
@@ -13,7 +15,7 @@ namespace ENGINE_NAMESPACE {
             if(error != 0) {
                 char errorMsg[256];
                 sprintf(errorMsg, "'%s': %s", filename, lodepng_error_text(error));
-                Logging::Log(LOGGING_ERROR, "Textures", errorMsg);
+                Log(LOGGING_ERROR, "Textures", errorMsg);
                 return 0;
             }
 
@@ -43,7 +45,7 @@ namespace ENGINE_NAMESPACE {
 
             char logString[256];
             sprintf(logString, "Texture ID Registered: %i", textureID);
-            Logging::Log(LOGGING_INFO, "Textures", logString);
+            Log(LOGGING_INFO, "Textures", logString);
         }
 
         void cleanupTextures()
@@ -52,7 +54,7 @@ namespace ENGINE_NAMESPACE {
             {
                 char infoMsg[256];
                 sprintf(infoMsg, "Deleting Texture [%i]", registeredTextures[i]);
-                Logging::Log(LOGGING_INFO, "Cleanup", infoMsg);
+                Log(LOGGING_INFO, "Cleanup", infoMsg);
                 // Yes, thats formatted properly. Pointers...
                 glDeleteTextures(1, &registeredTextures[i]);
             }

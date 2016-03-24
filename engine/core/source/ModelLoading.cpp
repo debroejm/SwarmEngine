@@ -4,8 +4,10 @@
 #define SSTR( x ) static_cast< std::ostringstream & >( \
         ( std::ostringstream() << std::dec << x ) ).str()
 
+using namespace ENGINE_NAMESPACE::ENGINE_NAMESPACE_LOG;
+
 namespace ENGINE_NAMESPACE {
-    namespace Models {
+    namespace ENGINE_NAMESPACE_MODEL {
 
         vector<GLuint> registeredBuffers;
         vector<vec3*> registeredNormals;
@@ -14,7 +16,7 @@ namespace ENGINE_NAMESPACE {
             for(int i = 0; i < registeredBuffers.size(); i++) {
                 char infoMsg[256];
                 sprintf(infoMsg, "Deleting Buffer [%i]", registeredBuffers[i]);
-                Logging::Log(LOGGING_INFO, "Cleanup", infoMsg);
+                Log(LOGGING_INFO, "Cleanup", infoMsg);
                 glDeleteBuffers(1, &registeredBuffers[i]);
             }
 
@@ -345,7 +347,7 @@ namespace ENGINE_NAMESPACE {
         }
 
         string Bone::printHierarchy() {
-            string result = name + " Global:" + Logging::formatVec3(getPosition()) + " Relative:" + Logging::formatVec3(getRelativePosition());
+            string result = name + " Global:" + formatVec3(getPosition()) + " Relative:" + formatVec3(getRelativePosition());
             for(int i = 0; i < children.size(); i++)
             {
                 result += ("\n   - " + children[i]->printHierarchy("   - "));
@@ -354,7 +356,7 @@ namespace ENGINE_NAMESPACE {
         }
 
         string Bone::printHierarchy(string header) {
-            string result = name + " Global:" + Logging::formatVec3(getPosition()) + " Relative:" + Logging::formatVec3(getRelativePosition());
+            string result = name + " Global:" + formatVec3(getPosition()) + " Relative:" + formatVec3(getRelativePosition());
             for(int i = 0; i < children.size(); i++)
             {
                 result += ("\n     " + header + children[i]->printHierarchy("     " + header));
@@ -435,7 +437,7 @@ namespace ENGINE_NAMESPACE {
 
         void Model::addTexture(const char *textureName) { texture.addTexture(textureName); }
         void Model::addTexture(GLuint textureID) { texture.addTexture(textureID); }
-        void Model::setTexture(Textures::AnimatedTexture other) { texture = other; }
+        void Model::setTexture(ENGINE_NAMESPACE_TEXTURE::AnimatedTexture other) { texture = other; }
 
         bool Model::loadMMD(const char *path)
         {
@@ -443,7 +445,7 @@ namespace ENGINE_NAMESPACE {
 
             char fileLoadBuff[1000];
             sprintf(fileLoadBuff, "Loading MMD file: %s", path);
-            Logging::Log(LOGGING_INFO, "Models", fileLoadBuff);
+            Log(LOGGING_INFO, "Models", fileLoadBuff);
 
             vector<unsigned int> vertexIndices, uvIndices, normalIndices;
             vector<glm::vec3> temp_vertices;
@@ -459,7 +461,7 @@ namespace ENGINE_NAMESPACE {
 
             FILE * file = fopen(path, "r");
             if( file == NULL ){
-                Logging::Log(LOGGING_ERROR, "Models", "Failed to open the file");
+                Log(LOGGING_ERROR, "Models", "Failed to open the file");
                 getchar();
                 return false;
             }
@@ -483,7 +485,7 @@ namespace ENGINE_NAMESPACE {
                     glm::vec3 vertex;
                     int matches = fscanf(file, "%f %f %f\n", &vertex.x, &vertex.y, &vertex.z );
                     if(matches != 3) {
-                        Logging::Log(LOGGING_ERROR, "MMDLoading", SSTR("[" << lineNum << "] Incorrect Argument Count").c_str());
+                        Log(LOGGING_ERROR, "MMDLoading", SSTR("[" << lineNum << "] Incorrect Argument Count").c_str());
                         return false;
                     }
                     temp_vertices.push_back(vertex);
@@ -501,7 +503,7 @@ namespace ENGINE_NAMESPACE {
                     int BID;
                     int matches = fscanf(file, "%f %f %f %i\n", &vertex.x, &vertex.y, &vertex.z, &BID);
                     if(matches != 4) {
-                        Logging::Log(LOGGING_ERROR, "MMDLoading", SSTR("[" << lineNum << "] Incorrect Argument Count").c_str());
+                        Log(LOGGING_ERROR, "MMDLoading", SSTR("[" << lineNum << "] Incorrect Argument Count").c_str());
                         return false;
                     }
                     temp_vertices.push_back(vertex);
@@ -518,7 +520,7 @@ namespace ENGINE_NAMESPACE {
                     glm::vec2 uv;
                     int matches = fscanf(file, "%f %f\n", &uv.x, &uv.y );
                     if(matches != 2) {
-                        Logging::Log(LOGGING_ERROR, "MMDLoading", SSTR("[" << lineNum << "] Incorrect Argument Count").c_str());
+                        Log(LOGGING_ERROR, "MMDLoading", SSTR("[" << lineNum << "] Incorrect Argument Count").c_str());
                         return false;
                     }
                     temp_uvs.push_back(uv);
@@ -528,7 +530,7 @@ namespace ENGINE_NAMESPACE {
                     glm::vec3 normal;
                     int matches = fscanf(file, "%f %f %f\n", &normal.x, &normal.y, &normal.z );
                     if(matches != 3) {
-                        Logging::Log(LOGGING_ERROR, "MMDLoading", SSTR("[" << lineNum << "] Incorrect Argument Count").c_str());
+                        Log(LOGGING_ERROR, "MMDLoading", SSTR("[" << lineNum << "] Incorrect Argument Count").c_str());
                         return false;
                     }
                     temp_normals.push_back(normal);
@@ -540,7 +542,7 @@ namespace ENGINE_NAMESPACE {
                     //int matches = fscanf(file, "%f %f %f %i %32s\n", &bonePos.x, &bonePos.y, &bonePos.z, &bIndex, boneName );
                     int matches = fscanf(file, "%f %f %f %i\n", &bonePos.x, &bonePos.y, &bonePos.z, &bIndex);
                     if(matches != 4) {
-                        Logging::Log(LOGGING_ERROR, "MMDLoading", SSTR("[" << lineNum << "] Incorrect Argument Count").c_str());
+                        Log(LOGGING_ERROR, "MMDLoading", SSTR("[" << lineNum << "] Incorrect Argument Count").c_str());
                         return false;
                     }
                     if(bIndex == 0)
@@ -555,7 +557,7 @@ namespace ENGINE_NAMESPACE {
                     {
                         char logString[256];
                         sprintf(logString, "[%i] Invalid Bone index: %i", lineNum, bIndex);
-                        Logging::Log(LOGGING_ERROR, "MMDLoading", logString);
+                        Log(LOGGING_ERROR, "MMDLoading", logString);
                         return false;
                     }
                     readBoneNames.push_back(SSTR("Bone " << readBoneNames.size()));
@@ -567,7 +569,7 @@ namespace ENGINE_NAMESPACE {
                     char boneName[55];
                     int matches = fscanf(file, "%f %f %f %i %50s\n", &bonePos.x, &bonePos.y, &bonePos.z, &bIndex, boneName );
                     if(matches != 5) {
-                        Logging::Log(LOGGING_ERROR, "MMDLoading", SSTR("[" << lineNum << "] Incorrect Argument Count").c_str());
+                        Log(LOGGING_ERROR, "MMDLoading", SSTR("[" << lineNum << "] Incorrect Argument Count").c_str());
                         return false;
                     }
                     if(bIndex == 0)
@@ -582,7 +584,7 @@ namespace ENGINE_NAMESPACE {
                     {
                         char logString[256];
                         sprintf(logString, "[%i] Invalid Bone index: %i", lineNum, bIndex);
-                        Logging::Log(LOGGING_ERROR, "MMDLoading", logString);
+                        Log(LOGGING_ERROR, "MMDLoading", logString);
                         return false;
                     }
                     readBoneNames.push_back(string(boneName));
@@ -593,7 +595,7 @@ namespace ENGINE_NAMESPACE {
                     unsigned int vertexIndex[3], uvIndex[3], normalIndex[3];
                     int matches = fscanf(file, "%d/%d/%d %d/%d/%d %d/%d/%d\n", &vertexIndex[0], &uvIndex[0], &normalIndex[0], &vertexIndex[1], &uvIndex[1], &normalIndex[1], &vertexIndex[2], &uvIndex[2], &normalIndex[2] );
                     if(matches != 9) {
-                        Logging::Log(LOGGING_ERROR, "MMDLoading", SSTR("[" << lineNum << "] Incorrect Argument Count").c_str());
+                        Log(LOGGING_ERROR, "MMDLoading", SSTR("[" << lineNum << "] Incorrect Argument Count").c_str());
                         return false;
                     }
                     vertexIndices.push_back(vertexIndex[0]);
@@ -698,19 +700,19 @@ namespace ENGINE_NAMESPACE {
 
             char successMsg[256];
             sprintf(successMsg, "Model Loaded: '%s' [B-%i|U-%i|N-%i|E-%i]", name.c_str(), bonebuffer, uvbuffer, normalbuffer, elementbuffer);
-            Logging::Log(LOGGING_INFO, "Models", successMsg);
+            Log(LOGGING_INFO, "Models", successMsg);
 
             loaded = true;
             return true;
         }
 
-        bool Models::Model::loadOBJ(const char *path)
+        bool Model::loadOBJ(const char *path)
         {
             if (loaded) return false;
 
             char fileLoadBuff[1000];
             sprintf(fileLoadBuff, "Loading OBJ file: %s", path);
-            Logging::Log(LOGGING_INFO, "Models", fileLoadBuff);
+            Log(LOGGING_INFO, "Models", fileLoadBuff);
 
             std::vector<unsigned int> vertexIndices, uvIndices, normalIndices;
             std::vector<glm::vec3> temp_vertices;
@@ -723,7 +725,7 @@ namespace ENGINE_NAMESPACE {
 
             FILE * file = fopen(path, "r");
             if( file == NULL ){
-                Logging::Log(LOGGING_ERROR, "Models", "Failed to open the file");
+                Log(LOGGING_ERROR, "Models", "Failed to open the file");
                 getchar();
                 return false;
             }
@@ -876,7 +878,7 @@ namespace ENGINE_NAMESPACE {
 
             char successMsg[256];
             sprintf(successMsg, "Model Loaded: '%s' [B-%i|U-%i|N-%i|E-%i]", name.c_str(), bonebuffer, uvbuffer, normalbuffer, elementbuffer);
-            Logging::Log(LOGGING_INFO, "Models", successMsg);
+            Log(LOGGING_INFO, "Models", successMsg);
 
             loaded = true;
             return true;
@@ -952,7 +954,7 @@ namespace ENGINE_NAMESPACE {
             for(int i = 0; i < elementCount; i++) {
                 char infoMsg[256];
                 sprintf(infoMsg, "(%f, %f, %f)", normals[i].x, normals[i].y, normals[i].z);
-                Logging::Log(LOGGING_INFO, "Models", infoMsg);
+                Log(LOGGING_INFO, "Models", infoMsg);
             }
             return "";
         }

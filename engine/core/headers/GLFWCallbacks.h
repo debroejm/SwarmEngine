@@ -21,7 +21,7 @@
 // ----------------
 
 namespace ENGINE_NAMESPACE {
-    namespace GLFW {
+    namespace ENGINE_NAMESPACE_GLFW {
 
         // GLFW Callback Prototypes
         void error_callback(int error, const char* description);

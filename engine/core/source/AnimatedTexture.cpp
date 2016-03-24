@@ -1,7 +1,7 @@
 #include "../headers/AnimatedTexture.h"
 
 namespace ENGINE_NAMESPACE {
-    namespace Textures {
+    namespace ENGINE_NAMESPACE_TEXTURE {
 
         AnimatedTexture::AnimatedTexture(GLuint textureID)
         {

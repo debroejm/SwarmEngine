@@ -29,27 +29,12 @@ using namespace glm;
 
 #include "../Definitions.h"
 
-// -----------
-// Definitions
-// -----------
-
-// Shader Uniform IDs
-#define SHADER_UNIFORM_MVP 1
-#define SHADER_UNIFORM_MODEL 2
-#define SHADER_UNIFORM_VIEW 3
-#define SHADER_UNIFORM_TEXTURE 4
-#define SHADER_UNIFORM_LIGHT_POS 5
-#define SHADER_UNIFORM_LIGHT_COLOR 6
-#define SHADER_UNIFORM_LIGHT_POWER 7
-#define SHADER_UNIFORM_SCREENSIZE 8
-
-
 // -------------------
 // | SHADERS SECTION |
 // -------------------
 
 namespace ENGINE_NAMESPACE {
-    namespace Shaders {
+    namespace ENGINE_NAMESPACE_SHADER {
 
         class Shader{
         public:

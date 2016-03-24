@@ -27,7 +27,7 @@ using namespace std;
 // --------------------
 
 namespace ENGINE_NAMESPACE {
-    namespace Textures {
+    namespace ENGINE_NAMESPACE_TEXTURE {
 
         class AnimatedTexture
         {

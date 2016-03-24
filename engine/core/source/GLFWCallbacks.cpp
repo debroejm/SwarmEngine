@@ -1,11 +1,13 @@
 #include "../headers/GLFWCallbacks.h"
 
+using namespace ENGINE_NAMESPACE::ENGINE_NAMESPACE_LOG;
+
 namespace ENGINE_NAMESPACE {
-    namespace GLFW {
+    namespace ENGINE_NAMESPACE_GLFW {
 
         void error_callback(int error, const char* description)
         {
-            Logging::Log(LOGGING_ERROR, "GLFW", description);
+            Log(LOGGING_ERROR, "GLFW", description);
             //fputs(description, stderr);
         }
 
@@ -17,8 +19,8 @@ namespace ENGINE_NAMESPACE {
                 */
 
             // Send keycode and other info to the input processing part of mEng
-            if(action == GLFW_PRESS) Configuration::setPressed(key, true);
-            if(action == GLFW_RELEASE) Configuration::setPressed(key, false);
+            if(action == GLFW_PRESS) ENGINE_NAMESPACE_CONFIG::setPressed(key, true);
+            if(action == GLFW_RELEASE) ENGINE_NAMESPACE_CONFIG::setPressed(key, false);
         }
 
         void framebuffer_size_callback(GLFWwindow* window, int width, int height)

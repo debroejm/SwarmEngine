@@ -1,8 +1,9 @@
 #include "../headers/Configuration.h"
 
+using namespace ENGINE_NAMESPACE::ENGINE_NAMESPACE_LOG;
 
 namespace ENGINE_NAMESPACE {
-    namespace Configuration {
+    namespace ENGINE_NAMESPACE_CONFIG {
 
         unordered_map<int, Keybinding*> keybindingRegistry_int;
         unordered_map<string, Keybinding*> keybindingRegistry_str;
@@ -83,7 +84,7 @@ namespace ENGINE_NAMESPACE {
             } else {
                 char errorMsg[256];
                 sprintf(errorMsg, "Failed to open '%s'", filepath);
-                Logging::Log(LOGGING_WARNING, "Configuration", errorMsg);
+                Log(LOGGING_WARNING, "Configuration", errorMsg);
                 return;
             }
         }

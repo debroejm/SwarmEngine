@@ -20,7 +20,7 @@ using namespace glm;
 // --------------------
 
 namespace ENGINE_NAMESPACE {
-    namespace Controls {
+    namespace ENGINE_NAMESPACE_INPUT {
 
         void computeMatricesFromInputs();
         glm::mat4 getViewMatrix();

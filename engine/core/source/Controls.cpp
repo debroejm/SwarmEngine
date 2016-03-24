@@ -1,7 +1,7 @@
 #include "../headers/Controls.h"
 
 namespace ENGINE_NAMESPACE {
-    namespace Controls {
+    namespace ENGINE_NAMESPACE_INPUT {
 
         glm::mat4 ViewMatrix;
         glm::mat4 ProjectionMatrix;

@@ -1,6 +1,24 @@
 #ifndef SWARMENGINE_DEFINITIONS_H
 #define SWARMENGINE_DEFINITIONS_H
 
+
+// ***********************
+//  Namespace Definitions
+// ***********************
+
 #define ENGINE_NAMESPACE Swarm
+
+#define ENGINE_NAMESPACE_ANIM Anim
+#define ENGINE_NAMESPACE_CONFIG Config
+#define ENGINE_NAMESPACE_GLFW GLFW
+#define ENGINE_NAMESPACE_INIT Init
+#define ENGINE_NAMESPACE_INPUT Input
+#define ENGINE_NAMESPACE_LOG Logging
+#define ENGINE_NAMESPACE_MODEL Model
+#define ENGINE_NAMESPACE_RENDER Render
+#define ENGINE_NAMESPACE_SHADER Shader
+#define ENGINE_NAMESPACE_TEXTURE Texture
+
+
 
 #endif //SWARMENGINE_DEFINITIONS_H

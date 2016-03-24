@@ -21,7 +21,7 @@ using namespace std;
 
 
 namespace ENGINE_NAMESPACE {
-    namespace Configuration {
+    namespace ENGINE_NAMESPACE_CONFIG {
 
         class RawConfigData {
         public:

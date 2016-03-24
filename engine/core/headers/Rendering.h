@@ -34,14 +34,14 @@ using namespace glm;
 // ---------------------
 
 namespace ENGINE_NAMESPACE {
-    namespace Rendering {
+    namespace ENGINE_NAMESPACE_RENDER {
 
         void init();
         void cleanup();
 
-        void ChangeShader(ENGINE_NAMESPACE::Shaders::Program &newProgram);
-        void Render(ENGINE_NAMESPACE::Models::Model & object);
-        void Render(ENGINE_NAMESPACE::Models::Model & object, glm::mat4 modelMatrix);
+        void ChangeShader(ENGINE_NAMESPACE::ENGINE_NAMESPACE_SHADER::Program &newProgram);
+        void Render(ENGINE_NAMESPACE::ENGINE_NAMESPACE_MODEL::Model & object);
+        void Render(ENGINE_NAMESPACE::ENGINE_NAMESPACE_MODEL::Model & object, glm::mat4 modelMatrix);
 
     }
 }
