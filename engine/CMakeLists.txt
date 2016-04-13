@@ -36,6 +36,6 @@ set(EXTERNAL_SOURCES
         ../external/glew/src/glew.c
         ../external/lodepng/lodepng.cpp)
 
-add_library(SwarmEngineCore ${LIB_TYPE} ${ENGINE_HEADERS} ${ENGINE_SOURCE} ${EXTERNAL_SOURCES})
-#add_executable(SwarmEngineCore ${ENGINE_HEADERS} ${ENGINE_SOURCE})
-target_link_libraries(SwarmEngineCore ${OPENGL_LIBRARIES} ${ENGINE_LIBRARIES})
+# BUILD ENGINE
+add_library(SwarmEngineCore STATIC ${ENGINE_HEADERS} ${ENGINE_SOURCE} ${EXTERNAL_SOURCES})
+target_link_libraries(SwarmEngineCore ${OPENGL_LIBRARIES} glfw ${GLFW_LIBRARIES})

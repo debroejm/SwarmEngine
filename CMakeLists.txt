@@ -10,6 +10,7 @@ set (LIB_TYPE STATIC)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -static-libgcc -static-libstdc++")
 
+
 ###############################################################
 # FIND OPENGL
 ###############################################################
@@ -18,34 +19,32 @@ include_directories(${OpenGL_INCLUDE_DIRS})
 link_directories(${OpenGL_LIBRARY_DIRS})
 add_definitions(${OpenGL_DEFINITIONS})
 if(NOT OPENGL_FOUND)
-        message(ERROR " OPENGL not found!")
+    message(ERROR " OPENGL not found!")
 endif(NOT OPENGL_FOUND)
 
+
 ###############################################################
-# ADD GLEW
+# ADD INCLUDES
 ###############################################################
 include_directories("external/glew/include")
-
-###############################################################
-# ADD GLFW
-###############################################################
-add_subdirectory("external/glfw")
 include_directories("external/glfw/include")
-
-###############################################################
-# ADD GLM
-###############################################################
 include_directories("external/glm")
-
-###############################################################
-# ADD MISC
-###############################################################
 include_directories("external/lodepng")
 
-set(ENGINE_LIBRARIES
-        glfw
-        ${GLFW_LIBRARIES}
-)
 
-add_subdirectory(engine)
-add_subdirectory(test)
+###############################################################
+# BUILD FUNCTION
+###############################################################
+function(BuildEngine SystemName)
+    set(CMAKE_SYSTEM_NAME ${SystemName})
+    add_subdirectory("external/glfw" ${SystemName}/GLFW)
+    add_subdirectory("engine" ${SystemName}/Engine)
+    add_subdirectory("test" ${SystemName}/Sample)
+endfunction(BuildEngine)
+
+
+BuildEngine(${CMAKE_SYSTEM_NAME})
+# I'll get these working at some point...
+#BuildEngine("Windows")
+#BuildEngine("Linux")
+#BuildEngine("Darwin")
