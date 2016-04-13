@@ -36,12 +36,14 @@ using namespace glm;
 namespace ENGINE_NAMESPACE {
     namespace ENGINE_NAMESPACE_RENDER {
 
+        #pragma lhgMultiOn(SwarmEngine, ENGINE_NAMESPACE::ENGINE_NAMESPACE_RENDER, -1)
         void init();
         void cleanup();
 
-        void ChangeShader(ENGINE_NAMESPACE::ENGINE_NAMESPACE_SHADER::Program &newProgram);
-        void Render(ENGINE_NAMESPACE::ENGINE_NAMESPACE_MODEL::Model & object);
-        void Render(ENGINE_NAMESPACE::ENGINE_NAMESPACE_MODEL::Model & object, glm::mat4 modelMatrix);
+        void ChangeShader(ENGINE_NAMESPACE_SHADER::Program &newProgram);
+        void Render(ENGINE_NAMESPACE_MODEL::Model & object);
+        void Render(ENGINE_NAMESPACE_MODEL::Model & object, glm::mat4 modelMatrix);
+        #pragma lhgMultiOff()
 
     }
 }

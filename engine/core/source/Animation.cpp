@@ -16,10 +16,10 @@ namespace ENGINE_NAMESPACE {
         }
 
         void RiggingHumanoid::apply() {
-            if(leftKnee != NULL) leftKnee->rotatePosition(radians(-35.0f), vec3(1.0f, 0.0f, 0.2f));
-            if(rightKnee != NULL) rightKnee->rotatePosition(radians(-35.0f), vec3(1.0f, 0.0f, -0.2f));
-            if(leftFoot != NULL) leftFoot->rotatePosition(radians(60.0f), vec3(1.0f, 0.0f, 0.0f));
-            if(rightFoot != NULL) rightFoot->rotatePosition(radians(60.0f), vec3(1.0f, 0.0f, 0.0f));
+            if(leftKnee != NULL) leftKnee->rotatePosition(glm::radians(-35.0f), glm::vec3(1.0f, 0.0f, 0.2f));
+            if(rightKnee != NULL) rightKnee->rotatePosition(glm::radians(-35.0f), glm::vec3(1.0f, 0.0f, -0.2f));
+            if(leftFoot != NULL) leftFoot->rotatePosition(glm::radians(60.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+            if(rightFoot != NULL) rightFoot->rotatePosition(glm::radians(60.0f), glm::vec3(1.0f, 0.0f, 0.0f));
         }
 
         void RiggingHumanoid::update(float delta) {

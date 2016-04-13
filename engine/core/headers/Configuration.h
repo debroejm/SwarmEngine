@@ -23,6 +23,7 @@ using namespace std;
 namespace ENGINE_NAMESPACE {
     namespace ENGINE_NAMESPACE_CONFIG {
 
+        #pragma lhgMultiOn(SwarmEngine, ENGINE_NAMESPACE::ENGINE_NAMESPACE_CONFIG)
         class RawConfigData {
         public:
             RawConfigData(const char * filepath);
@@ -71,6 +72,8 @@ namespace ENGINE_NAMESPACE {
         Keybinding* getKeybinding(int key);
         Keybinding* getKeybinding(string name);
         void addKeybinding(Keybinding &binding);
+        #pragma lhgMultiOff()
+
     }
 }
 

@@ -83,7 +83,7 @@ namespace ENGINE_NAMESPACE {
             }
         }
 
-        string formatVec3(vec3 pos) { return formatVec3(pos.x, pos.y, pos.z); }
+        string formatVec3(glm::vec3 pos) { return formatVec3(pos.x, pos.y, pos.z); }
         string formatVec3(float x, float y, float z) {
             return SSTR("(" << x << ", " << y << ", " << z << ")");
         }

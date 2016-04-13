@@ -35,6 +35,7 @@ using namespace std;
 namespace ENGINE_NAMESPACE {
     namespace ENGINE_NAMESPACE_INIT {
 
+        #pragma lhgMultiOn(SwarmEngine, ENGINE_NAMESPACE::ENGINE_NAMESPACE_INIT)
         bool init();
         bool init(const char * windowName);
         bool init(const char * windowName, int windowX, int windowY);
@@ -43,6 +44,7 @@ namespace ENGINE_NAMESPACE {
         bool init(int logLevel, int logType, const char * windowName, int windowX, int windowY);
 
         void cleanup();
+        #pragma lhgMultiOff()
 
     }
 }

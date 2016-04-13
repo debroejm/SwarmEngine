@@ -8,6 +8,7 @@
 namespace ENGINE_NAMESPACE {
     namespace ENGINE_NAMESPACE_ANIM {
 
+        #pragma lhgMultiOn(SwarmEngine, ENGINE_NAMESPACE::ENGINE_NAMESPACE_ANIM, -5)
         class Rigging {
         public:
             Rigging(ENGINE_NAMESPACE_MODEL::Model &input);
@@ -33,6 +34,7 @@ namespace ENGINE_NAMESPACE {
             ENGINE_NAMESPACE_MODEL::Bone* leftFoot = NULL;
             ENGINE_NAMESPACE_MODEL::Bone* rightFoot = NULL;
         };
+        #pragma lhgMultiOff()
 
     }
 }

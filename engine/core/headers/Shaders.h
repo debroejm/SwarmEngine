@@ -36,6 +36,7 @@ using namespace glm;
 namespace ENGINE_NAMESPACE {
     namespace ENGINE_NAMESPACE_SHADER {
 
+        #pragma lhgMultiOn(SwarmEngine, ENGINE_NAMESPACE::ENGINE_NAMESPACE_SHADER)
         class Shader{
         public:
             Shader(const char * shaderPath, GLenum shaderType);
@@ -96,6 +97,7 @@ namespace ENGINE_NAMESPACE {
 
         void cleanupShaders();
         void cleanupPrograms();
+        #pragma lhgMultiOff()
 
     }
 }

@@ -22,11 +22,13 @@ using namespace glm;
 namespace ENGINE_NAMESPACE {
     namespace ENGINE_NAMESPACE_INPUT {
 
+        #pragma lhgMultiOn(SwarmEngine, ENGINE_NAMESPACE::ENGINE_NAMESPACE_INPUT)
         void computeMatricesFromInputs();
         glm::mat4 getViewMatrix();
         glm::mat4 getProjectionMatrix();
         void setWindow(GLFWwindow* windowIN);
         GLFWwindow* getWindow();
+        #pragma lhgMultiOff()
 
     }
 }

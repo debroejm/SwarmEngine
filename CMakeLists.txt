@@ -37,9 +37,13 @@ include_directories("external/lodepng")
 ###############################################################
 function(BuildEngine SystemName)
     set(CMAKE_SYSTEM_NAME ${SystemName})
-    add_subdirectory("external/glfw" ${SystemName}/GLFW)
-    add_subdirectory("engine" ${SystemName}/Engine)
-    add_subdirectory("test" ${SystemName}/Sample)
+    #add_subdirectory("external/lhg" out-${SystemName})
+    #add_subdirectory("external/glfw" out-${SystemName})
+    #add_subdirectory("engine" out-${SystemName})
+    #add_subdirectory("test" out-${SystemName})
+    add_subdirectory("external/glfw")
+    add_subdirectory("engine")
+    add_subdirectory("test")
 endfunction(BuildEngine)
 
 

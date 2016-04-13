@@ -20,8 +20,6 @@ using namespace std;
 
 #include <glm/glm.hpp>
 
-using namespace glm;
-
 
 // Internal Libraries
 #include "Logging.h"
@@ -39,25 +37,26 @@ using namespace glm;
 namespace ENGINE_NAMESPACE {
     namespace ENGINE_NAMESPACE_MODEL {
 
+        #pragma lhgMultiOn(SwarmEngine, ENGINE_NAMESPACE::ENGINE_NAMESPACE_MODEL)
         void cleanupBuffers();
 
         class Bone
         {
         public:
             Bone();
-            Bone(vec3 pos);
-            Bone(vec3 pos, string name);
-            Bone(vec3 pos, Bone &parent);
-            Bone(vec3 pos, string name, Bone &parent);
+            Bone(glm::vec3 pos);
+            Bone(glm::vec3 pos, string name);
+            Bone(glm::vec3 pos, Bone &parent);
+            Bone(glm::vec3 pos, string name, Bone &parent);
             Bone(Bone &bone);
             Bone(Bone &bone, string name);
             ~Bone();
 
             void revertPosition();
-            void addPosition(vec3 newPos);
-            void setPosition(vec3 newPos);
-            void rotatePosition(float angle, vec3 amount);
-            void rotatePosition(mat4 rotMatrix);
+            void addPosition(glm::vec3 newPos);
+            void setPosition(glm::vec3 newPos);
+            void rotatePosition(float angle, glm::vec3 amount);
+            void rotatePosition(glm::mat4 rotMatrix);
 
             void updateBoneBuffer();
 
@@ -67,15 +66,15 @@ namespace ENGINE_NAMESPACE {
             void addChild(Bone &child);
             vector<Bone*> getChildren() { return children; }
 
-            void addBonePosition(vec3 &bonePos);
-            void addNormal(vec3 &normal);
-            void addNormal(vec3 &normal, vec3 &normalStatic);
-            vector<vec3*> getBonePositions() { return bonePositions; }
-            vector<vec3*> getNormals() { return normals; }
+            void addBonePosition(glm::vec3 &bonePos);
+            void addNormal(glm::vec3 &normal);
+            void addNormal(glm::vec3 &normal, glm::vec3 &normalStatic);
+            vector<glm::vec3*> getBonePositions() { return bonePositions; }
+            vector<glm::vec3*> getNormals() { return normals; }
 
-            vec3 getPosition();
-            vec3 getRelativePosition();
-            mat4 getRotationMatrix();
+            glm::vec3 getPosition();
+            glm::vec3 getRelativePosition();
+            glm::mat4 getRotationMatrix();
 
             string getName() { return name; }
 
@@ -86,14 +85,14 @@ namespace ENGINE_NAMESPACE {
 
         private:
             string name;
-            vec3 originalPos;
-            vec3 position;
-            mat4 rotationMatrix = mat4(1.0f);
+            glm::vec3 originalPos;
+            glm::vec3 position;
+            glm::mat4 rotationMatrix = glm::mat4(1.0f);
             Bone* parent;
             vector<Bone*> children;
-            vector<vec3*> bonePositions;
-            vector<vec3*> normals;
-            vector<vec3*> normalsStatic;
+            vector<glm::vec3*> bonePositions;
+            vector<glm::vec3*> normals;
+            vector<glm::vec3*> normalsStatic;
         };
 
         struct bVert{
@@ -132,13 +131,13 @@ namespace ENGINE_NAMESPACE {
             bool isLoaded();
             string getName() { return name; }
 
-            vec3 getMaxDimensions();
-            vec3 getMinDimensions();
+            glm::vec3 getMaxDimensions();
+            glm::vec3 getMinDimensions();
 
-            vec3 getBonePosition(int index);
-            void addBonePosition(int index, vec3 pos);
-            void setBonePosition(int index, vec3 pos);
-            void rotateBonePosition(int index, float angle, vec3 amount);
+            glm::vec3 getBonePosition(int index);
+            void addBonePosition(int index, glm::vec3 pos);
+            void setBonePosition(int index, glm::vec3 pos);
+            void rotateBonePosition(int index, float angle, glm::vec3 amount);
 
             void updateBoneBuffer();
 
@@ -157,23 +156,21 @@ namespace ENGINE_NAMESPACE {
 
             Bone* skeleton = NULL;
             int boneCount;
-            vec3* bonePositions= NULL;
-            vec3* normals = NULL;
-            vec3* normalsStatic = NULL;
+            glm::vec3* bonePositions= NULL;
+            glm::vec3* normals = NULL;
+            glm::vec3* normalsStatic = NULL;
             int elementCount;
 
             //vector<Bone> skeleton;
-            //vector<vec3> bones;
-            //vector<vec3> normals;
+            //vector<glm::vec3> bones;
+            //vector<glm::vec3> normals;
 
-            vec3 maxDim;
-            vec3 minDim;
+            glm::vec3 maxDim;
+            glm::vec3 minDim;
 
             ENGINE_NAMESPACE_TEXTURE::AnimatedTexture texture;
         };
-
-
-
+        #pragma lhgMultiOff()
     }
 }
 

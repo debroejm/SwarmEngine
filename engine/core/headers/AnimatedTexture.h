@@ -29,6 +29,7 @@ using namespace std;
 namespace ENGINE_NAMESPACE {
     namespace ENGINE_NAMESPACE_TEXTURE {
 
+        #pragma lhgMultiOn(SwarmEngine, ENGINE_NAMESPACE::ENGINE_NAMESPACE_TEXTURE)
         class AnimatedTexture
         {
         public:
@@ -51,6 +52,7 @@ namespace ENGINE_NAMESPACE {
             vector<double> changeDelay;
             double lastTime;
         };
+        #pragma lhgMultiOff()
 
     }
 }

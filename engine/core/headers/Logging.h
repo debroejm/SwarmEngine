@@ -14,7 +14,6 @@ using namespace std;
 #include <stdlib.h>
 
 #include <glm/glm.hpp>
-using namespace glm;
 
 #include "../Definitions.h"
 
@@ -22,6 +21,7 @@ using namespace glm;
 // Definitions
 // -----------
 
+#pragma lhgMultiOn(SwarmEngine, LHG_NONE, 100)
 // Logging Level
 #define LOGGING_LEVEL_MIN 1 // Just Errors
 #define LOGGING_LEVEL_NORMAL 2 // Errors + Warnings
@@ -37,6 +37,7 @@ using namespace glm;
 #define LOGGING_ERROR 1
 #define LOGGING_WARNING 2
 #define LOGGING_INFO 3
+#pragma lhgMultiOff()
 
 
 // -------------------
@@ -46,6 +47,7 @@ using namespace glm;
 namespace ENGINE_NAMESPACE {
     namespace ENGINE_NAMESPACE_LOG {
 
+        #pragma lhgMultiOn(SwarmEngine, ENGINE_NAMESPACE::ENGINE_NAMESPACE_LOG)
         void ChangeLoggingLevel(int newLoggingLevel);
         void ChangeLoggingType(int newLoggingType);
 
@@ -56,8 +58,9 @@ namespace ENGINE_NAMESPACE {
         void Log(int level, const char * category, const char * message);
         //void Log(int level, const char * category, const char * message, std::vector< int > intInputs);
 
-        string formatVec3(vec3 pos);
+        string formatVec3(glm::vec3 pos);
         string formatVec3(float x, float y, float z);
+        #pragma lhgMultiOff()
 
     }
 }

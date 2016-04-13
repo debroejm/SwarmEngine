@@ -10,7 +10,7 @@ namespace ENGINE_NAMESPACE {
     namespace ENGINE_NAMESPACE_MODEL {
 
         vector<GLuint> registeredBuffers;
-        vector<vec3*> registeredNormals;
+        vector<glm::vec3*> registeredNormals;
 
         void cleanupBuffers() {
             for(int i = 0; i < registeredBuffers.size(); i++) {
@@ -44,22 +44,22 @@ namespace ENGINE_NAMESPACE {
         };
 
         struct PreBoneData {
-            vec3 position;
+            glm::vec3 position;
             int parentID;
         };
 
         struct PreVertexData {
-            vec3 position;
+            glm::vec3 position;
             int boneID;
         };
 
-        int getClosestBoneID(vec3 in_vertex, vector<PreBoneData> &bones)
+        int getClosestBoneID(glm::vec3 in_vertex, vector<PreBoneData> &bones)
         {
             int closestID = -1;
             double closeDist = 0.0;
             for(int i = 0; i < bones.size(); i++)
             {
-                vec3 bPos = bones[i].position;
+                glm::vec3 bPos = bones[i].position;
                 double newDist = sqrt( pow(bPos.x - in_vertex.x, 2) + pow(bPos.y - in_vertex.y, 2) + pow(bPos.z - in_vertex.z, 2) );
                 if(closestID == -1)
                 {
@@ -143,11 +143,11 @@ namespace ENGINE_NAMESPACE {
         void indexVBO(
                 vector<PreVertexData> &in_vertices,
                 vector<PreBoneData> &in_bones,
-                vector<vec2> &in_uvs,
+                vector<glm::vec2> &in_uvs,
 
                 vector<unsigned short> &out_indices,
                 vector<PreBoneData> &out_bones,
-                vector<vec2> &out_uvs,
+                vector<glm::vec2> &out_uvs,
                 vector<PreVertexData> &out_normals
         ){
             std::map<PackedVertex,unsigned short> BoneToOutIndex;
@@ -157,7 +157,7 @@ namespace ENGINE_NAMESPACE {
             for( unsigned int i=0; i<in_vertices.size(); i++ )
             {
                 glm::vec3 bonePos = in_bones[in_vertices[i].boneID].position;
-                in_normals.push_back( vec3(in_vertices[i].position.x - bonePos.x,
+                in_normals.push_back( glm::vec3(in_vertices[i].position.x - bonePos.x,
                                            in_vertices[i].position.y - bonePos.y,
                                            in_vertices[i].position.z - bonePos.z) );
             }
@@ -184,7 +184,7 @@ namespace ENGINE_NAMESPACE {
             }
         }
 
-        Bone* constructNewSkeleton(Bone* oldSkeleton, int boneCount, vec3* oldBones, vec3* oldNormals, vec3* newBones, vec3* newNormals, int elementCount) {
+        Bone* constructNewSkeleton(Bone* oldSkeleton, int boneCount, glm::vec3* oldBones, glm::vec3* oldNormals, glm::vec3* newBones, glm::vec3* newNormals, int elementCount) {
             Bone* newSkeleton = new Bone[boneCount];
             for(int i = 0; i < boneCount; i++) {
                 //newSkeleton[i] = Bone(oldSkeleton[i], oldSkeleton[i].getName()+"_2");
@@ -210,7 +210,7 @@ namespace ENGINE_NAMESPACE {
                 }
 
                 // Scan and find this bones' positions
-                vector<vec3*> positions = oldSkeleton[i].getBonePositions();
+                vector<glm::vec3*> positions = oldSkeleton[i].getBonePositions();
                 for(int j = 0; j < positions.size(); j++) {
                     for(int k = 0; k < elementCount; k++) {
                         if(&oldBones[k] == positions[j]) {
@@ -221,7 +221,7 @@ namespace ENGINE_NAMESPACE {
                 }
 
                 // Scan and find this bones' positions
-                vector<vec3*> normals = oldSkeleton[i].getNormals();
+                vector<glm::vec3*> normals = oldSkeleton[i].getNormals();
                 for(int j = 0; j < normals.size(); j++) {
                     for(int k = 0; k < elementCount; k++) {
                         if(&oldNormals[k] == normals[j]) {
@@ -240,7 +240,7 @@ namespace ENGINE_NAMESPACE {
             parent = NULL;
         }
 
-        Bone::Bone(vec3 pos)
+        Bone::Bone(glm::vec3 pos)
         {
             originalPos = pos;
             position = pos;
@@ -248,7 +248,7 @@ namespace ENGINE_NAMESPACE {
             parent = NULL;
         }
 
-        Bone::Bone(vec3 pos, string name)
+        Bone::Bone(glm::vec3 pos, string name)
         {
             originalPos = pos;
             position = pos;
@@ -256,7 +256,7 @@ namespace ENGINE_NAMESPACE {
             parent = NULL;
         }
 
-        Bone::Bone(vec3 pos, Bone &parent)
+        Bone::Bone(glm::vec3 pos, Bone &parent)
         {
             originalPos = pos;
             position = pos;
@@ -264,7 +264,7 @@ namespace ENGINE_NAMESPACE {
             this->parent = &parent;
         }
 
-        Bone::Bone(vec3 pos, string name, Bone &parent)
+        Bone::Bone(glm::vec3 pos, string name, Bone &parent)
         {
             originalPos = pos;
             position = pos;
@@ -296,22 +296,22 @@ namespace ENGINE_NAMESPACE {
             position = originalPos;
         }
 
-        void Bone::addPosition(vec3 newPos) { setPosition(position+newPos); }
-        void Bone::setPosition(vec3 newPos) { position = newPos; }
-        void Bone::rotatePosition(float angle, vec3 amount) { rotatePosition(glm::rotate(angle, amount)); }
-        void Bone::rotatePosition(mat4 rotMatrix) {
+        void Bone::addPosition(glm::vec3 newPos) { setPosition(position+newPos); }
+        void Bone::setPosition(glm::vec3 newPos) { position = newPos; }
+        void Bone::rotatePosition(float angle, glm::vec3 amount) { rotatePosition(glm::rotate(angle, amount)); }
+        void Bone::rotatePosition(glm::mat4 rotMatrix) {
             rotationMatrix = rotMatrix;
         }
 
         void Bone::updateBoneBuffer() {
-            vec3 totalPos = getPosition();
+            glm::vec3 totalPos = getPosition();
             for(int i = 0; i < bonePositions.size(); i++)
             {
                 bonePositions[i]->operator=(totalPos);
             }
-            mat4 rotMat = getRotationMatrix();
+            glm::mat4 rotMat = getRotationMatrix();
             for(int i = 0; i < normals.size(); i++) {
-                (*normals[i]) = vec3(rotMat * vec4((*normalsStatic[i]),1.0f));
+                (*normals[i]) = glm::vec3(rotMat * glm::vec4((*normalsStatic[i]),1.0f));
             }
         }
 
@@ -319,29 +319,29 @@ namespace ENGINE_NAMESPACE {
             children.push_back(&child);
         }
 
-        void Bone::addBonePosition(vec3 &bonePos) {
+        void Bone::addBonePosition(glm::vec3 &bonePos) {
             bonePositions.push_back(&bonePos);
         }
 
-        void Bone::addNormal(vec3 &normal) {
+        void Bone::addNormal(glm::vec3 &normal) {
             normals.push_back(&normal);
         }
 
-        void Bone::addNormal(vec3 &normal, vec3 &normalStatic) {
+        void Bone::addNormal(glm::vec3 &normal, glm::vec3 &normalStatic) {
             normals.push_back(&normal);
             normalsStatic.push_back(&normalStatic);
         }
 
-        vec3 Bone::getPosition() {
-            if(parent == NULL) return vec3(getRotationMatrix() * vec4(position, 1.0f));
-            else return vec3(getRotationMatrix() * vec4(position, 1.0f)) + parent->getPosition();
+        glm::vec3 Bone::getPosition() {
+            if(parent == NULL) return glm::vec3(getRotationMatrix() * glm::vec4(position, 1.0f));
+            else return glm::vec3(getRotationMatrix() * glm::vec4(position, 1.0f)) + parent->getPosition();
         }
 
-        vec3 Bone::getRelativePosition() {
+        glm::vec3 Bone::getRelativePosition() {
             return position;
         }
 
-        mat4 Bone::getRotationMatrix() {
+        glm::mat4 Bone::getRotationMatrix() {
             if(parent == NULL) return rotationMatrix;
             else return rotationMatrix * parent->getRotationMatrix();
         }
@@ -375,15 +375,15 @@ namespace ENGINE_NAMESPACE {
         Model::Model()
         {
             loaded = false;
-            minDim = vec3(0.0f, 0.0f, 0.0f);
-            maxDim = vec3(0.0f, 0.0f, 0.0f);
+            minDim = glm::vec3(0.0f, 0.0f, 0.0f);
+            maxDim = glm::vec3(0.0f, 0.0f, 0.0f);
             name = "Unnamned";
         }
 
         Model::Model(string name) {
             loaded = false;
-            minDim = vec3(0.0f, 0.0f, 0.0f);
-            maxDim = vec3(0.0f, 0.0f, 0.0f);
+            minDim = glm::vec3(0.0f, 0.0f, 0.0f);
+            maxDim = glm::vec3(0.0f, 0.0f, 0.0f);
             this->name = name;
         }
 
@@ -417,11 +417,11 @@ namespace ENGINE_NAMESPACE {
                 minDim = rhs.minDim;
                 texture = rhs.texture;
 
-                bonePositions = new vec3[elementCount];
-                normals = new vec3[elementCount];
+                bonePositions = new glm::vec3[elementCount];
+                normals = new glm::vec3[elementCount];
                 for(int i = 0; i < elementCount; i++) {
-                    bonePositions[i] = vec3(rhs.bonePositions[i]);
-                    normals[i] = vec3(rhs.normals[i]);
+                    bonePositions[i] = glm::vec3(rhs.bonePositions[i]);
+                    normals[i] = glm::vec3(rhs.normals[i]);
                 }
                 skeleton = constructNewSkeleton(rhs.skeleton, rhs.boneCount, rhs.bonePositions, rhs.normals, bonePositions, normals, elementCount);
 
@@ -537,7 +537,7 @@ namespace ENGINE_NAMESPACE {
                 }
                 // Bone : [x y z parent]
                 else if ( strcmp( lineHeader, "j" ) == 0 ){
-                    vec3 bonePos;
+                    glm::vec3 bonePos;
                     int bIndex;
                     //int matches = fscanf(file, "%f %f %f %i %32s\n", &bonePos.x, &bonePos.y, &bonePos.z, &bIndex, boneName );
                     int matches = fscanf(file, "%f %f %f %i\n", &bonePos.x, &bonePos.y, &bonePos.z, &bIndex);
@@ -564,7 +564,7 @@ namespace ENGINE_NAMESPACE {
                 }
                 // Bone, Named : [x y z parent name]
                 else if ( strcmp( lineHeader, "jn" ) == 0 ) {
-                    vec3 bonePos;
+                    glm::vec3 bonePos;
                     int bIndex;
                     char boneName[55];
                     int matches = fscanf(file, "%f %f %f %i %50s\n", &bonePos.x, &bonePos.y, &bonePos.z, &bIndex, boneName );
@@ -663,9 +663,9 @@ namespace ENGINE_NAMESPACE {
 
             // Compile Element Arrays
             elementCount = indexed_bones.size();
-            bonePositions = new vec3[elementCount];
-            normals = new vec3[elementCount];
-            normalsStatic = new vec3[elementCount];
+            bonePositions = new glm::vec3[elementCount];
+            normals = new glm::vec3[elementCount];
+            normalsStatic = new glm::vec3[elementCount];
             for(int i = 0; i < elementCount; i++) {
                 bonePositions[i] = indexed_bones[i].position;
                 normals[i] = indexed_normals[i].position;
@@ -788,7 +788,7 @@ namespace ENGINE_NAMESPACE {
             }
 
             // Create the one Bone that a loaded OBJ will use
-            vec3 tBPos;
+            glm::vec3 tBPos;
             tBPos.x = (maxDim.x + minDim.x) / 2;
             tBPos.y = (maxDim.y + minDim.y) / 2;
             tBPos.z = (maxDim.z + minDim.z) / 2;
@@ -840,9 +840,9 @@ namespace ENGINE_NAMESPACE {
 
             // Compile Element Arrays
             elementCount = indexed_bones.size();
-            bonePositions = new vec3[elementCount];
-            normals = new vec3[elementCount];
-            normalsStatic = new vec3[elementCount];
+            bonePositions = new glm::vec3[elementCount];
+            normals = new glm::vec3[elementCount];
+            normalsStatic = new glm::vec3[elementCount];
             for(int i = 0; i < elementCount; i++) {
                 bonePositions[i] = indexed_bones[i].position;
                 normals[i] = indexed_normals[i].position;
@@ -917,26 +917,26 @@ namespace ENGINE_NAMESPACE {
 
         bool Model::isLoaded()			{ return loaded; }
 
-        vec3 Model::getMaxDimensions()	{ return maxDim; }
-        vec3 Model::getMinDimensions()	{ return minDim; }
+        glm::vec3 Model::getMaxDimensions()	{ return maxDim; }
+        glm::vec3 Model::getMinDimensions()	{ return minDim; }
 
-        vec3 Model::getBonePosition(int index)
+        glm::vec3 Model::getBonePosition(int index)
         {
             if(index > -1 && index < boneCount)
             {
                 return skeleton[index].getPosition();
             }
-            return vec3(0.0f, 0.0f, 0.0f);
+            return glm::vec3(0.0f, 0.0f, 0.0f);
         }
 
-        void Model::addBonePosition(int index, vec3 pos) {
+        void Model::addBonePosition(int index, glm::vec3 pos) {
             if(index > -1 && index < boneCount)
             {
                 skeleton[index].addPosition(pos);
             }
         }
 
-        void Model::setBonePosition(int index, vec3 pos)
+        void Model::setBonePosition(int index, glm::vec3 pos)
         {
             if(index > -1 && index < boneCount)
             {
@@ -944,7 +944,7 @@ namespace ENGINE_NAMESPACE {
             }
         }
 
-        void Model::rotateBonePosition(int index, float angle, vec3 amount) {
+        void Model::rotateBonePosition(int index, float angle, glm::vec3 amount) {
             if(index > -1 && index < boneCount) {
                 skeleton[index].rotatePosition(angle, amount);
             }
