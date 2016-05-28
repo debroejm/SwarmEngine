@@ -59,6 +59,7 @@ using namespace std;
 #define ENGINE_NAMESPACE_RENDER Render
 #define ENGINE_NAMESPACE_SHADER Shader
 #define ENGINE_NAMESPACE_TEXTURE Texture
+#define ENGINE_NAMESPACE_WORLD World
 #pragma lhgFlagOff(PROCESS_DEFINES)
 #pragma lhgMultiOff()
 

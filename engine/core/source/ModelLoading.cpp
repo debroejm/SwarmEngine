@@ -10,7 +10,15 @@ namespace ENGINE_NAMESPACE {
     namespace ENGINE_NAMESPACE_MODEL {
 
         vector<GLuint> registeredBuffers;
+        vector<GLuint> registeredVAOs;
         vector<glm::vec3*> registeredNormals;
+
+        void registerStaticNormalArray(glm::vec3 normals[]) {
+            for(int i = 0; i < registeredNormals.size(); i++) {
+                if(registeredNormals[i] == normals) break;
+            }
+            registeredNormals.push_back(normals);
+        }
 
         void cleanupBuffers() {
             for(int i = 0; i < registeredBuffers.size(); i++) {
@@ -18,6 +26,11 @@ namespace ENGINE_NAMESPACE {
                 sprintf(infoMsg, "Deleting Buffer [%i]", registeredBuffers[i]);
                 Log(LOGGING_INFO, "Cleanup", infoMsg);
                 glDeleteBuffers(1, &registeredBuffers[i]);
+            }
+
+            for(int i = 0; i < registeredVAOs.size(); i++) {
+                Log(LOGGING_INFO, "Cleanup", SSTR("Deleting VAO [" << registeredVAOs[i] << "]").c_str());
+                glDeleteVertexArrays(1, &registeredVAOs[i]);
             }
 
             for(int i = 0; i < registeredNormals.size(); i++) {
@@ -220,7 +233,7 @@ namespace ENGINE_NAMESPACE {
                     }
                 }
 
-                // Scan and find this bones' positions
+                // Scan and find this bones' normals
                 vector<glm::vec3*> normals = oldSkeleton[i].getNormals();
                 for(int j = 0; j < normals.size(); j++) {
                     for(int k = 0; k < elementCount; k++) {
@@ -372,7 +385,7 @@ namespace ENGINE_NAMESPACE {
             name = rhs.name;
         }
 
-        Model::Model()
+        ENGINE_NAMESPACE_MODEL::Model()
         {
             loaded = false;
             minDim = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -380,66 +393,63 @@ namespace ENGINE_NAMESPACE {
             name = "Unnamned";
         }
 
-        Model::Model(string name) {
+        ENGINE_NAMESPACE_MODEL::Model(string name) {
             loaded = false;
             minDim = glm::vec3(0.0f, 0.0f, 0.0f);
             maxDim = glm::vec3(0.0f, 0.0f, 0.0f);
             this->name = name;
         }
 
-        Model::Model(Model &other) {
+        ENGINE_NAMESPACE_MODEL::Model(Model &other) {
             operator=(other);
         }
 
-        Model::~Model()
+        ENGINE_NAMESPACE_MODEL::~Model()
         {
             delete [] skeleton;
             delete [] bonePositions;
+            delete [] uvs;
             delete [] normals;
+            delete [] indexArray;
         }
 
-        void Model::operator=(Model &rhs) {
+        void ENGINE_NAMESPACE_MODEL::operator=(Model &rhs) {
             delete [] skeleton;
             delete [] bonePositions;
+            delete [] uvs;
             delete [] normals;
+            delete [] indexArray;
 
             name = rhs.name;
             loaded = rhs.loaded;
 
             if(loaded) {
-                uvbuffer = rhs.uvbuffer;
-                elementbuffer = rhs.elementbuffer;
-                indexCount = rhs.indexCount;
-                boneCount = rhs.boneCount;
-                elementCount = rhs.elementCount;
-                normalsStatic = rhs.normalsStatic;
                 maxDim = rhs.maxDim;
                 minDim = rhs.minDim;
                 texture = rhs.texture;
+                boneCount = rhs.boneCount;
 
-                bonePositions = new glm::vec3[elementCount];
-                normals = new glm::vec3[elementCount];
-                for(int i = 0; i < elementCount; i++) {
+                glm::vec3* bonePositions = new glm::vec3[rhs.elementCount];
+                glm::vec2* uvs = new glm::vec2[rhs.elementCount];
+                glm::vec3* normals = new glm::vec3[rhs.elementCount];
+                for(int i = 0; i < rhs.elementCount; i++) {
                     bonePositions[i] = glm::vec3(rhs.bonePositions[i]);
+                    uvs[i] = glm::vec2(rhs.uvs[i]);
                     normals[i] = glm::vec3(rhs.normals[i]);
                 }
-                skeleton = constructNewSkeleton(rhs.skeleton, rhs.boneCount, rhs.bonePositions, rhs.normals, bonePositions, normals, elementCount);
+                unsigned short* indexArray = new unsigned short[rhs.indexCount];
+                for(int i = 0; i < rhs.indexCount; i++) indexArray[i] = rhs.indexArray[i];
+                Bone* skeleton = constructNewSkeleton(rhs.skeleton, rhs.boneCount, rhs.bonePositions, rhs.normals, bonePositions, normals, rhs.elementCount);
 
-                glGenBuffers(1, &bonebuffer);
-                glBindBuffer(GL_ARRAY_BUFFER, bonebuffer);
-                glBufferData(GL_ARRAY_BUFFER, elementCount * sizeof(glm::vec3), &bonePositions[0], GL_DYNAMIC_DRAW);
-
-                glGenBuffers(1, &normalbuffer);
-                glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
-                glBufferData(GL_ARRAY_BUFFER, elementCount * sizeof(glm::vec3), &normals[0], GL_DYNAMIC_DRAW);
+                loadData(skeleton, bonePositions, uvs, normals, rhs.normalsStatic, rhs.elementCount, indexArray, rhs.indexCount);
             }
         }
 
-        void Model::addTexture(const char *textureName) { texture.addTexture(textureName); }
-        void Model::addTexture(GLuint textureID) { texture.addTexture(textureID); }
-        void Model::setTexture(ENGINE_NAMESPACE_TEXTURE::AnimatedTexture other) { texture = other; }
+        void ENGINE_NAMESPACE_MODEL::addTexture(const char *textureName) { texture.addTexture(textureName); }
+        void ENGINE_NAMESPACE_MODEL::addTexture(GLuint textureID) { texture.addTexture(textureID); }
+        void ENGINE_NAMESPACE_MODEL::setTexture(ENGINE_NAMESPACE_TEXTURE::AnimatedTexture other) { texture = other; }
 
-        bool Model::loadMMD(const char *path)
+        bool ENGINE_NAMESPACE_MODEL::loadMMD(const char *path)
         {
             if (loaded) return false;
 
@@ -649,7 +659,7 @@ namespace ENGINE_NAMESPACE {
 
             // Compile Final Skeleton Array
             boneCount = readBones.size();
-            skeleton = new Bone[boneCount];
+            Bone *skeleton = new Bone[boneCount];
             for(int i = 0; i < boneCount; i++) {
                 if(readBones[i].parentID > -1) skeleton[i] = Bone(readBones[i].position - readBones[readBones[i].parentID].position, readBoneNames[i] );
                 else skeleton[i] = Bone(readBones[i].position, readBoneNames[i] );
@@ -662,51 +672,24 @@ namespace ENGINE_NAMESPACE {
             }
 
             // Compile Element Arrays
-            elementCount = indexed_bones.size();
-            bonePositions = new glm::vec3[elementCount];
-            normals = new glm::vec3[elementCount];
-            normalsStatic = new glm::vec3[elementCount];
+            unsigned int elementCount = indexed_bones.size();
+            glm::vec3 *bones = new glm::vec3[elementCount];
+            glm::vec2 *uvs = new glm::vec2[elementCount];
+            glm::vec3 *normals = new glm::vec3[elementCount];
+            glm::vec3 *normalsStatic = new glm::vec3[elementCount];
             for(int i = 0; i < elementCount; i++) {
-                bonePositions[i] = indexed_bones[i].position;
+                bones[i] = indexed_bones[i].position;
+                uvs[i] = indexed_uvs[i];
                 normals[i] = indexed_normals[i].position;
                 normalsStatic[i] = indexed_normals[i].position;
-                skeleton[indexed_normals[i].boneID].addBonePosition(bonePositions[i]);
+                skeleton[indexed_normals[i].boneID].addBonePosition(bones[i]);
                 skeleton[indexed_normals[i].boneID].addNormal(normals[i], normalsStatic[i]);
             }
-            registeredNormals.push_back(normalsStatic);
 
-            indexCount = indices.size();
-
-            glGenBuffers(1, &bonebuffer);
-            glBindBuffer(GL_ARRAY_BUFFER, bonebuffer);
-            glBufferData(GL_ARRAY_BUFFER, elementCount * sizeof(glm::vec3), &bonePositions[0], GL_DYNAMIC_DRAW);
-
-            glGenBuffers(1, &uvbuffer);
-            glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
-            glBufferData(GL_ARRAY_BUFFER, elementCount * sizeof(glm::vec2), &indexed_uvs[0], GL_STATIC_DRAW);
-
-            glGenBuffers(1, &normalbuffer);
-            glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
-            glBufferData(GL_ARRAY_BUFFER, elementCount * sizeof(glm::vec3), &normals[0], GL_DYNAMIC_DRAW);
-
-            glGenBuffers(1, &elementbuffer);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbuffer);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexCount * sizeof(unsigned short), &indices[0], GL_STATIC_DRAW);
-
-            registeredBuffers.push_back(bonebuffer);
-            registeredBuffers.push_back(uvbuffer);
-            registeredBuffers.push_back(normalbuffer);
-            registeredBuffers.push_back(elementbuffer);
-
-            char successMsg[256];
-            sprintf(successMsg, "Model Loaded: '%s' [B-%i|U-%i|N-%i|E-%i]", name.c_str(), bonebuffer, uvbuffer, normalbuffer, elementbuffer);
-            Log(LOGGING_INFO, "Models", successMsg);
-
-            loaded = true;
-            return true;
+            loadData(skeleton, bones, uvs, normals, normalsStatic, elementCount, indices.data(), indices.size());
         }
 
-        bool Model::loadOBJ(const char *path)
+        bool ENGINE_NAMESPACE_MODEL::loadOBJ(const char *path)
         {
             if (loaded) return false;
 
@@ -827,7 +810,7 @@ namespace ENGINE_NAMESPACE {
 
             // Compile Final Skeleton Array
             boneCount = out_bones.size();
-            skeleton = new Bone[boneCount];
+            Bone *skeleton = new Bone[boneCount];
             for(int i = 0; i < boneCount; i++) {
                 skeleton[i] = Bone(out_bones[i].position);
             }
@@ -839,42 +822,96 @@ namespace ENGINE_NAMESPACE {
             }
 
             // Compile Element Arrays
-            elementCount = indexed_bones.size();
-            bonePositions = new glm::vec3[elementCount];
-            normals = new glm::vec3[elementCount];
-            normalsStatic = new glm::vec3[elementCount];
+            unsigned int elementCount = indexed_bones.size();
+            glm::vec3 *bones = new glm::vec3[elementCount];
+            glm::vec2 *uvs = new glm::vec2[elementCount];
+            glm::vec3 *normals = new glm::vec3[elementCount];
+            glm::vec3 *normalsStatic = new glm::vec3[elementCount];
             for(int i = 0; i < elementCount; i++) {
-                bonePositions[i] = indexed_bones[i].position;
+                bones[i] = indexed_bones[i].position;
+                uvs[i] = indexed_uvs[i];
                 normals[i] = indexed_normals[i].position;
                 normalsStatic[i] = indexed_normals[i].position;
-                skeleton[indexed_normals[i].boneID].addBonePosition(bonePositions[i]);
+                skeleton[indexed_normals[i].boneID].addBonePosition(bones[i]);
                 skeleton[indexed_normals[i].boneID].addNormal(normals[i], normalsStatic[i]);
             }
-            registeredNormals.push_back(normalsStatic);
 
-            indexCount = indices.size();
+            loadData(skeleton, bones, uvs, normals, normalsStatic, elementCount, indices.data(), indices.size());
+        }
+        
+        bool ENGINE_NAMESPACE_MODEL::loadData(Bone skeleton[], glm::vec3 bones[], glm::vec2 uvs[], glm::vec3 normals[], glm::vec3 normalsStatic[], unsigned int elementCount, unsigned short indices[], unsigned int indexCount) {
+            this->elementCount = elementCount;
+            this->skeleton = skeleton;
+            this->bonePositions = bones;
+            this->uvs = uvs;
+            this->normals = normals;
+            this->normalsStatic = normalsStatic;
+            registerStaticNormalArray(normalsStatic);
+            this->indexCount = indexCount;
+            this->indexArray = indices;
 
+            glGenVertexArrays(1, &vao);
+            glBindVertexArray(vao);
 
             glGenBuffers(1, &bonebuffer);
             glBindBuffer(GL_ARRAY_BUFFER, bonebuffer);
-            glBufferData(GL_ARRAY_BUFFER, elementCount * sizeof(glm::vec3), &bonePositions[0], GL_DYNAMIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, this->elementCount * sizeof(glm::vec3), &this->bonePositions[0], GL_DYNAMIC_DRAW);
 
             glGenBuffers(1, &uvbuffer);
             glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
-            glBufferData(GL_ARRAY_BUFFER, elementCount * sizeof(glm::vec2), &indexed_uvs[0], GL_STATIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, this->elementCount * sizeof(glm::vec2), &this->uvs[0], GL_STATIC_DRAW);
 
             glGenBuffers(1, &normalbuffer);
             glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
-            glBufferData(GL_ARRAY_BUFFER, elementCount * sizeof(glm::vec3), &normals[0], GL_DYNAMIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, this->elementCount * sizeof(glm::vec3), &this->normals[0], GL_DYNAMIC_DRAW);
 
             glGenBuffers(1, &elementbuffer);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbuffer);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexCount * sizeof(unsigned short), &indices[0], GL_STATIC_DRAW);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->indexCount * sizeof(unsigned short), &this->indexArray[0], GL_STATIC_DRAW);
+
+            glEnableVertexAttribArray(0);
+            glBindBuffer(GL_ARRAY_BUFFER, bonebuffer);
+            glVertexAttribPointer(
+                    0,                  // attribute
+                    3,                  // size
+                    GL_FLOAT,           // type
+                    GL_FALSE,           // normalized?
+                    0,                  // stride
+                    (void *) 0            // array buffer offset
+            );
+
+            glEnableVertexAttribArray(1);
+            glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
+            glVertexAttribPointer(
+                    1,                                // attribute
+                    2,                                // size
+                    GL_FLOAT,                         // type
+                    GL_FALSE,                         // normalized?
+                    0,                                // stride
+                    (void *) 0                          // array buffer offset
+            );
+
+            glEnableVertexAttribArray(2);
+            glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
+            glVertexAttribPointer(
+                    2,                                // attribute
+                    3,                                // size
+                    GL_FLOAT,                         // type
+                    GL_FALSE,                         // normalized?
+                    0,                                // stride
+                    (void *) 0                          // array buffer offset
+            );
+
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbuffer);
 
             registeredBuffers.push_back(bonebuffer);
             registeredBuffers.push_back(uvbuffer);
             registeredBuffers.push_back(normalbuffer);
             registeredBuffers.push_back(elementbuffer);
+
+            registeredVAOs.push_back(vao);
+
+            glBindVertexArray(0);
 
             char successMsg[256];
             sprintf(successMsg, "Model Loaded: '%s' [B-%i|U-%i|N-%i|E-%i]", name.c_str(), bonebuffer, uvbuffer, normalbuffer, elementbuffer);
@@ -884,7 +921,7 @@ namespace ENGINE_NAMESPACE {
             return true;
         }
 
-        void Model::updateBoneBuffer()
+        void ENGINE_NAMESPACE_MODEL::updateBoneBuffer()
         {
             for(int i = 0; i < boneCount; i++) {
                 skeleton[i].updateBoneBuffer();
@@ -895,32 +932,33 @@ namespace ENGINE_NAMESPACE {
             glBufferSubData(GL_ARRAY_BUFFER, 0, elementCount * sizeof(glm::vec3), &normals[0]);
         }
 
-        Bone* Model::getBone(int index) {
+        Bone* ENGINE_NAMESPACE_MODEL::getBone(int index) {
             if(index > -1 && index < boneCount) {
                 return &skeleton[index];
             } return NULL;
         }
 
-        Bone* Model::getBone(string tag) {
+        Bone* ENGINE_NAMESPACE_MODEL::getBone(string tag) {
             // TODO: Make Case-Insensitive
             for(int i = 0; i < boneCount; i++) {
                 if(skeleton[i].getName().find(tag) != string::npos) return &skeleton[i];
             } return NULL;
         }
 
-        GLuint Model::getBoneBuffer()	{ return bonebuffer; }
-        GLuint Model::getUVBuffer()		{ return uvbuffer; }
-        GLuint Model::getNormalBuffer() { return normalbuffer; }
-        GLuint Model::getElementBuffer(){ return elementbuffer; }
-        int Model::getElementCount()	{ return indexCount; }
-        GLuint Model::getTexture()		{ return texture.getTexture(); }
+        //GLuint ENGINE_NAMESPACE_MODEL::getBoneBuffer()	{ return bonebuffer; }
+        //GLuint ENGINE_NAMESPACE_MODEL::getUVBuffer()		{ return uvbuffer; }
+        //GLuint ENGINE_NAMESPACE_MODEL::getNormalBuffer() { return normalbuffer; }
+        //GLuint ENGINE_NAMESPACE_MODEL::getElementBuffer(){ return elementbuffer; }
+        GLuint ENGINE_NAMESPACE_MODEL::getVaoID()       { return vao; }
+        int ENGINE_NAMESPACE_MODEL::getElementCount()	{ return indexCount; }
+        GLuint ENGINE_NAMESPACE_MODEL::getTexture()		{ return texture.getTexture(); }
 
-        bool Model::isLoaded()			{ return loaded; }
+        bool ENGINE_NAMESPACE_MODEL::isLoaded()			{ return loaded; }
 
-        glm::vec3 Model::getMaxDimensions()	{ return maxDim; }
-        glm::vec3 Model::getMinDimensions()	{ return minDim; }
+        glm::vec3 ENGINE_NAMESPACE_MODEL::getMaxDimensions()	{ return maxDim; }
+        glm::vec3 ENGINE_NAMESPACE_MODEL::getMinDimensions()	{ return minDim; }
 
-        glm::vec3 Model::getBonePosition(int index)
+        glm::vec3 ENGINE_NAMESPACE_MODEL::getBonePosition(int index)
         {
             if(index > -1 && index < boneCount)
             {
@@ -929,14 +967,14 @@ namespace ENGINE_NAMESPACE {
             return glm::vec3(0.0f, 0.0f, 0.0f);
         }
 
-        void Model::addBonePosition(int index, glm::vec3 pos) {
+        void ENGINE_NAMESPACE_MODEL::addBonePosition(int index, glm::vec3 pos) {
             if(index > -1 && index < boneCount)
             {
                 skeleton[index].addPosition(pos);
             }
         }
 
-        void Model::setBonePosition(int index, glm::vec3 pos)
+        void ENGINE_NAMESPACE_MODEL::setBonePosition(int index, glm::vec3 pos)
         {
             if(index > -1 && index < boneCount)
             {
@@ -944,13 +982,13 @@ namespace ENGINE_NAMESPACE {
             }
         }
 
-        void Model::rotateBonePosition(int index, float angle, glm::vec3 amount) {
+        void ENGINE_NAMESPACE_MODEL::rotateBonePosition(int index, float angle, glm::vec3 amount) {
             if(index > -1 && index < boneCount) {
                 skeleton[index].rotatePosition(angle, amount);
             }
         }
 
-        string Model::getStringData() {
+        string ENGINE_NAMESPACE_MODEL::getStringData() {
             for(int i = 0; i < elementCount; i++) {
                 char infoMsg[256];
                 sprintf(infoMsg, "(%f, %f, %f)", normals[i].x, normals[i].y, normals[i].z);
@@ -959,7 +997,7 @@ namespace ENGINE_NAMESPACE {
             return "";
         }
 
-        string Model::printDebug() {
+        string ENGINE_NAMESPACE_MODEL::printDebug() {
             return ("Name: "+name+"\nBones:\n"+skeleton[0].printHierarchy());
         }
 

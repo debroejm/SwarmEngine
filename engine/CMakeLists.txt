@@ -15,6 +15,7 @@ set(ENGINE_HEADERS
         core/headers/GLFWCallbacks.h
         core/headers/Configuration.h
         core/headers/Animation.h
+        core/headers/world/Terrain.h
         )
 
 set(ENGINE_SOURCE
@@ -30,6 +31,7 @@ set(ENGINE_SOURCE
         core/source/TextureHandler.cpp
         core/source/Configuration.cpp
         core/source/Animation.cpp
+        core/source/world/Terrain.cpp
         )
 
 set(ENGINE_EXTERNAL_SOURCES

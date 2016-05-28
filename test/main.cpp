@@ -62,8 +62,8 @@ int main() {
     cube.loadOBJ("Resources/Models/Cube.obj");
     cube.setTexture(Texture::AnimatedTexture("Resources/Models/Sample.png"));
 
-    Logging::Log(LOGGING_INFO, "Debug", ("Model Info:\n"+testModel.printDebug()).c_str());
-    Logging::Log(LOGGING_INFO, "Debug", ("Model Info:\n"+testModel2.printDebug()).c_str());
+    //Logging::Log(LOGGING_INFO, "Debug", ("Model Info:\n"+testModel.printDebug()).c_str());
+    //Logging::Log(LOGGING_INFO, "Debug", ("Model Info:\n"+testModel2.printDebug()).c_str());
 
     GLFWwindow * window = Input::getWindow();
 
@@ -80,7 +80,6 @@ int main() {
         cube.addBonePosition(0, tPos);
         testModel.rotateBonePosition(1, glfwGetTime(), vec3(1.0f, 0.0f, 1.0f));
         testModel2.rotateBonePosition(10, glfwGetTime(), vec3(0.0f, 1.0f, 0.0f));
-        //testModel.setBonePosition(1, vec3(0, 0, 10));
         cube.updateBoneBuffer();
         testModel.updateBoneBuffer();
         testModel2.updateBoneBuffer();

@@ -269,6 +269,7 @@ namespace Swarm {
         ~Model();
         bool loadOBJ(const char * path);
         bool loadMMD(const char * path);
+        bool loadData(Bone skeleton[], glm::vec3 bones[], glm::vec2 uvs[], glm::vec3 normals[], glm::vec3 normalsStatic[], unsigned int elementCount, unsigned short indices[], unsigned int indexCount);
         
         void operator=(Model &rhs);
         
@@ -276,10 +277,11 @@ namespace Swarm {
         void addTexture(GLuint textureID);
         void setTexture(Texture::AnimatedTexture other);
         
-        GLuint getBoneBuffer();
-        GLuint getUVBuffer();
-        GLuint getNormalBuffer();
-        GLuint getElementBuffer();
+        //GLuint getBoneBuffer();
+        //GLuint getUVBuffer();
+        //GLuint getNormalBuffer();
+        //GLuint getElementBuffer();
+        GLuint getVaoID();
         int getElementCount();
         GLuint getTexture();
         
@@ -306,18 +308,22 @@ namespace Swarm {
         bool loaded;
         string name;
         
+        GLuint vao;
+        
         GLuint bonebuffer;
         GLuint uvbuffer;
         GLuint normalbuffer;
         GLuint elementbuffer;
-        int indexCount;
+        unsigned int indexCount;
         
         Bone* skeleton = NULL;
         int boneCount;
-        glm::vec3* bonePositions= NULL;
+        glm::vec3* bonePositions = NULL;
+        glm::vec2* uvs = NULL;
         glm::vec3* normals = NULL;
         glm::vec3* normalsStatic = NULL;
-        int elementCount;
+        unsigned short* indexArray = NULL;
+        unsigned int elementCount;
         
         //vector<Bone> skeleton;
         //vector<glm::vec3> bones;

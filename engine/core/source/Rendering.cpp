@@ -5,8 +5,6 @@ ENGINE_NAMESPACE::ENGINE_NAMESPACE_SHADER::Program *currentProgram;
 namespace ENGINE_NAMESPACE {
     namespace ENGINE_NAMESPACE_RENDER {
 
-        GLuint VertexArrayID;
-
         void init() {
             // Enable depth test
             glEnable(GL_DEPTH_TEST);
@@ -15,13 +13,10 @@ namespace ENGINE_NAMESPACE {
 
             // Cull triangles which normal is not towards the camera
             glEnable(GL_CULL_FACE);
-
-            glGenVertexArrays(1, &VertexArrayID);
-            glBindVertexArray(VertexArrayID);
         }
 
         void cleanup() {
-            glDeleteVertexArrays(1, &VertexArrayID);
+
         }
 
         void ChangeShader(ENGINE_NAMESPACE_SHADER::Program &newProgram)
@@ -68,6 +63,7 @@ namespace ENGINE_NAMESPACE {
             glBindTexture(GL_TEXTURE_2D, TexID);
             glUniform1i(currentProgram->getUniformID_texture(), 0);
 
+            /*
             // 1rst attribute buffer : bones
             if(currentProgram->usesVertices()) {
                 glEnableVertexAttribArray(0);
@@ -112,6 +108,9 @@ namespace ENGINE_NAMESPACE {
 
             // Index buffer
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, object.getElementBuffer());
+             */
+
+            glBindVertexArray(object.getVaoID());
 
             // Draw the triangles !
             glDrawElements(
@@ -121,9 +120,11 @@ namespace ENGINE_NAMESPACE {
                     (void*)0           // element array buffer offset
             );
 
-            if(currentProgram->usesVertices()) glDisableVertexAttribArray(0);
-            if(currentProgram->usesUVs()) glDisableVertexAttribArray(1);
-            if(currentProgram->usesNormals()) glDisableVertexAttribArray(2);
+            glBindVertexArray(0);
+
+            //if(currentProgram->usesVertices()) glDisableVertexAttribArray(0);
+            //if(currentProgram->usesUVs()) glDisableVertexAttribArray(1);
+            //if(currentProgram->usesNormals()) glDisableVertexAttribArray(2);
         }
     }
 }
