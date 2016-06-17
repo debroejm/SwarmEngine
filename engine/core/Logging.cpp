@@ -1,4 +1,4 @@
-#include "../headers/Logging.h"
+#include "Logging.h"
 
 #define SSTR( x ) static_cast< std::ostringstream & >( \
         ( std::ostringstream() << std::dec << x ) ).str()

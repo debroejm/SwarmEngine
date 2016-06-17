@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../../Definitions.h"
-#include "../ModelLoading.h"
+#include "Definitions.h"
+#include "model/ModelLoading.h"
 
 namespace ENGINE_NAMESPACE {
     namespace ENGINE_NAMESPACE_WORLD {

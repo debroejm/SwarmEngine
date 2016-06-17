@@ -1,4 +1,4 @@
-#include "../headers/Configuration.h"
+#include "Configuration.h"
 
 using namespace ENGINE_NAMESPACE::ENGINE_NAMESPACE_LOG;
 

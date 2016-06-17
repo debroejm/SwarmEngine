@@ -1,7 +1,7 @@
 #ifndef SWARMENGINE_ANIMATION_H
 #define SWARMENGINE_ANIMATION_H
 
-#include "../Definitions.h"
+#include "Definitions.h"
 
 #include "ModelLoading.h"
 

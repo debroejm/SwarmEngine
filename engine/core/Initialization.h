@@ -20,13 +20,13 @@ using namespace std;
 #include <glfw/glfw3.h>
 
 // Internal Libraries
-#include "Controls.h"
+#include "config/Controls.h"
 #include "Logging.h"
-#include "Rendering.h"
+#include "render/Rendering.h"
 
 #include "GLFWCallbacks.h"
 
-#include "../Definitions.h"
+#include "Definitions.h"
 
 // ----------------
 // | INIT SECTION |

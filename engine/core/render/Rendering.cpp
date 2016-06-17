@@ -1,4 +1,4 @@
-#include "../headers/Rendering.h"
+#include "Rendering.h"
 
 ENGINE_NAMESPACE::ENGINE_NAMESPACE_SHADER::Program *currentProgram;
 

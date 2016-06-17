@@ -1,4 +1,4 @@
-#include "../headers/AnimatedTexture.h"
+#include "AnimatedTexture.h"
 
 namespace ENGINE_NAMESPACE {
     namespace ENGINE_NAMESPACE_TEXTURE {

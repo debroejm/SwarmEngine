@@ -13,7 +13,7 @@
 using namespace glm;
 
 
-#include "../Definitions.h"
+#include "Definitions.h"
 
 // --------------------
 // | CONTROLS SECTION |

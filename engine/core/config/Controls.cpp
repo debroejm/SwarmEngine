@@ -1,4 +1,4 @@
-#include "../headers/Controls.h"
+#include "Controls.h"
 
 namespace ENGINE_NAMESPACE {
     namespace ENGINE_NAMESPACE_INPUT {

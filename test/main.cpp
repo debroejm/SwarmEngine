@@ -17,7 +17,7 @@
 
 #include <glm/glm.hpp>
 
-#include "../engine/SwarmEngine.h"
+#include "SwarmEngine.h"
 
 using namespace glm;
 using namespace Swarm;

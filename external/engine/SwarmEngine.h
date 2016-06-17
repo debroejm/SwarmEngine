@@ -53,7 +53,43 @@ using namespace std;
 #define LOGGING_INFO 3
 
 
+
+
 namespace Swarm {
+    namespace Texture {
+
+        
+        class AnimatedTexture
+        {
+        public:
+        AnimatedTexture(GLuint textureID);
+        AnimatedTexture(const char * textureName);
+        AnimatedTexture();
+        ~AnimatedTexture();
+        
+        void addTexture(GLuint textureID);
+        void addTexture(const char * textureName);
+        void addTexture(GLuint textureID, double interval);
+        void addTexture(const char * textureName, double interval);
+        
+        GLuint getTexture();
+        
+        void operator=(const AnimatedTexture &rhs);
+        private:
+        vector<GLuint> textureList;
+        int currentIndex;
+        vector<double> changeDelay;
+        double lastTime;
+        };
+
+    }
+
+    namespace Anim {
+
+        
+
+    }
+
     namespace Config {
 
         
@@ -118,14 +154,7 @@ namespace Swarm {
         GLFWwindow* getWindow();
 
     }
-}
 
-
-
-
-
-
-namespace Swarm {
     namespace Init {
 
         
@@ -161,12 +190,6 @@ namespace Swarm {
         
         string formatVec3(glm::vec3 pos);
         string formatVec3(float x, float y, float z);
-
-    }
-
-    namespace Anim {
-
-        
 
     }
 
@@ -388,29 +411,6 @@ namespace Swarm {
 
     namespace Texture {
 
-        
-        class AnimatedTexture
-        {
-        public:
-        AnimatedTexture(GLuint textureID);
-        AnimatedTexture(const char * textureName);
-        AnimatedTexture();
-        ~AnimatedTexture();
-        
-        void addTexture(GLuint textureID);
-        void addTexture(const char * textureName);
-        void addTexture(GLuint textureID, double interval);
-        void addTexture(const char * textureName, double interval);
-        
-        GLuint getTexture();
-        
-        void operator=(const AnimatedTexture &rhs);
-        private:
-        vector<GLuint> textureList;
-        int currentIndex;
-        vector<double> changeDelay;
-        double lastTime;
-        };
         
         GLuint loadPNGTexture(const char* filename);
         void registerTexture(GLuint textureID);

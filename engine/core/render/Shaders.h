@@ -27,7 +27,7 @@ using namespace glm;
 // Internal Libraries
 #include "Logging.h"
 
-#include "../Definitions.h"
+#include "Definitions.h"
 
 // -------------------
 // | SHADERS SECTION |

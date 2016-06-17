@@ -23,10 +23,10 @@ using namespace glm;
 // Internal Libraries
 #include "Logging.h"
 #include "Shaders.h"
-#include "ModelLoading.h"
-#include "Controls.h"
+#include "model/ModelLoading.h"
+#include "config/Controls.h"
 
-#include "../Definitions.h"
+#include "Definitions.h"
 
 
 // ---------------------

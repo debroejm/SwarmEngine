@@ -19,7 +19,7 @@ using namespace std;
 // Internal Libraries
 #include "TextureHandler.h"
 
-#include "../Definitions.h"
+#include "Definitions.h"
 
 
 // --------------------

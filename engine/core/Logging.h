@@ -15,7 +15,7 @@ using namespace std;
 
 #include <glm/glm.hpp>
 
-#include "../Definitions.h"
+#include "Definitions.h"
 
 // -----------
 // Definitions

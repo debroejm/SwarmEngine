@@ -2,7 +2,7 @@
 
 set(SOURCE_FILES
         main.cpp
-        ../engine/SwarmEngine.h
+        ${CMAKE_SOURCE_DIR}/external/engine/SwarmEngine.h
 )
 
 add_executable(SwarmEngineTest ${SOURCE_FILES})

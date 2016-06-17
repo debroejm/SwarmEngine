@@ -17,7 +17,7 @@ using namespace std;
 // Internal Libraries
 #include "Logging.h"
 
-#include "../Definitions.h"
+#include "Definitions.h"
 
 
 namespace ENGINE_NAMESPACE {

@@ -26,6 +26,7 @@ endif(NOT OPENGL_FOUND)
 ###############################################################
 # ADD INCLUDES
 ###############################################################
+include_directories("external/engine")
 include_directories("external/glew/include")
 include_directories("external/glfw/include")
 include_directories("external/glm")

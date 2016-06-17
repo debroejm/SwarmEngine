@@ -11,9 +11,9 @@
 
 // Internal Libraries
 #include "Logging.h"
-#include "Configuration.h"
+#include "config/Configuration.h"
 
-#include "../Definitions.h"
+#include "Definitions.h"
 
 
 // ----------------

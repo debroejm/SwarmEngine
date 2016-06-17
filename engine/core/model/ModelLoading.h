@@ -23,9 +23,9 @@ using namespace std;
 
 // Internal Libraries
 #include "Logging.h"
-#include "AnimatedTexture.h"
+#include "texture/AnimatedTexture.h"
 
-#include "../Definitions.h"
+#include "Definitions.h"
 
 #define MAX_BONE_CHILDREN 8
 
