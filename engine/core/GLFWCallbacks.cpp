@@ -7,7 +7,7 @@ namespace ENGINE_NAMESPACE {
 
         void error_callback(int error, const char* description)
         {
-            Log(LOGGING_ERROR, "GLFW", description);
+            Log::log_global(ERR) << description;
             //fputs(description, stderr);
         }
 

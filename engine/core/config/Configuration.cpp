@@ -82,9 +82,7 @@ namespace ENGINE_NAMESPACE {
                 }
                 dataStream.close();
             } else {
-                char errorMsg[256];
-                sprintf(errorMsg, "Failed to open '%s'", filepath);
-                Log(LOGGING_WARNING, "Configuration", errorMsg);
+                Log::log_config(WARNING) << "Failed to open '" << filepath << "'";
                 return;
             }
         }

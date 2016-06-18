@@ -39,9 +39,6 @@ namespace ENGINE_NAMESPACE {
         bool init();
         bool init(const char * windowName);
         bool init(const char * windowName, int windowX, int windowY);
-        bool init(int logLevel, int logType);
-        bool init(int logLevel, int logType, const char * windowName);
-        bool init(int logLevel, int logType, const char * windowName, int windowX, int windowY);
 
         void cleanup();
         #pragma lhgMultiOff()

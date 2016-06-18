@@ -22,6 +22,7 @@ namespace ENGINE_NAMESPACE {
         const char* getShaderName(GLenum shaderType) {
             switch(shaderType) {
                 case GL_VERTEX_SHADER: return "Vertex";
+                case GL_GEOMETRY_SHADER: return "Geometry";
                 case GL_FRAGMENT_SHADER: return "Fragment";
                 default: return NULL;
             }
@@ -30,12 +31,9 @@ namespace ENGINE_NAMESPACE {
         GLuint compileShader(const char* shaderPath, GLenum shaderType) {
 
             // Determine the type of shader
-            char infoMsg[256];
             const char* shaderTypeName = getShaderName(shaderType);
             if(shaderTypeName == NULL) {
-                char errorMsg[256];
-                sprintf(errorMsg, "Unknown Shader Type '%i': %s", shaderType, shaderPath);
-                Log(LOGGING_ERROR, "Shaders", errorMsg);
+                Log::log_render(ERR) << "Unknown Shader Type '" << shaderType << "' Specified For: " << shaderPath;
                 return 0;
             }
 
@@ -47,16 +45,13 @@ namespace ENGINE_NAMESPACE {
                 while(getline(shaderStream, line)) shaderSource += "\n" + line;
                 shaderStream.close();
             } else {
-                char errorMsg[256];
-                sprintf(errorMsg, "Failed to open '%s'", shaderPath);
-                Log(LOGGING_ERROR, "Shaders", errorMsg);
+                Log::log_render(ERR) << "Failed to Open Shader: " << shaderPath;
                 return 0;
             }
 
             GLuint shaderID = glCreateShader(shaderType);
             registeredShaders.push_back(shaderID);
-            sprintf(infoMsg, "Attempting to compile %s Shader [%i]: %s", shaderTypeName, shaderID, shaderPath);
-            Log(LOGGING_INFO, "Shaders", infoMsg);
+            Log::log_render(INFO) << "Compiling " << shaderTypeName << " Shader [" << shaderID << "]: " << shaderPath;
 
             // Attempt to compile shader
             const char* sourcePointer = shaderSource.c_str();
@@ -68,24 +63,19 @@ namespace ENGINE_NAMESPACE {
             int infoLogLength;
             glGetShaderiv(shaderID, GL_COMPILE_STATUS, &result);
             glGetShaderiv(shaderID, GL_INFO_LOG_LENGTH, &infoLogLength);
-            std::vector<char> shaderErrorMessage(infoLogLength);
+            char shaderErrorMessage[infoLogLength+1];
             glGetShaderInfoLog(shaderID, infoLogLength, NULL, &shaderErrorMessage[0]);
-            if(shaderErrorMessage.size() > 3) {
-                char errorMsg[1000];
-                sprintf(errorMsg, "%s Shader Error: %s", shaderTypeName, &shaderErrorMessage[0]);
-                Log(LOGGING_ERROR, "Shaders", errorMsg);
+            if(infoLogLength > 2) {
+                Log::log_render(ERR) << shaderTypeName << " Shader Error: " << shaderErrorMessage;
                 return 0;
             }
 
-            Log(LOGGING_INFO, "Shaders", "Done!");
             return shaderID;
         }
 
         void cleanupShaders() {
             for(int i = 0; i < registeredShaders.size(); i++) {
-                char infoMsg[256];
-                sprintf(infoMsg, "Deleting Shader [%i]", registeredShaders[i]);
-                Log(LOGGING_INFO, "Cleanup", infoMsg);
+                Log::log_render(INFO) << "Deleting Shader [" << registeredShaders[i] << "]";
                 glDeleteShader(registeredShaders[i]);
             }
         }
@@ -93,19 +83,15 @@ namespace ENGINE_NAMESPACE {
         GLuint compileProgram(Shader *shaders[], int shaderCount) {
             GLuint programID = glCreateProgram();
             registeredPrograms.push_back(programID);
-            char infoMsg[256];
-            sprintf(infoMsg, "Attempting to Link Program [%i]", programID);
-            Log(LOGGING_INFO, "Shaders", infoMsg);
+            Log::log_render(INFO) << "Linking Program [" << programID << "]";
 
             // Attach Shaders
             for(int i = 0; i < shaderCount; i++) {
                 if(shaders[i] != NULL) {
                     glAttachShader(programID, shaders[i]->getShaderID());
-                    char infoMsg2[256];
-                    sprintf(infoMsg2, "Attaching %s Shader [%i]", getShaderName(shaders[i]->getShaderType()), shaders[i]->getShaderID());
-                    Log(LOGGING_INFO, "Shaders", infoMsg2);
+                    Log::log_render(INFO) << "Attaching " << getShaderName(shaders[i]->getShaderType()) << " Shader [" << shaders[i]->getShaderID() << "]";
                 } else {
-                    Log(LOGGING_WARNING, "Shaders", "Found NULL Shader Object");
+                    Log::log_render(WARNING) << "Found NULL Shader Object";
                 }
             }
             glLinkProgram(programID);
@@ -120,9 +106,7 @@ namespace ENGINE_NAMESPACE {
             char errorMessage[infoLogLength+1];
             glGetProgramInfoLog(programID, infoLogLength, NULL, &errorMessage[0]);
             if(infoLogLength > 3) {
-                char errorMsg[1000];
-                sprintf(errorMsg, "Program Error: %s", errorMessage);
-                Log(LOGGING_ERROR, "Shaders", errorMsg);
+                Log::log_render(ERR) << "Program Error: " << errorMessage;
                 return 0;
             }
 
@@ -130,15 +114,12 @@ namespace ENGINE_NAMESPACE {
                 if(shaders[i] != NULL) glDetachShader(programID, shaders[i]->getShaderID());
             }
 
-            Log(LOGGING_INFO, "Shaders", "Done!");
             return programID;
         }
 
         void cleanupPrograms() {
             for(int i = 0; i < registeredPrograms.size(); i++) {
-                char infoMsg[256];
-                sprintf(infoMsg, "Deleting Program [%i]", registeredPrograms[i]);
-                Log(LOGGING_INFO, "Cleanup", infoMsg);
+                Log::log_render(INFO) << "Deleting Program [" << registeredPrograms[i] << "]";
                 glDeleteProgram(registeredPrograms[i]);
             }
         }

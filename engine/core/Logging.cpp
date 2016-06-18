@@ -16,6 +16,7 @@
 namespace ENGINE_NAMESPACE {
     namespace ENGINE_NAMESPACE_LOG {
 
+        /*
         const char * LOG_FILENAME = "SwarmLogging.log";
         FILE * logFile;
 
@@ -82,10 +83,144 @@ namespace ENGINE_NAMESPACE {
                 fprintf( logFile, "[%f][%s][%s] %s\n", time, tS, category, message);
             }
         }
+         */
 
         string formatVec3(glm::vec3 pos) { return formatVec3(pos.x, pos.y, pos.z); }
         string formatVec3(float x, float y, float z) {
             return SSTR("(" << x << ", " << y << ", " << z << ")");
+        }
+
+        // ********************
+        //  Static Log Methods
+        // ********************
+
+        const char * Log::defaultFilepath = "logs/Swarm_";
+        vector<FILE*> Log::fileptrs;
+
+        Log Log::log_global("Global", true);
+        Log Log::log_config("Configuration", true);
+        Log Log::log_model("Model", true);
+        Log Log::log_render("Rendering", true);
+
+        void Log::setDefaultFilepath(const char * path) {
+            defaultFilepath = path;
+        }
+
+        void Log::cleanupAll() {
+            for(int i = 0; i < fileptrs.size(); i++) fclose(fileptrs[i]);
+        }
+
+
+
+        // ********************
+        //  Member Log Methods
+        // ********************
+
+        Log::Log() {
+            file = NULL;
+            name = "";
+            filepath = NULL;
+            console = true;
+        }
+
+        Log::Log(const char * name, bool console) : name(name), console(console) {
+            filepath = (string(defaultFilepath) + string(name) + ".log").c_str();
+            file = fopen(filepath, "w");
+            if(file == NULL) cerr << "Failed to create log: " << filepath;
+            else fileptrs.push_back(file);
+        }
+
+        Log::Log(const char * name, FILE * file, bool console) : name(name), file(file), console(console) {
+            filepath = "";
+        }
+
+        Log::~Log() {
+            //if(file != NULL) fclose(file);
+        }
+
+        string Log::time() {
+            time_t now = std::time(NULL);
+            char buff[80];
+            strftime(buff, sizeof(buff), "[%m/%d/%Y-%X]", localtime(&now));
+            return buff;
+        }
+
+        const char * Log::prefix() {
+            switch(severity) {
+                case INFO:
+                    return "[INFO]";
+                case WARNING:
+                    return "[WARN]";
+                case ERR:
+                    return "[ERROR]";
+                case FATAL:
+                    return "[FATAL]";
+                default:
+                    return "[UNKWN]";
+            }
+        }
+
+        void Log::newline() {
+            *this << "\n" << time() << "[" << name << "]" << prefix() << " ";
+        }
+
+        void Log::setSeverity(LogSeverity severity) {
+            this->severity = severity;
+            newline();
+        }
+
+        Log &Log::operator()(LogSeverity severity) {
+            setSeverity(severity);
+            return *this;
+        }
+
+        Log &Log::operator<<(const char * input) {
+            if(file != NULL) fprintf(file, "%s", input);
+            if(console && (severity == ERR || severity == FATAL)) fprintf(stderr, "%s", input);
+            else if(console) fprintf(stdout, "%s", input);
+            return *this;
+        }
+
+        Log &Log::operator<<(string input) {
+            *this << input.c_str();
+            return *this;
+        }
+
+        Log &Log::operator<<(GLuint input) {
+            if(file != NULL) fprintf(file, "%u", input);
+            if(console && (severity == ERR || severity == FATAL)) fprintf(stderr, "%u", input);
+            else if(console) fprintf(stdout, "%u", input);
+            return *this;
+        }
+
+        Log &Log::operator<<(GLint input) {
+            if(file != NULL) fprintf(file, "%i", input);
+            if(console && (severity == ERR || severity == FATAL)) fprintf(stderr, "%i", input);
+            else if(console) fprintf(stdout, "%i", input);
+            return *this;
+        }
+
+        Log &Log::operator<<(double input) {
+            if(file != NULL) fprintf(file, "%f", input);
+            if(console && (severity == ERR || severity == FATAL)) fprintf(stderr, "%f", input);
+            else if(console) fprintf(stdout, "%f", input);
+            return *this;
+        }
+
+        Log &Log::operator<<(char input) {
+            if(file != NULL) fprintf(file, "%c", input);
+            if(console && (severity == ERR || severity == FATAL)) fprintf(stderr, "%c", input);
+            else if(console) fprintf(stdout, "%c", input);
+            return *this;
+        }
+
+        Log &Log::operator=(Log &other) {
+            this->name = other.name;
+            this->file = other.file;
+            this->filepath = other.filepath;
+            this->console = other.console;
+            this->severity = other.severity;
+            return *this;
         }
 
     }

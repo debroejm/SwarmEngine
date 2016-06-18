@@ -132,9 +132,6 @@ namespace Swarm {
         bool init();
         bool init(const char * windowName);
         bool init(const char * windowName, int windowX, int windowY);
-        bool init(int logLevel, int logType);
-        bool init(int logLevel, int logType, const char * windowName);
-        bool init(int logLevel, int logType, const char * windowName, int windowX, int windowY);
         
         void cleanup();
 
@@ -149,18 +146,69 @@ namespace Swarm {
     namespace Logging {
 
         
-        void ChangeLoggingLevel(int newLoggingLevel);
-        void ChangeLoggingType(int newLoggingType);
-        
-        void initLogging();
-        void initLogging(int newLoggingLevel, int newLoggingType);
-        void cleanupLogging();
-        
-        void Log(int level, const char * category, const char * message);
-        //void Log(int level, const char * category, const char * message, std::vector< int > intInputs);
-        
         string formatVec3(glm::vec3 pos);
         string formatVec3(float x, float y, float z);
+        
+        enum LogSeverity {
+        INFO,
+        WARNING,
+        ERR,        // 'ERROR' is macro'd somewhere
+        FATAL
+        };
+        
+        class Log {
+        public:
+        Log();      // Console-Only Log
+        Log(const char * name, bool console = false);
+        Log(const char * name, FILE * file, bool console = false);
+        virtual ~Log();
+        
+        void newline();
+        
+        // Getters
+        const char * getName() { return name; }
+        const char * getFilepath() { return filepath; }
+        
+        // Setters
+        void setSeverity(LogSeverity severity);
+        
+        // Operator Overloads
+        Log &operator()(LogSeverity severity);
+        Log &operator<<(const char * input);
+        Log &operator<<(string input);
+        Log &operator<<(GLuint input);
+        Log &operator<<(GLint input);
+        Log &operator<<(double input);
+        Log &operator<<(char input);
+        Log &operator=(Log &other);
+        
+        static void setDefaultFilepath(const char * path);
+        static void cleanupAll();
+        
+        static Log log_global;
+        static Log log_config;
+        static Log log_model;
+        static Log log_render;
+        
+        protected:
+        string time();
+        const char * prefix();
+        
+        const char * name;
+        const char * filepath;
+        
+        FILE * file = NULL;
+        
+        bool console = false;
+        
+        LogSeverity severity = INFO;
+        
+        static const char * defaultFilepath;
+        
+        private:
+        static vector<FILE*> fileptrs;
+        };
+        
 
     }
 

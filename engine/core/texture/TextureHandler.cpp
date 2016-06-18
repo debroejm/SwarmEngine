@@ -13,9 +13,7 @@ namespace ENGINE_NAMESPACE {
             unsigned error = lodepng::decode(image, width, height, filename);
 
             if(error != 0) {
-                char errorMsg[256];
-                sprintf(errorMsg, "'%s': %s", filename, lodepng_error_text(error));
-                Log(LOGGING_ERROR, "Textures", errorMsg);
+                Log::log_render(ERR) << "Texture Error [" << filename << "]: " << lodepng_error_text(error);
                 return 0;
             }
 
@@ -43,18 +41,14 @@ namespace ENGINE_NAMESPACE {
             }
             registeredTextures.push_back(textureID);
 
-            char logString[256];
-            sprintf(logString, "Texture ID Registered: %i", textureID);
-            Log(LOGGING_INFO, "Textures", logString);
+            Log::log_render(INFO) << "Texture ID Registered: " << textureID;
         }
 
         void cleanupTextures()
         {
             for(int i = 0; i < registeredTextures.size(); i++)
             {
-                char infoMsg[256];
-                sprintf(infoMsg, "Deleting Texture [%i]", registeredTextures[i]);
-                Log(LOGGING_INFO, "Cleanup", infoMsg);
+                Log::log_render(INFO) << "Deleting Texture [" << registeredTextures[i] << "]";
                 // Yes, thats formatted properly. Pointers...
                 glDeleteTextures(1, &registeredTextures[i]);
             }

@@ -25,7 +25,7 @@ using namespace std;
 
 int main() {
 
-    if(!Init::init(LOGGING_LEVEL_MOST, LOGGING_TYPE_FILE_AND_CONSOLE)) {
+    if(!Init::init()) {
         return -1;
     }
 
