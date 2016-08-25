@@ -33,6 +33,14 @@ using namespace glm;
 // | SHADERS SECTION |
 // -------------------
 
+#pragma lhgMultiOn(SwarmEngine, LHG_NONE, 100)
+#define SHADER_ATTRIBUTE_VERTEX 1
+#define SHADER_ATTRIBUTE_NORMAL 2
+#define SHADER_ATTRIBUTE_COLOR 3
+#define SHADER_ATTRIBUTE_UV 4
+#define SHADER_ATTRIBUTE_TANGET 5
+#pragma lhgMultiOff()
+
 namespace ENGINE_NAMESPACE {
     namespace ENGINE_NAMESPACE_SHADER {
 
@@ -56,9 +64,7 @@ namespace ENGINE_NAMESPACE {
             Program();
             Program(Program &other);
             Program(Shader *shaders[], int shaderCount,
-                    bool vertices = true, bool uvs = true, bool normals = true,
-                    const char * model = "_m", const char * view = "_v", const char * projection = "_p",
-                    const char * texMap = "texturemap");
+                    bool vertices = true, bool uvs = true, bool normals = true);
             ~Program();
 
             void operator=(const Program &rhs);
@@ -69,18 +75,11 @@ namespace ENGINE_NAMESPACE {
             bool usesUVs() { return uvs; }
             bool usesNormals() { return normals; }
 
-            GLint getUniformID(const char * name);
-            GLint getUniformID_model() { return uniformID_model; }
-            GLint getUniformID_view() { return uniformID_view; }
-            GLint getUniformID_projection() { return uniformID_projection; }
-            GLint getUniformID_texture() { return uniformID_texture; }
+            GLint getUniformID(string name);
 
             bool isLinked() { return linked; }
 
         protected:
-            bool findUniformIDs(const char * model, const char * view, const char * projection,
-                                const char * texMap);
-
             GLuint programID;
             bool linked;
 
@@ -88,11 +87,7 @@ namespace ENGINE_NAMESPACE {
             bool uvs;
             bool normals;
 
-            GLint uniformID_model;
-            GLint uniformID_view;
-            GLint uniformID_projection;
-
-            GLint uniformID_texture;
+            map<string, GLint> uniformCache;
         };
 
         void cleanupShaders();

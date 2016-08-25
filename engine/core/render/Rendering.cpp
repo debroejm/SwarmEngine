@@ -53,15 +53,15 @@ namespace ENGINE_NAMESPACE {
             glUniformMatrix4fv(ModelID, 1, GL_FALSE, &ModelMatrix[0][0]);
             glUniformMatrix4fv(ViewID, 1, GL_FALSE, &ViewMatrix[0][0]);
              */
-            glUniformMatrix4fv(currentProgram->getUniformID_model(), 1, GL_FALSE, &modelMatrix[0][0]);
-            glUniformMatrix4fv(currentProgram->getUniformID_view(), 1, GL_FALSE, &ViewMatrix[0][0]);
-            glUniformMatrix4fv(currentProgram->getUniformID_projection(), 1, GL_FALSE, &ProjectionMatrix[0][0]);
+            glUniformMatrix4fv(currentProgram->getUniformID("_m"), 1, GL_FALSE, &modelMatrix[0][0]);
+            glUniformMatrix4fv(currentProgram->getUniformID("_v"), 1, GL_FALSE, &ViewMatrix[0][0]);
+            glUniformMatrix4fv(currentProgram->getUniformID("_p"), 1, GL_FALSE, &ProjectionMatrix[0][0]);
 
             // Texture Binding
             glActiveTexture(GL_TEXTURE0);
             GLuint TexID = object.getTexture();
             glBindTexture(GL_TEXTURE_2D, TexID);
-            glUniform1i(currentProgram->getUniformID_texture(), 0);
+            glUniform1i(currentProgram->getUniformID("texturemap"), 0);
 
             /*
             // 1rst attribute buffer : bones

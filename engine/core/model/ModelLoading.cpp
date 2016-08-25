@@ -859,10 +859,10 @@ namespace ENGINE_NAMESPACE {
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbuffer);
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->indexCount * sizeof(unsigned short), &this->indexArray[0], GL_STATIC_DRAW);
 
-            glEnableVertexAttribArray(0);
+            glEnableVertexAttribArray(SHADER_ATTRIBUTE_VERTEX);
             glBindBuffer(GL_ARRAY_BUFFER, bonebuffer);
             glVertexAttribPointer(
-                    0,                  // attribute
+                    SHADER_ATTRIBUTE_VERTEX,                  // attribute
                     3,                  // size
                     GL_FLOAT,           // type
                     GL_FALSE,           // normalized?
@@ -870,10 +870,10 @@ namespace ENGINE_NAMESPACE {
                     (void *) 0            // array buffer offset
             );
 
-            glEnableVertexAttribArray(1);
+            glEnableVertexAttribArray(SHADER_ATTRIBUTE_UV);
             glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
             glVertexAttribPointer(
-                    1,                                // attribute
+                    SHADER_ATTRIBUTE_UV,                                // attribute
                     2,                                // size
                     GL_FLOAT,                         // type
                     GL_FALSE,                         // normalized?
@@ -881,10 +881,10 @@ namespace ENGINE_NAMESPACE {
                     (void *) 0                          // array buffer offset
             );
 
-            glEnableVertexAttribArray(2);
+            glEnableVertexAttribArray(SHADER_ATTRIBUTE_NORMAL);
             glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
             glVertexAttribPointer(
-                    2,                                // attribute
+                    SHADER_ATTRIBUTE_NORMAL,                                // attribute
                     3,                                // size
                     GL_FLOAT,                         // type
                     GL_FALSE,                         // normalized?

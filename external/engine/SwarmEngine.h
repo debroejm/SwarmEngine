@@ -51,14 +51,19 @@ using namespace std;
 #define LOGGING_ERROR 1
 #define LOGGING_WARNING 2
 #define LOGGING_INFO 3
-
-
+#define SHADER_ATTRIBUTE_VERTEX 1
+#define SHADER_ATTRIBUTE_NORMAL 2
+#define SHADER_ATTRIBUTE_COLOR 3
+#define SHADER_ATTRIBUTE_UV 4
+#define SHADER_ATTRIBUTE_TANGET 5
 
 
 namespace Swarm {
     namespace Texture {
 
-        
+        GLuint loadPNGTexture(const char* filename);
+        void registerTexture(GLuint textureID);
+        void cleanupTextures();
         class AnimatedTexture
         {
         public:
@@ -81,12 +86,6 @@ namespace Swarm {
         vector<double> changeDelay;
         double lastTime;
         };
-
-    }
-
-    namespace Anim {
-
-        
 
     }
 
@@ -154,16 +153,20 @@ namespace Swarm {
         GLFWwindow* getWindow();
 
     }
+}
 
+
+
+
+
+
+namespace Swarm {
     namespace Init {
 
         
         bool init();
         bool init(const char * windowName);
         bool init(const char * windowName, int windowX, int windowY);
-        bool init(int logLevel, int logType);
-        bool init(int logLevel, int logType, const char * windowName);
-        bool init(int logLevel, int logType, const char * windowName, int windowX, int windowY);
         
         void cleanup();
 
@@ -178,18 +181,75 @@ namespace Swarm {
     namespace Logging {
 
         
-        void ChangeLoggingLevel(int newLoggingLevel);
-        void ChangeLoggingType(int newLoggingType);
-        
-        void initLogging();
-        void initLogging(int newLoggingLevel, int newLoggingType);
-        void cleanupLogging();
-        
-        void Log(int level, const char * category, const char * message);
-        //void Log(int level, const char * category, const char * message, std::vector< int > intInputs);
-        
         string formatVec3(glm::vec3 pos);
         string formatVec3(float x, float y, float z);
+        
+        enum LogSeverity {
+        INFO,
+        WARNING,
+        ERR,        // 'ERROR' is macro'd somewhere
+        FATAL
+        };
+        
+        class Log {
+        public:
+        Log();      // Console-Only Log
+        Log(const char * name, bool console = false);
+        Log(const char * name, FILE * file, bool console = false);
+        virtual ~Log();
+        
+        void newline();
+        
+        // Getters
+        const char * getName() { return name; }
+        const char * getFilepath() { return filepath; }
+        
+        // Setters
+        void setSeverity(LogSeverity severity);
+        
+        // Operator Overloads
+        Log &operator()(LogSeverity severity);
+        Log &operator<<(const char * input);
+        Log &operator<<(string input);
+        Log &operator<<(GLuint input);
+        Log &operator<<(GLint input);
+        Log &operator<<(double input);
+        Log &operator<<(char input);
+        Log &operator=(Log &other);
+        
+        static void setDefaultFilepath(const char * path);
+        static void cleanupAll();
+        
+        static Log log_global;
+        static Log log_config;
+        static Log log_model;
+        static Log log_render;
+        
+        protected:
+        string time();
+        const char * prefix();
+        
+        const char * name;
+        const char * filepath;
+        
+        FILE * file = NULL;
+        
+        bool console = false;
+        
+        LogSeverity severity = INFO;
+        
+        static const char * defaultFilepath;
+        
+        private:
+        static vector<FILE*> fileptrs;
+        };
+        
+
+    }
+
+    namespace Anim {
+
+        
 
     }
 
@@ -342,7 +402,13 @@ namespace Swarm {
         
 
     }
+}
 
+
+
+
+
+namespace Swarm {
     namespace Shader {
 
         
@@ -365,9 +431,7 @@ namespace Swarm {
         Program();
         Program(Program &other);
         Program(Shader *shaders[], int shaderCount,
-        bool vertices = true, bool uvs = true, bool normals = true,
-        const char * model = "_m", const char * view = "_v", const char * projection = "_p",
-        const char * texMap = "texturemap");
+        bool vertices = true, bool uvs = true, bool normals = true);
         ~Program();
         
         void operator=(const Program &rhs);
@@ -378,18 +442,11 @@ namespace Swarm {
         bool usesUVs() { return uvs; }
         bool usesNormals() { return normals; }
         
-        GLint getUniformID(const char * name);
-        GLint getUniformID_model() { return uniformID_model; }
-        GLint getUniformID_view() { return uniformID_view; }
-        GLint getUniformID_projection() { return uniformID_projection; }
-        GLint getUniformID_texture() { return uniformID_texture; }
+        GLint getUniformID(string name);
         
         bool isLinked() { return linked; }
         
         protected:
-        bool findUniformIDs(const char * model, const char * view, const char * projection,
-        const char * texMap);
-        
         GLuint programID;
         bool linked;
         
@@ -397,11 +454,7 @@ namespace Swarm {
         bool uvs;
         bool normals;
         
-        GLint uniformID_model;
-        GLint uniformID_view;
-        GLint uniformID_projection;
-        
-        GLint uniformID_texture;
+        map<string, GLint> uniformCache;
         };
         
         void cleanupShaders();
@@ -412,9 +465,7 @@ namespace Swarm {
     namespace Texture {
 
         
-        GLuint loadPNGTexture(const char* filename);
-        void registerTexture(GLuint textureID);
-        void cleanupTextures();
+        
 
     }
 

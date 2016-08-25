@@ -29,7 +29,7 @@ using namespace std;
 namespace ENGINE_NAMESPACE {
     namespace ENGINE_NAMESPACE_TEXTURE {
 
-        #pragma lhgMultiOn(SwarmEngine, ENGINE_NAMESPACE::ENGINE_NAMESPACE_TEXTURE)
+        #pragma lhgMultiOn(SwarmEngine, ENGINE_NAMESPACE::ENGINE_NAMESPACE_TEXTURE, 45)
         class AnimatedTexture
         {
         public:

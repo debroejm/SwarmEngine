@@ -23,6 +23,7 @@ using namespace std;
 
 // Internal Libraries
 #include "Logging.h"
+#include "render/Shaders.h"
 #include "texture/AnimatedTexture.h"
 
 #include "Definitions.h"

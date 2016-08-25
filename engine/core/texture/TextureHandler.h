@@ -32,7 +32,7 @@ using namespace std;
 namespace ENGINE_NAMESPACE {
     namespace ENGINE_NAMESPACE_TEXTURE {
 
-        #pragma lhgMultiOn(SwarmEngine, ENGINE_NAMESPACE::ENGINE_NAMESPACE_TEXTURE)
+        #pragma lhgMultiOn(SwarmEngine, ENGINE_NAMESPACE::ENGINE_NAMESPACE_TEXTURE, 50)
         GLuint loadPNGTexture(const char* filename);
         void registerTexture(GLuint textureID);
         void cleanupTextures();

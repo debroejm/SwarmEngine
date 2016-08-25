@@ -25,6 +25,8 @@ using namespace std;
 
 int main() {
 
+    int dud;
+
     if(!Init::init()) {
         return -1;
     }
@@ -77,7 +79,7 @@ int main() {
         Input::computeMatricesFromInputs();
 
         vec3 tPos(0.0f, 0.0f, 0.005f);
-        cube.addBonePosition(0, tPos);
+        if (FORWARD.isPressed()) cube.addBonePosition(0, tPos);
         testModel.rotateBonePosition(1, glfwGetTime(), vec3(1.0f, 0.0f, 1.0f));
         testModel2.rotateBonePosition(10, glfwGetTime(), vec3(0.0f, 1.0f, 0.0f));
         cube.updateBoneBuffer();

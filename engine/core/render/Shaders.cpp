@@ -156,12 +156,10 @@ namespace ENGINE_NAMESPACE {
         Program::Program() { linked = false; }
         Program::Program(Program &other) { *this = other; }
         Program::Program(Shader *shaders[], int shaderCount,
-                         bool vertices, bool uvs, bool normals,
-                         const char * model, const char * view, const char * projection,
-                         const char * texMap) 
+                         bool vertices, bool uvs, bool normals)
                        : vertices(vertices), uvs(uvs), normals(normals) {
             this->programID = compileProgram(shaders, shaderCount);
-            linked = (programID > 0) && findUniformIDs(model, view, projection, texMap);
+            linked = (programID > 0);
         }
 
         Program::~Program() {
@@ -174,24 +172,13 @@ namespace ENGINE_NAMESPACE {
             this->vertices = rhs.vertices;
             this->uvs = rhs.uvs;
             this->normals = rhs.normals;
-            this->uniformID_model = rhs.uniformID_model;
-            this->uniformID_view = rhs.uniformID_view;
-            this->uniformID_projection = rhs.uniformID_projection;
-            this->uniformID_texture = rhs.uniformID_texture;
             this->linked = rhs.linked;
+            this->uniformCache = rhs.uniformCache;
         }
         
-        GLint Program::getUniformID(const char * name) {
-            return glGetUniformLocation(programID, name);
-        }
-
-        bool Program::findUniformIDs(const char * model, const char * view, const char * projection,
-                                     const char * texMap) {
-            uniformID_model =       glGetUniformLocation(programID, model);
-            uniformID_view =        glGetUniformLocation(programID, view);
-            uniformID_projection =  glGetUniformLocation(programID, projection);
-            uniformID_texture =     glGetUniformLocation(programID, texMap);
-            return !(uniformID_model < 0 || uniformID_view < 0 || uniformID_projection < 0 || uniformID_texture < 0);
+        GLint Program::getUniformID(string name) {
+            if(uniformCache.count(name) < 1) uniformCache[name] = glGetUniformLocation(programID, name.c_str());
+            return uniformCache[name];
         }
     }
 }
