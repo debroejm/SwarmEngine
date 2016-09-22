@@ -1,9 +1,13 @@
-#include "TextureHandler.h"
+#include "../../Render.h"
 
-using namespace ENGINE_NAMESPACE::ENGINE_NAMESPACE_LOG;
+#include "../../Core.h"
 
-namespace ENGINE_NAMESPACE {
-    namespace ENGINE_NAMESPACE_TEXTURE {
+#include <lodepng.h>
+
+using namespace Swarm::Logging;
+
+namespace Swarm {
+    namespace Texture {
 
         std::vector<GLuint> registeredTextures;
 

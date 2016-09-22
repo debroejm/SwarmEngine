@@ -1,4 +1,4 @@
-#include "Logging.h"
+#include "../Core.h"
 
 #define SSTR( x ) static_cast< std::ostringstream & >( \
         ( std::ostringstream() << std::dec << x ) ).str()
@@ -13,8 +13,8 @@
 
 #endif
 
-namespace ENGINE_NAMESPACE {
-    namespace ENGINE_NAMESPACE_LOG {
+namespace Swarm {
+    namespace Logging {
 
         /*
         const char * LOG_FILENAME = "SwarmLogging.log";
@@ -85,11 +85,6 @@ namespace ENGINE_NAMESPACE {
         }
          */
 
-        string formatVec3(glm::vec3 pos) { return formatVec3(pos.x, pos.y, pos.z); }
-        string formatVec3(float x, float y, float z) {
-            return SSTR("(" << x << ", " << y << ", " << z << ")");
-        }
-
         // ********************
         //  Static Log Methods
         // ********************
@@ -142,7 +137,7 @@ namespace ENGINE_NAMESPACE {
             time_t now = std::time(NULL);
             char buff[80];
             strftime(buff, sizeof(buff), "[%m/%d/%Y-%X]", localtime(&now));
-            return buff;
+            return string(buff);
         }
 
         const char * Log::prefix() {
@@ -211,6 +206,11 @@ namespace ENGINE_NAMESPACE {
             if(file != NULL) fprintf(file, "%c", input);
             if(console && (severity == ERR || severity == FATAL)) fprintf(stderr, "%c", input);
             else if(console) fprintf(stdout, "%c", input);
+            return *this;
+        }
+
+        Log &Log::operator<<(glm::vec3 input) {
+            *this << "(" << input.x << ", " << input.y << ", " << input.z << ")";
             return *this;
         }
 

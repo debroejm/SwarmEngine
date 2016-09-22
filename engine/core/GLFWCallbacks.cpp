@@ -1,14 +1,15 @@
 #include "GLFWCallbacks.h"
 
-using namespace ENGINE_NAMESPACE::ENGINE_NAMESPACE_LOG;
+#include "../Core.h"
 
-namespace ENGINE_NAMESPACE {
-    namespace ENGINE_NAMESPACE_GLFW {
+using namespace Swarm::Logging;
+
+namespace Swarm {
+    namespace GLFW {
 
         void error_callback(int error, const char* description)
         {
-            Log::log_global(ERR) << description;
-            //fputs(description, stderr);
+            Log::log_global(ERR) << " " << error << ": " << description;
         }
 
         void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -19,8 +20,8 @@ namespace ENGINE_NAMESPACE {
                 */
 
             // Send keycode and other info to the input processing part of mEng
-            if(action == GLFW_PRESS) ENGINE_NAMESPACE_CONFIG::setPressed(key, true);
-            if(action == GLFW_RELEASE) ENGINE_NAMESPACE_CONFIG::setPressed(key, false);
+            if(action == GLFW_PRESS) Input::setPressed(key, true);
+            if(action == GLFW_RELEASE) Input::setPressed(key, false);
         }
 
         void framebuffer_size_callback(GLFWwindow* window, int width, int height)

@@ -1,7 +1,7 @@
-#include "Controls.h"
+#include "../../Core.h"
 
-namespace ENGINE_NAMESPACE {
-    namespace ENGINE_NAMESPACE_INPUT {
+namespace Swarm {
+    namespace Input {
 
         glm::mat4 ViewMatrix;
         glm::mat4 ProjectionMatrix;
@@ -75,7 +75,7 @@ namespace ENGINE_NAMESPACE {
 
             // Up vector
             //glm::vec3 up = glm::cross( right, direction );
-            vec3 up(0.0f, 1.0f, 0.0f);
+            glm::vec3 up(0.0f, 1.0f, 0.0f);
 
 
             // Move forward

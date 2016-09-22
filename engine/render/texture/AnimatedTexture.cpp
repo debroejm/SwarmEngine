@@ -1,7 +1,7 @@
-#include "AnimatedTexture.h"
+#include "../../Render.h"
 
-namespace ENGINE_NAMESPACE {
-    namespace ENGINE_NAMESPACE_TEXTURE {
+namespace Swarm {
+    namespace Texture {
 
         AnimatedTexture::AnimatedTexture(GLuint textureID)
         {
@@ -23,11 +23,6 @@ namespace ENGINE_NAMESPACE {
         {
             currentIndex = 0;
             lastTime = glfwGetTime();
-        }
-
-        AnimatedTexture::~AnimatedTexture()
-        {
-
         }
 
         void AnimatedTexture::addTexture(GLuint textureID)
@@ -69,12 +64,33 @@ namespace ENGINE_NAMESPACE {
             return tx;
         }
 
-        void AnimatedTexture::operator=(const AnimatedTexture &rhs) {
-            (*this).textureList = rhs.textureList;
-            (*this).changeDelay = rhs.changeDelay;
-            (*this).currentIndex = 0;
-            (*this).lastTime = glfwGetTime();
+        AnimatedTexture &AnimatedTexture::operator=(const AnimatedTexture &rhs) {
+            this->textureList = rhs.textureList;
+            this->changeDelay = rhs.changeDelay;
+            this->currentIndex = 0;
+            this->lastTime = glfwGetTime();
+            return *this;
         };
+
+        AnimatedTexture &AnimatedTexture::operator=(const SingleTexture &rhs) {
+            this->textureList.clear();
+            this->textureList.push_back(rhs.textureID);
+            this->changeDelay.clear();
+            this->changeDelay.push_back(1.0);
+            this->currentIndex = 0;
+            this->lastTime = glfwGetTime();
+            return *this;
+        }
+
+        AnimatedTexture &AnimatedTexture::operator=(const GLuint &rhs) {
+            this->textureList.clear();
+            this->textureList.push_back(rhs);
+            this->changeDelay.clear();
+            this->changeDelay.push_back(1.0);
+            this->currentIndex = 0;
+            this->lastTime = glfwGetTime();
+            return *this;
+        }
 
 
     }

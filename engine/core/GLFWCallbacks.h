@@ -1,5 +1,4 @@
-#ifndef SWARMENGINE_GLFWCALLBACKS_H
-#define SWARMENGINE_GLFWCALLBACKS_H
+#pragma once
 
 // External Libraries
 #define GLEW_STATIC
@@ -8,20 +7,8 @@
 //#define GLFW_DLL
 #include <glfw/glfw3.h>
 
-
-// Internal Libraries
-#include "Logging.h"
-#include "config/Configuration.h"
-
-#include "Definitions.h"
-
-
-// ----------------
-// | GLFW SECTION |
-// ----------------
-
-namespace ENGINE_NAMESPACE {
-    namespace ENGINE_NAMESPACE_GLFW {
+namespace Swarm {
+    namespace GLFW {
 
         // GLFW Callback Prototypes
         void error_callback(int error, const char* description);
@@ -30,5 +17,3 @@ namespace ENGINE_NAMESPACE {
 
     }
 }
-
-#endif //SWARMENGINE_GLFWCALLBACKS_H

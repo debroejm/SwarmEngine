@@ -1,20 +1,25 @@
-#include "Initialization.h"
+#include "../Core.h"
 
-using namespace ENGINE_NAMESPACE::ENGINE_NAMESPACE_LOG;
+#include "../Render.h"
+#include "GLFWCallbacks.h"
 
-namespace ENGINE_NAMESPACE {
-    namespace ENGINE_NAMESPACE_INIT {
+using namespace Swarm::Logging;
 
-        bool init() { return init( "Swarm Engine Instance", 1600, 900 ); }
-        bool init(const char * windowName) { return init( windowName, 1600, 900 ); }
+namespace Swarm {
+    namespace Init {
 
-        bool init(const char * windowName, int windowX, int windowY) {
+        bool init(const char * windowName) {
+            // TODO: Modify so that default size is determined by screen capabilities
+            return init( 1600, 900, windowName );
+        }
+
+        bool init(int windowX, int windowY, const char * windowName) {
 
             GLFWwindow* window;
 
             // Initialize GLFW
             Log::log_global(INFO) << "Initializing GLFW";
-            glfwSetErrorCallback(ENGINE_NAMESPACE_GLFW::error_callback);
+            glfwSetErrorCallback(GLFW::error_callback);
             if (!glfwInit()) {
                 Log::log_global(FATAL) << "Failed to Initialize GLFW!";
                 exit(EXIT_FAILURE);
@@ -30,14 +35,14 @@ namespace ENGINE_NAMESPACE {
             }
             glfwMakeContextCurrent(window);
 
-            glfwSetKeyCallback(window, ENGINE_NAMESPACE_GLFW::key_callback);
+            glfwSetKeyCallback(window, GLFW::key_callback);
 
             glfwSetCursorPos(window, windowX/2, windowY/2);
 
-            ENGINE_NAMESPACE_INPUT::setWindow(window);
+            Input::setWindow(window);
 
             // Initialize GLEW
-            glewExperimental = true; // Needed for core profile
+            glewExperimental = GL_TRUE; // Needed for core profile
             if (glewInit() != GLEW_OK) {
                 Log::log_global(FATAL) << "Failed to Initialize GLEW!";
                 return false;
@@ -47,18 +52,18 @@ namespace ENGINE_NAMESPACE {
             glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
 
-            ENGINE_NAMESPACE_RENDER::init();
+            Render::init();
 
             return true;
 
         }
 
         void cleanup() {
-            ENGINE_NAMESPACE_TEXTURE::cleanupTextures();
-            ENGINE_NAMESPACE_MODEL::cleanupBuffers();
-            ENGINE_NAMESPACE_SHADER::cleanupShaders();
-            ENGINE_NAMESPACE_SHADER::cleanupPrograms();
-            ENGINE_NAMESPACE_RENDER::cleanup();
+            Texture::cleanupTextures();
+            Model::cleanupBuffers();
+            Render::cleanupShaders();
+            Render::cleanupPrograms();
+            Render::cleanup();
 
             Log::cleanupAll();
         }

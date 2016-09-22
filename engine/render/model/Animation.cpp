@@ -1,14 +1,14 @@
-#include "Animation.h"
+#include "../../Render.h"
 
-namespace ENGINE_NAMESPACE {
-    namespace ENGINE_NAMESPACE_ANIM {
+namespace Swarm {
+    namespace Anim {
 
-        Rigging::Rigging(ENGINE_NAMESPACE_MODEL::Model &input) {
+        Rigging::Rigging(Model::Model &input) {
             model = &input;
         }
 
 
-        RiggingHumanoid::RiggingHumanoid(ENGINE_NAMESPACE_MODEL::Model &input): Rigging(input) {
+        RiggingHumanoid::RiggingHumanoid(Model::Model &input): Rigging(input) {
             leftKnee = input.getBone("KneeL");
             leftFoot = input.getBone("FootL");
             rightKnee = input.getBone("KneeR");

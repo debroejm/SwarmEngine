@@ -26,7 +26,6 @@ endif(NOT OPENGL_FOUND)
 ###############################################################
 # ADD INCLUDES
 ###############################################################
-include_directories("external/engine")
 include_directories("external/glew/include")
 include_directories("external/glfw/include")
 include_directories("external/glm")
@@ -44,6 +43,7 @@ function(BuildEngine SystemName)
     #add_subdirectory("test" out-${SystemName})
     add_subdirectory("external/glfw")
     add_subdirectory("engine")
+    include_directories("engine")
     add_subdirectory("test")
 endfunction(BuildEngine)
 

@@ -1,20 +1,11 @@
-#include "Shaders.h"
+#include "../Render.h"
 
-using namespace ENGINE_NAMESPACE::ENGINE_NAMESPACE_LOG;
+#include "../Core.h"
 
-namespace ENGINE_NAMESPACE {
-    namespace ENGINE_NAMESPACE_SHADER {
+using namespace Swarm::Logging;
 
-
-// Shader Uniform Names
-        const GLchar * UniformName_MVP = "MVP";
-        const GLchar * UniformName_Model = "M";
-        const GLchar * UniformName_View = "V";
-        const GLchar * UniformName_Texture = "textureSampler";
-        const GLchar * UniformName_LightPos = "LightPosition_worldspace";
-        const GLchar * UniformName_LightColor = "";
-        const GLchar * UniformName_LightPower = "";
-        const GLchar * UniformName_ScreenSize = "";
+namespace Swarm {
+    namespace Render {
 
         std::vector<GLuint> registeredShaders;
         std::vector<GLuint> registeredPrograms;
