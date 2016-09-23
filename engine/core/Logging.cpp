@@ -89,13 +89,11 @@ namespace Swarm {
         //  Static Log Methods
         // ********************
 
-        const char * Log::defaultFilepath = "logs/Swarm_";
+        const char * Log::defaultFilepath = "Swarm_";
         vector<FILE*> Log::fileptrs;
 
-        Log Log::log_global("Global", true);
-        Log Log::log_config("Configuration", true);
-        Log Log::log_model("Model", true);
-        Log Log::log_render("Rendering", true);
+        Log Log::log_core("Core", true);
+        Log Log::log_render("Render", true);
 
         void Log::setDefaultFilepath(const char * path) {
             defaultFilepath = path;
@@ -121,7 +119,7 @@ namespace Swarm {
         Log::Log(const char * name, bool console) : name(name), console(console) {
             filepath = (string(defaultFilepath) + string(name) + ".log").c_str();
             file = fopen(filepath, "w");
-            if(file == NULL) cerr << "Failed to create log: " << filepath;
+            if(file == NULL) cerr << "Failed to create log: '" << filepath << "'; Error '" << strerror(errno) << "'\n";
             else fileptrs.push_back(file);
         }
 
@@ -143,9 +141,9 @@ namespace Swarm {
         const char * Log::prefix() {
             switch(severity) {
                 case INFO:
-                    return "[INFO]";
+                    return "[ INFO]";
                 case WARNING:
-                    return "[WARN]";
+                    return "[ WARN]";
                 case ERR:
                     return "[ERROR]";
                 case FATAL:
@@ -156,7 +154,7 @@ namespace Swarm {
         }
 
         void Log::newline() {
-            *this << "\n" << time() << "[" << name << "]" << prefix() << " ";
+            *this << "\n" << time() << prefix() << "[" << name << "]" << " ";
         }
 
         void Log::setSeverity(LogSeverity severity) {

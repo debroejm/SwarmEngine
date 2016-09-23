@@ -126,13 +126,9 @@ namespace Swarm {
             static void setDefaultFilepath(const char * path);
             static void cleanupAll();
 
-            //! Global Log, to be used when a log snippet doesn't fit anywhere else.
-            static Log log_global;
-            //! Configuration Log, used for configuration data management.
-            static Log log_config;
-            //! Model Log, mainly used for model loading and manipulation.
-            static Log log_model;
-            //! Render Log, used to document the render cycle.
+            //! Core Log, for the core selection of methods.
+            static Log log_core;
+            //! Render Log, used to document the render cycle + model loading.
             static Log log_render;
 
         protected:

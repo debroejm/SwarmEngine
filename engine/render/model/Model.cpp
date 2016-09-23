@@ -23,12 +23,12 @@ namespace Swarm {
 
         void cleanupBuffers() {
             for(int i = 0; i < registeredBuffers.size(); i++) {
-                Log::log_model(INFO) << "Deleting Buffer [" << registeredBuffers[i] << "]";
+                Log::log_render(INFO) << "Deleting Buffer [" << registeredBuffers[i] << "]";
                 glDeleteBuffers(1, &registeredBuffers[i]);
             }
 
             for(int i = 0; i < registeredVAOs.size(); i++) {
-                Log::log_model(INFO) << "Deleting VAO [" << registeredVAOs[i] << "]";
+                Log::log_render(INFO) << "Deleting VAO [" << registeredVAOs[i] << "]";
                 glDeleteVertexArrays(1, &registeredVAOs[i]);
             }
 
@@ -315,7 +315,7 @@ bool Model::loadMMD(const char *path)
 {
     if (loaded) return false;
 
-    Log::log_model(INFO) << "Loading MMD file: " << path;
+    Log::log_render(INFO) << "Loading MMD file: " << path;
 
     vector<unsigned int> vertexIndices, uvIndices, normalIndices;
     vector<glm::vec3> temp_vertices;
@@ -331,7 +331,7 @@ bool Model::loadMMD(const char *path)
 
     FILE * file = fopen(path, "r");
     if( file == NULL ){
-        Log::log_model(ERR) << "Failed to open file: " << path;
+        Log::log_render(ERR) << "Failed to open file: " << path;
         getchar();
         return false;
     }
@@ -355,7 +355,7 @@ bool Model::loadMMD(const char *path)
             glm::vec3 vertex;
             int matches = fscanf(file, "%f %f %f\n", &vertex.x, &vertex.y, &vertex.z );
             if(matches != 3) {
-                Log::log_model(ERR) << "[" << lineNum << "] Incorrect Argument Count";
+                Log::log_render(ERR) << "[" << lineNum << "] Incorrect Argument Count";
                 return false;
             }
             temp_vertices.push_back(vertex);
@@ -373,7 +373,7 @@ bool Model::loadMMD(const char *path)
             int BID;
             int matches = fscanf(file, "%f %f %f %i\n", &vertex.x, &vertex.y, &vertex.z, &BID);
             if(matches != 4) {
-                Log::log_model(ERR) << "[" << lineNum << "] Incorrect Argument Count";
+                Log::log_render(ERR) << "[" << lineNum << "] Incorrect Argument Count";
                 return false;
             }
             temp_vertices.push_back(vertex);
@@ -390,7 +390,7 @@ bool Model::loadMMD(const char *path)
             glm::vec2 uv;
             int matches = fscanf(file, "%f %f\n", &uv.x, &uv.y );
             if(matches != 2) {
-                Log::log_model(ERR) << "[" << lineNum << "] Incorrect Argument Count";
+                Log::log_render(ERR) << "[" << lineNum << "] Incorrect Argument Count";
                 return false;
             }
             temp_uvs.push_back(uv);
@@ -400,7 +400,7 @@ bool Model::loadMMD(const char *path)
             glm::vec3 normal;
             int matches = fscanf(file, "%f %f %f\n", &normal.x, &normal.y, &normal.z );
             if(matches != 3) {
-                Log::log_model(ERR) << "[" << lineNum << "] Incorrect Argument Count";
+                Log::log_render(ERR) << "[" << lineNum << "] Incorrect Argument Count";
                 return false;
             }
             temp_normals.push_back(normal);
@@ -412,7 +412,7 @@ bool Model::loadMMD(const char *path)
             //int matches = fscanf(file, "%f %f %f %i %32s\n", &bonePos.x, &bonePos.y, &bonePos.z, &bIndex, boneName );
             int matches = fscanf(file, "%f %f %f %i\n", &bonePos.x, &bonePos.y, &bonePos.z, &bIndex);
             if(matches != 4) {
-                Log::log_model(ERR) << "[" << lineNum << "] Incorrect Argument Count";
+                Log::log_render(ERR) << "[" << lineNum << "] Incorrect Argument Count";
                 return false;
             }
             if(bIndex == 0)
@@ -425,7 +425,7 @@ bool Model::loadMMD(const char *path)
             }
             else
             {
-                Log::log_model(ERR) << "[" << lineNum << "] Invalid Bone Index: " << bIndex;
+                Log::log_render(ERR) << "[" << lineNum << "] Invalid Bone Index: " << bIndex;
                 return false;
             }
             readBoneNames.push_back("Bone " + readBoneNames.size());
@@ -437,7 +437,7 @@ bool Model::loadMMD(const char *path)
             char boneName[55];
             int matches = fscanf(file, "%f %f %f %i %50s\n", &bonePos.x, &bonePos.y, &bonePos.z, &bIndex, boneName );
             if(matches != 5) {
-                Log::log_model(ERR) << "[" << lineNum << "] Incorrect Argument Count";
+                Log::log_render(ERR) << "[" << lineNum << "] Incorrect Argument Count";
                 return false;
             }
             if(bIndex == 0)
@@ -450,7 +450,7 @@ bool Model::loadMMD(const char *path)
             }
             else
             {
-                Log::log_model(ERR) << "[" << lineNum << "] Invalid Bone Index: " << bIndex;
+                Log::log_render(ERR) << "[" << lineNum << "] Invalid Bone Index: " << bIndex;
                 return false;
             }
             readBoneNames.push_back(string(boneName));
@@ -461,7 +461,7 @@ bool Model::loadMMD(const char *path)
             unsigned int vertexIndex[3], uvIndex[3], normalIndex[3];
             int matches = fscanf(file, "%d/%d/%d %d/%d/%d %d/%d/%d\n", &vertexIndex[0], &uvIndex[0], &normalIndex[0], &vertexIndex[1], &uvIndex[1], &normalIndex[1], &vertexIndex[2], &uvIndex[2], &normalIndex[2] );
             if(matches != 9) {
-                Log::log_model(ERR) << "[" << lineNum << "] Incorrect Argument Count";
+                Log::log_render(ERR) << "[" << lineNum << "] Incorrect Argument Count";
                 return false;
             }
             vertexIndices.push_back(vertexIndex[0]);
@@ -549,7 +549,7 @@ bool Model::loadOBJ(const char *path)
 {
     if (loaded) return false;
 
-    Log::log_model(INFO) << "Loading OBJ file: " << path;
+    Log::log_render(INFO) << "Loading OBJ file: " << path;
 
     std::vector<unsigned int> vertexIndices, uvIndices, normalIndices;
     std::vector<glm::vec3> temp_vertices;
@@ -562,7 +562,7 @@ bool Model::loadOBJ(const char *path)
 
     FILE * file = fopen(path, "r");
     if( file == NULL ){
-        Log::log_model(ERR) << "Failed to open file: " << path;
+        Log::log_render(ERR) << "Failed to open file: " << path;
         getchar();
         return false;
     }
@@ -767,7 +767,7 @@ bool Model::loadData(Bone skeleton[], glm::vec3 bones[], glm::vec2 uvs[], glm::v
 
     glBindVertexArray(0);
 
-    Log::log_model(INFO) << "Model Loaded: '" << name << "' [B-" << bonebuffer << "|U-" << uvbuffer << "|N-" << normalbuffer << "|E-" << elementbuffer << "]";
+    Log::log_render(INFO) << "Model Loaded: '" << name << "' [B-" << bonebuffer << "|U-" << uvbuffer << "|N-" << normalbuffer << "|E-" << elementbuffer << "]";
     loaded = true;
     return true;
 }

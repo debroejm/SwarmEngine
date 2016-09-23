@@ -9,7 +9,7 @@ namespace Swarm {
 
         void error_callback(int error, const char* description)
         {
-            Log::log_global(ERR) << " " << error << ": " << description;
+            Log::log_core(ERR) << " " << error << ": " << description;
         }
 
         void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)

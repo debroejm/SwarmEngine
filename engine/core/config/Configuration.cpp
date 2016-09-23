@@ -8,6 +8,7 @@ namespace Swarm {
     namespace Config {
 
         RawConfigData::RawConfigData(const char * filepath) {
+            Log::log_core(INFO) << "Reading configuration file '" << filepath << "'";
             this->filepath = filepath;
             ifstream dataStream(filepath, ios::in);
             if(dataStream.is_open()) {
@@ -26,7 +27,7 @@ namespace Swarm {
                 }
                 dataStream.close();
             } else {
-                Log::log_config(WARNING) << "Failed to open '" << filepath << "'";
+                Log::log_core(WARNING) << "Failed to open '" << filepath << "'";
                 return;
             }
         }

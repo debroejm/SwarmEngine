@@ -18,10 +18,10 @@ namespace Swarm {
             GLFWwindow* window;
 
             // Initialize GLFW
-            Log::log_global(INFO) << "Initializing GLFW";
+            Log::log_core(INFO) << "Initializing GLFW";
             glfwSetErrorCallback(GLFW::error_callback);
             if (!glfwInit()) {
-                Log::log_global(FATAL) << "Failed to Initialize GLFW!";
+                Log::log_core(FATAL) << "Failed to Initialize GLFW!";
                 exit(EXIT_FAILURE);
             }
 
@@ -30,7 +30,7 @@ namespace Swarm {
             if (!window)
             {
                 glfwTerminate();
-                Log::log_global(FATAL) << "Failed to Create Window!";
+                Log::log_core(FATAL) << "Failed to Create Window!";
                 exit(EXIT_FAILURE);
             }
             glfwMakeContextCurrent(window);
@@ -44,7 +44,7 @@ namespace Swarm {
             // Initialize GLEW
             glewExperimental = GL_TRUE; // Needed for core profile
             if (glewInit() != GLEW_OK) {
-                Log::log_global(FATAL) << "Failed to Initialize GLEW!";
+                Log::log_core(FATAL) << "Failed to Initialize GLEW!";
                 return false;
             }
 
