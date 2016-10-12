@@ -5,6 +5,8 @@ using namespace glm;
 using namespace Swarm;
 using namespace std;
 
+using namespace Swarm::Logging;
+
 int main() {
 
     if(!Init::init()) {
@@ -48,6 +50,45 @@ int main() {
     //Logging::Log(LOGGING_INFO, "Debug", ("Model Info:\n"+testModel2.printDebug()).c_str());
 
     GLFWwindow * window = Input::getWindow();
+
+    float data_vertex[]{
+            0.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 1.0f,
+            1.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 0.0f
+    };
+    float data_uv[]{
+            1.0f, 1.0f,
+            1.0f, 0.0f,
+            0.0f, 0.0f,
+            1.0f, 1.0f
+    };
+    float data_normal[]{
+            1.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 1.0f,
+            1.0f, 0.0f, 0.0f
+    };
+
+    Model::RawModelData data;
+    data.setData(Model::MDT_Vertex, data_vertex, 4);
+    data.setData(Model::MDT_UV, data_uv, 4);
+    data.setData(Model::MDT_Normal, data_normal, 4);
+
+    Log::log_core(INFO) << "Vertices: " << (data.hasData(Model::MDT_Vertex) ? "True" : "False")
+                        << ", UVs: " << (data.hasData(Model::MDT_UV) ? "True" : "False")
+                        << ", Normals: " << (data.hasData(Model::MDT_Normal) ? "True" : "False")
+                        << ", Colors: " << (data.hasData(Model::MDT_Color) ? "True" : "False");
+    Log::log_core(INFO) << "Size: " << data.getSize();
+
+    Log::log_core(INFO) << data.getSize() << ": ";
+    float* data_array = data.getData(Model::MDT_Vertex);
+    for(int i = 0; i < data.getSize()*3; i++) Log::log_core << data_array[i] << ", ";
+
+    Model::RawModelDataIndexed* data_indexed = data.index();
+    Log::log_core(INFO) << data_indexed->getSize() << ": ";
+    data_array = data_indexed->getData(Model::MDT_Vertex);
+    for(int i = 0; i < data_indexed->getSize()*3; i++) Log::log_core << data_array[i] << ", ";
 
     // Main runtime loop
     while (!glfwWindowShouldClose(window))

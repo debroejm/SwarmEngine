@@ -10,6 +10,7 @@
 #include <sstream>
 #include <cstring>
 #include <unordered_map>
+#include <map>
 #include <vector>
 using namespace std;
 
@@ -41,8 +42,10 @@ namespace Swarm {
 
     namespace Texture {
 
-        GLuint loadPNGTexture(const char* filename);
+        GLuint loadPNGTexture(const char *filename);
+
         void registerTexture(GLuint textureID);
+
         void cleanupTextures();
 
         class Texture {
@@ -52,16 +55,19 @@ namespace Swarm {
 
         class SingleTexture : public Texture {
             SingleTexture(GLuint textureID);
-            SingleTexture(const char * textureName);
+
+            SingleTexture(const char *textureName);
 
             friend class AnimatedTexture;
 
             virtual GLuint getTexture();
 
             SingleTexture &operator=(const SingleTexture &rhs);
+
             SingleTexture &operator=(const GLuint &rhs);
 
             bool operator==(const SingleTexture &rhs);
+
             bool operator==(const GLuint &rhs);
 
         protected:
@@ -71,18 +77,25 @@ namespace Swarm {
         class AnimatedTexture : public Texture {
         public:
             AnimatedTexture(GLuint textureID);
-            AnimatedTexture(const char * textureName);
+
+            AnimatedTexture(const char *textureName);
+
             AnimatedTexture();
 
             void addTexture(GLuint textureID);
-            void addTexture(const char * textureName);
+
+            void addTexture(const char *textureName);
+
             void addTexture(GLuint textureID, double interval);
-            void addTexture(const char * textureName, double interval);
+
+            void addTexture(const char *textureName, double interval);
 
             virtual GLuint getTexture();
 
             AnimatedTexture &operator=(const AnimatedTexture &rhs);
+
             AnimatedTexture &operator=(const SingleTexture &rhs);
+
             AnimatedTexture &operator=(const GLuint &rhs);
 
         protected:
@@ -95,6 +108,80 @@ namespace Swarm {
 
 
     namespace Model {
+
+        class ModelDataType {
+        public:
+            ModelDataType(int size);
+            ModelDataType(const ModelDataType &other);
+            ModelDataType &operator=(const ModelDataType &other);
+            bool operator==(const ModelDataType &other) const;
+
+            int getSize() const { return size; }
+            unsigned int getUUID() const { return uuid; } // TODO: Make this less visible, possibly with 'friend'
+        private:
+            int size;
+            unsigned int uuid;
+            static unsigned int nextID;
+        };
+
+        static const ModelDataType MDT_Vertex(3);
+        static const ModelDataType MDT_UV(2);
+        static const ModelDataType MDT_Normal(3);
+        static const ModelDataType MDT_Color(3);
+
+        class RawModelDataIndexed;
+    }
+}
+
+namespace std {
+    template<> struct hash<Swarm::Model::ModelDataType> {
+        size_t operator() (const Swarm::Model::ModelDataType &var) const {
+            return hash<unsigned int>()(var.getUUID());
+        }
+    };
+}
+
+namespace Swarm {
+    namespace Model {
+
+        class RawModelData {
+        public:
+            RawModelData() {}
+            RawModelData(RawModelData &other);
+            ~RawModelData();
+            RawModelData &operator=(const RawModelData &other);
+
+            RawModelData &setData(ModelDataType type, float data[], unsigned int size);
+            bool hasData(ModelDataType type) const;
+            float* getData(ModelDataType type) const;
+
+            unsigned int getSize() const;
+
+            RawModelDataIndexed* index();
+
+            virtual void cleanup();
+
+        protected:
+            // TODO: Consider array-based implementation if this turns out too slow
+            unordered_map<ModelDataType, float*> dataMap;
+
+            unsigned int size = 0;
+        };
+
+        class RawModelDataIndexed : public RawModelData {
+        public:
+            RawModelDataIndexed &setIndices(unsigned short* indices, unsigned int size);
+            unsigned short* getIndices() const;
+            unsigned int getIndexCount() const;
+
+            virtual void cleanup();
+
+        protected:
+            unsigned short* indices;
+            unsigned int indexCount;
+        };
+
+
         void cleanupBuffers();
 
         class Bone

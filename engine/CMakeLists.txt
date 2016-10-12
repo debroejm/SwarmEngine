@@ -17,6 +17,7 @@ set(ENGINE_SOURCE_CORE
         render/model/Animation.cpp
         render/model/Bone.cpp
         render/model/Model.cpp
+        render/model/RawModelData.cpp
         render/Rendering.cpp
         render/Shaders.cpp
         render/Camera.cpp
