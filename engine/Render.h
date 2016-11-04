@@ -23,13 +23,8 @@ using namespace std;
 #include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
+#include <set>
 
-
-#define SHADER_ATTRIB_ID_VERTEX 1
-#define SHADER_ATTRIB_ID_NORMAL 2
-#define SHADER_ATTRIB_ID_COLOR 3
-#define SHADER_ATTRIB_ID_UV 4
-#define SHADER_ATTRIB_ID_TANGET 5
 
 
 // ************
@@ -50,7 +45,7 @@ namespace Swarm {
 
         class Texture {
         public:
-            virtual GLuint getTexture() = 0;
+            virtual GLuint getID() = 0;
         };
 
         class SingleTexture : public Texture {
@@ -60,7 +55,7 @@ namespace Swarm {
 
             friend class AnimatedTexture;
 
-            virtual GLuint getTexture();
+            virtual GLuint getID();
 
             SingleTexture &operator=(const SingleTexture &rhs);
 
@@ -90,7 +85,7 @@ namespace Swarm {
 
             void addTexture(const char *textureName, double interval);
 
-            virtual GLuint getTexture();
+            virtual GLuint getID();
 
             AnimatedTexture &operator=(const AnimatedTexture &rhs);
 
@@ -109,34 +104,82 @@ namespace Swarm {
 
     namespace Model {
 
-        class ModelDataType {
-        public:
-            ModelDataType(int size);
-            ModelDataType(const ModelDataType &other);
-            ModelDataType &operator=(const ModelDataType &other);
-            bool operator==(const ModelDataType &other) const;
-
-            int getSize() const { return size; }
-            unsigned int getUUID() const { return uuid; } // TODO: Make this less visible, possibly with 'friend'
-        private:
-            int size;
-            unsigned int uuid;
-            static unsigned int nextID;
+        enum VecType {
+            ONE     = 1,
+            TWO     = 2,
+            THREE   = 3,
+            FOUR    = 4
         };
 
-        static const ModelDataType MDT_Vertex(3);
-        static const ModelDataType MDT_UV(2);
-        static const ModelDataType MDT_Normal(3);
-        static const ModelDataType MDT_Color(3);
+        struct VecVar {
+            union Val {
+                float v1;
+                glm::vec2 v2;
+                glm::vec3 v3;
+                glm::vec4 v4;
+                explicit Val(float in)      : v1(in) {}
+                explicit Val(glm::vec2 in)  : v2(in) {}
+                explicit Val(glm::vec3 in)  : v3(in) {}
+                explicit Val(glm::vec4 in)  : v4(in) {}
+            } val;
+            VecType type;
+            explicit VecVar()               : val(0.0f), type(ONE)  {}
+            explicit VecVar(float in)       : val(in), type(ONE)    {}
+            explicit VecVar(glm::vec2 in)   : val(in), type(TWO)    {}
+            explicit VecVar(glm::vec3 in)   : val(in), type(THREE)  {}
+            explicit VecVar(glm::vec4 in)   : val(in), type(FOUR)   {}
+        };
+
+        union VecArray {
+            float       *v1;
+            glm::vec2   *v2;
+            glm::vec3   *v3;
+            glm::vec4   *v4;
+            explicit VecArray()               : v1(NULL) {}
+            explicit VecArray(float in[])     : v1(in)   {}
+            explicit VecArray(glm::vec2 in[]) : v2(in)   {}
+            explicit VecArray(glm::vec3 in[]) : v3(in)   {}
+            explicit VecArray(glm::vec4 in[]) : v4(in)   {}
+        };
+
+        namespace DataType {
+
+            class Type {
+            public:
+                Type(VecType type, VecVar defaultVal, GLuint attribID, float epsilon = 0.00001f);
+
+                Type(const Type &other);
+                Type &operator=(const Type &other);
+
+                bool operator==(const Type &other) const;
+
+                VecType getType() const { return type; }
+                VecVar getDefault() const { return defaultVal; }
+                float getEpsilon() const { return epsilon; }
+                GLuint getAttribID() const { return attribID; }
+
+            private:
+                VecType type;
+                VecVar defaultVal;
+                float epsilon;
+                GLuint attribID;
+            };
+
+            static const Type VERTEX    ( THREE,  VecVar(glm::vec3(0.0f, 0.0f, 0.0f)),        1 );
+            static const Type UV        ( TWO,    VecVar(glm::vec2(0.0f, 0.0f)),              2 );
+            static const Type NORMAL    ( THREE,  VecVar(glm::vec3(0.0f, 1.0f, 0.0f)),        3 );
+            static const Type COLOR     ( FOUR,   VecVar(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)),  4 );
+
+        }
 
         class RawModelDataIndexed;
     }
 }
 
 namespace std {
-    template<> struct hash<Swarm::Model::ModelDataType> {
-        size_t operator() (const Swarm::Model::ModelDataType &var) const {
-            return hash<unsigned int>()(var.getUUID());
+    template<> struct hash<Swarm::Model::DataType::Type> {
+        size_t operator() (const Swarm::Model::DataType::Type &var) const {
+            return hash<unsigned int>()((var.getType()-1) + 4*var.getAttribID());
         }
     };
 }
@@ -151,39 +194,84 @@ namespace Swarm {
             ~RawModelData();
             RawModelData &operator=(const RawModelData &other);
 
-            RawModelData &setData(ModelDataType type, float data[], unsigned int size);
-            bool hasData(ModelDataType type) const;
-            float* getData(ModelDataType type) const;
+            RawModelData &setData(const DataType::Type &type, float data[], unsigned int size);
+            RawModelData &setData(const DataType::Type &type, VecArray data, unsigned int size);
+            bool hasData(const DataType::Type &type) const;
+            VecArray getData(const DataType::Type &type) const;
+            const unordered_map<DataType::Type, VecArray> &getData() const { return dataMap; }
 
             unsigned int getSize() const;
 
-            RawModelDataIndexed* index();
+            virtual RawModelDataIndexed* index();
 
             virtual void cleanup();
 
         protected:
+
+            void upsize(unsigned int size);
+
             // TODO: Consider array-based implementation if this turns out too slow
-            unordered_map<ModelDataType, float*> dataMap;
+            unordered_map<DataType::Type, VecArray> dataMap;
 
             unsigned int size = 0;
         };
 
         class RawModelDataIndexed : public RawModelData {
         public:
+            RawModelDataIndexed() {}
+            RawModelDataIndexed(const RawModelDataIndexed &other);
             RawModelDataIndexed &setIndices(unsigned short* indices, unsigned int size);
             unsigned short* getIndices() const;
             unsigned int getIndexCount() const;
 
+            RawModelDataIndexed &operator=(const RawModelDataIndexed &other);
+
+            virtual RawModelDataIndexed* index();
+
             virtual void cleanup();
 
         protected:
-            unsigned short* indices;
+            unsigned short* indices; // TODO: Possibly make this an unsigned int
             unsigned int indexCount;
+        };
+
+
+        RawModelDataIndexed* loadFromOBJ(const char * path);
+
+
+        class Model {
+        public:
+            virtual GLuint getVAOID() = 0;
+            virtual unsigned int getElementCount() = 0;
+        };
+
+        void cleanupBuffers();
+
+        class ModelSegment : public Model {
+        public:
+            ModelSegment(RawModelDataIndexed &data);
+            void genBuffers(RawModelDataIndexed &data);
+
+            ModelSegment(const ModelSegment &other);
+            ModelSegment &operator=(const ModelSegment &other);
+
+            virtual GLuint getVAOID() { return vao; }
+            virtual unsigned int getElementCount() { return elementCount; }
+
+            bool isLoaded() { return loaded; }
+            void cleanup();
+
+        protected:
+            GLuint vao;
+            std::set<GLuint> buffers;
+            unsigned int elementCount = 0;
+            bool loaded = false;
         };
 
 
         void cleanupBuffers();
 
+        /*
         class Bone
         {
         public:
@@ -237,7 +325,9 @@ namespace Swarm {
             float z;
             Bone* modifier;
         };
+         */
 
+        /*
         class Model
         {
         public:
@@ -309,10 +399,58 @@ namespace Swarm {
 
             Texture::AnimatedTexture texture;
         };
+         */
     }
 
 
     namespace Render {
+
+        namespace Uniforms {
+            static string MatrixModel =             "_m";
+            static string MatrixView =              "_v";
+            static string MatrixProjection =        "_p";
+            static string LightAmbientColor =       "_ambient_light_color";
+            static string LightAmbientDirection =   "_ambient_light_direction";
+        }
+
+
+        class RenderObjectSingle {
+        public:
+            virtual Model::Model &getModel() = 0;
+            virtual glm::mat4 &getMatrix() = 0;
+            virtual void setMatrix(glm::mat4 matrix) = 0;
+            virtual void prepareModel() {}
+        };
+
+        class RenderObjectMulti {
+        public:
+            virtual unsigned int getCount() = 0;
+            virtual Model::Model &getModel(unsigned int index) = 0;
+            virtual glm::mat4 &getMatrix(unsigned int index) = 0;
+            virtual void setMatrix(unsigned int index, glm::mat4 matrix) = 0;
+            virtual void prepareModel(unsigned int index) {}
+        };
+
+        class SimpleROS : public RenderObjectSingle {
+        public:
+            SimpleROS(Model::Model &model, glm::mat4 matrix = glm::mat4(1.0)) : model(model), matrix(matrix) {}
+            virtual Model::Model &getModel() { return model; }
+            virtual glm::mat4 &getMatrix() { return matrix; }
+            virtual void setMatrix(glm::mat4 matrix) { this->matrix = matrix; }
+            void translate(float x, float y, float z) { translate(glm::vec3(x, y, z)); }
+            virtual void translate(glm::vec3 amount);
+            void rotate(float amount, float x, float y, float z) { rotate(amount, glm::vec3(x, y, z)); }
+            virtual void rotate(float amount, glm::vec3 angle);
+            void scale(float x, float y, float z) { scale(glm::vec3(x, y, z)); }
+            virtual void scale(glm::vec3 amount);
+            virtual void resetMatrix();
+        protected:
+            Model::Model &model;
+            glm::mat4 matrix;
+        };
+
+
+
 
         class Shader {
         public:
@@ -449,13 +587,18 @@ namespace Swarm {
         class Renderer {
         public:
             Renderer() : currentProgram(NULL) {};
-            Renderer(Program* program) : currentProgram(program) {};
+            Renderer(Program* program);
 
             void changeShaderProfile(Program* program);
             void changeCamera(Camera* camera);
 
+            Program* getShaderProfile() { return currentProgram; }
+            Camera* getCamera() { return currentCamera; }
+
             void updateMatrixUniforms();
             void render(Model::Model &object, glm::mat4 matrix_Model = glm::mat4(1.0));
+            void render(RenderObjectSingle &object);
+            void render(RenderObjectMulti &object);
 
         protected:
             Program* currentProgram;
@@ -479,6 +622,7 @@ namespace Swarm {
             Model::Model* model = NULL;
         };
 
+        /*
         class RiggingHumanoid: public Rigging {
         public:
             RiggingHumanoid(Model::Model &input);
@@ -492,6 +636,6 @@ namespace Swarm {
             Model::Bone* leftFoot = NULL;
             Model::Bone* rightFoot = NULL;
         };
-        
+        */
     }
 }

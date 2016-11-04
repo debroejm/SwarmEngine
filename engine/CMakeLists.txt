@@ -4,6 +4,7 @@ set(ENGINE_HEADERS_CORE
         Core.h
         Render.h
         core/GLFWCallbacks.h
+        Util.h
         )
 
 set(ENGINE_SOURCE_CORE
@@ -15,10 +16,11 @@ set(ENGINE_SOURCE_CORE
         core/config/Controls.cpp
         core/config/Keybindings.cpp
         render/model/Animation.cpp
-        render/model/Bone.cpp
         render/model/Model.cpp
+        render/model/ModelLoading.cpp
         render/model/RawModelData.cpp
-        render/Rendering.cpp
+        render/Renderer.cpp
+        render/RenderObject.cpp
         render/Shaders.cpp
         render/Camera.cpp
         render/texture/AnimatedTexture.cpp

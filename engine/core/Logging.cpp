@@ -140,6 +140,8 @@ namespace Swarm {
 
         const char * Log::prefix() {
             switch(severity) {
+                case DEBUG:
+                    return "[DEBUG]";
                 case INFO:
                     return "[ INFO]";
                 case WARNING:

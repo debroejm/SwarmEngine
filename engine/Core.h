@@ -1,5 +1,6 @@
 #pragma once
 
+// Don't remember what this does... should probably look it up and document it.
 #if defined(_WIN32) || defined(__WIN32__)
 #if defined(SwarmEngine_EXPORTS)
 #define DLLFUNC __declspec(dllexport)
@@ -57,6 +58,7 @@ namespace Swarm {
          * Depending on settings, some severities will be excluded from being logged.
          */
         enum LogSeverity {
+            DEBUG,
             INFO,
             WARNING,
             ERR,        // 'ERROR' is macro'd somewhere in Windows headers
@@ -154,8 +156,15 @@ namespace Swarm {
 
     namespace Init {
 
-        bool init(const char * windowName = "Swarm Engine Instance");
-        bool init(int windowX, int windowY, const char * windowName = "Swarm Engine Instance");
+        enum Type {
+            FULL = 2,
+            RENDERING = 1,
+            MINIMAL = 0
+        };
+
+        bool init(Type type);
+        bool init(string windowName = "Swarm Engine Instance", Type type = FULL);
+        bool init(int windowX, int windowY, string windowName = "Swarm Engine Instance", Type type = FULL);
 
         void cleanup();
 

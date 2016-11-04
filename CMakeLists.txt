@@ -44,7 +44,8 @@ function(BuildEngine SystemName)
     add_subdirectory("external/glfw")
     add_subdirectory("engine")
     include_directories("engine")
-    add_subdirectory("test")
+    add_subdirectory("tests/generic")
+    add_subdirectory("tests/model")
 endfunction(BuildEngine)
 
 

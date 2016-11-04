@@ -56,7 +56,7 @@ namespace Swarm {
             glGetShaderiv(shaderID, GL_INFO_LOG_LENGTH, &infoLogLength);
             char shaderErrorMessage[infoLogLength+1];
             glGetShaderInfoLog(shaderID, infoLogLength, NULL, &shaderErrorMessage[0]);
-            if(infoLogLength > 2) {
+            if(!result) {
                 Log::log_render(ERR) << shaderTypeName << " Shader Error: " << shaderErrorMessage;
                 return 0;
             }
@@ -96,7 +96,7 @@ namespace Swarm {
             //vector<char> errorMessage( infoLogLength );
             char errorMessage[infoLogLength+1];
             glGetProgramInfoLog(programID, infoLogLength, NULL, &errorMessage[0]);
-            if(infoLogLength > 3) {
+            if(!result) {
                 Log::log_render(ERR) << "Program Error: " << errorMessage;
                 return 0;
             }

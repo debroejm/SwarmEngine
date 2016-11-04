@@ -49,7 +49,7 @@ namespace Swarm {
             changeDelay.push_back(interval);
         }
 
-        GLuint AnimatedTexture::getTexture()
+        GLuint AnimatedTexture::getID()
         {
             if(textureList.size() == 0) return 0;
             int tIndex = currentIndex+1;

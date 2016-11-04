@@ -2,6 +2,8 @@
 
 #include "../Core.h"
 
+using namespace Swarm::Logging;
+
 namespace Swarm {
     namespace Render {
 
@@ -19,9 +21,13 @@ namespace Swarm {
 
         }
 
+        Renderer::Renderer(Program *program) : currentProgram(program) {
+            if(currentProgram != NULL) glUseProgram(currentProgram->getProgramID());
+        }
+
         void Renderer::changeShaderProfile(Program *program) {
             currentProgram = program;
-            if(program != NULL) glUseProgram(currentProgram->getProgramID());
+            if(currentProgram != NULL) glUseProgram(currentProgram->getProgramID());
         }
 
         void Renderer::changeCamera(Camera* camera) {
@@ -36,13 +42,13 @@ namespace Swarm {
 
             // Grab the Matrices from the respective locations
             glm::mat4 matrix_Projection = Input::getProjectionMatrix(); // NEED
-            glm::mat4 matrix_View; // NEED
-            if(currentCamera == NULL) matrix_View = glm::mat4(1.0);
+            glm::mat4 matrix_View; // = Input::getViewMatrix(); // NEED
+            if(currentCamera == NULL) { matrix_View = glm::mat4(1.0); Logging::Log::log_render(Logging::ERR) << "NULL Camera when Rendering"; }
             else matrix_View = currentCamera->getViewMatrix();
 
             // Bind the Matrices
-            glUniformMatrix4fv(currentProgram->getUniformID("_v"), 1, GL_FALSE, &matrix_View[0][0]);
-            glUniformMatrix4fv(currentProgram->getUniformID("_p"), 1, GL_FALSE, &matrix_Projection[0][0]);
+            glUniformMatrix4fv(currentProgram->getUniformID(Uniforms::MatrixView),       1, GL_FALSE, &matrix_View[0][0]);
+            glUniformMatrix4fv(currentProgram->getUniformID(Uniforms::MatrixProjection), 1, GL_FALSE, &matrix_Projection[0][0]);
         }
 
         void Renderer::render(Model::Model & object, glm::mat4 matrix_Model) {
@@ -52,17 +58,20 @@ namespace Swarm {
             if(!currentProgram->isLinked()) return;
 
             // Bind the Model Matrix
-            glUniformMatrix4fv(currentProgram->getUniformID("_m"), 1, GL_FALSE, &matrix_Model[0][0]);
+            glUniformMatrix4fv(currentProgram->getUniformID(Uniforms::MatrixModel), 1, GL_FALSE, &matrix_Model[0][0]);
+            updateMatrixUniforms();
 
             // Texture Binding
             // TODO: Make the texture binding code object specific
+            /*
             glActiveTexture(GL_TEXTURE0);
-            GLuint TexID = object.getTexture();
+            GLuint TexID = object.getTexID();
             glBindTexture(GL_TEXTURE_2D, TexID);
             glUniform1i(currentProgram->getUniformID("texturemap"), 0);
+             */
 
             // Each Object has its own VAO
-            glBindVertexArray(object.getVaoID());
+            glBindVertexArray(object.getVAOID());
 
             // Draw the triangles !
             glDrawElements(
@@ -73,6 +82,18 @@ namespace Swarm {
             );
 
             glBindVertexArray(0);
+        }
+
+        void Renderer::render(RenderObjectSingle &object) {
+            object.prepareModel();
+            render(object.getModel(), object.getMatrix());
+        }
+
+        void Renderer::render(RenderObjectMulti &object) {
+            for(unsigned int i = 0; i < object.getCount(); i++) {
+                object.prepareModel(i);
+                render(object.getModel(i), object.getMatrix(i));
+            }
         }
     }
 }

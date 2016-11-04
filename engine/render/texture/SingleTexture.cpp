@@ -8,7 +8,7 @@ namespace Swarm {
             textureID = loadPNGTexture(textureName);
         }
 
-        GLuint SingleTexture::getTexture() { return textureID; }
+        GLuint SingleTexture::getID() { return textureID; }
 
         SingleTexture &SingleTexture::operator=(const SingleTexture &rhs) {
             textureID = rhs.textureID;

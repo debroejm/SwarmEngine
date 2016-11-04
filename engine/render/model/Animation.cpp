@@ -8,6 +8,7 @@ namespace Swarm {
         }
 
 
+        /*
         RiggingHumanoid::RiggingHumanoid(Model::Model &input): Rigging(input) {
             leftKnee = input.getBone("KneeL");
             leftFoot = input.getBone("FootL");
@@ -25,6 +26,7 @@ namespace Swarm {
         void RiggingHumanoid::update(float delta) {
 
         }
+         */
 
     }
 }
