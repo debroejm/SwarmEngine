@@ -8,6 +8,8 @@ using namespace Swarm::Logging;
 
 int main() {
 
+    int dud = 0;
+
     // Initialization
     if(!Init::init()) {
         return -1;
@@ -39,6 +41,9 @@ int main() {
     Render::SimpleROS object(model);
     object.scale(3.0f, 3.0f, 3.0f);
 
+    // Textures
+    Texture::SingleTexture cube_tex_diffuse("resources/models/Sample.png");
+
     // Some Light Settings
     glUniform3f(program.getUniformID(Render::Uniforms::LightAmbientColor), 0.5f, 0.5f, 0.5f);
     glUniform3f(program.getUniformID(Render::Uniforms::LightAmbientDirection), 1.0f, -1.0f, 1.0f);
@@ -48,20 +53,23 @@ int main() {
     while (!glfwWindowShouldClose(window))
     {
 
+        renderer.start();
+
         // Do something fun to the object
         object.rotate(0.01f, 0.5f, 1.0f, 0.5f);
 
-        // Clear the screen
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        if (FORWARD.isPressed())
+            object.scale(0.99f, 0.99f, 0.99f);
 
         Input::computeMatricesFromInputs();
 
+        cube_tex_diffuse.bind();
         renderer.render(object);
 
         if (EXIT.isPressed())
             glfwSetWindowShouldClose( window, GL_TRUE );
 
-        glfwSwapBuffers(window);
+        renderer.end();
         glfwPollEvents();
     }
 

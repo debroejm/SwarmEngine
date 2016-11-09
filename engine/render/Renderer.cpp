@@ -34,7 +34,7 @@ namespace Swarm {
             currentCamera = camera;
         }
 
-        void Renderer::updateMatrixUniforms() {
+        void Renderer::updateUniforms() {
 
             // Safety Check
             if(currentProgram == NULL) return;
@@ -46,9 +46,24 @@ namespace Swarm {
             if(currentCamera == NULL) { matrix_View = glm::mat4(1.0); Logging::Log::log_render(Logging::ERR) << "NULL Camera when Rendering"; }
             else matrix_View = currentCamera->getViewMatrix();
 
-            // Bind the Matrices
+            // Bind the VP Matrices
             glUniformMatrix4fv(currentProgram->getUniformID(Uniforms::MatrixView),       1, GL_FALSE, &matrix_View[0][0]);
             glUniformMatrix4fv(currentProgram->getUniformID(Uniforms::MatrixProjection), 1, GL_FALSE, &matrix_Projection[0][0]);
+
+            // Bind Texture IDs
+            glUniform1i(currentProgram->getUniformID(Uniforms::TextureDiffuse),     0);
+            glUniform1i(currentProgram->getUniformID(Uniforms::TextureSpecular),    1);
+            glUniform1i(currentProgram->getUniformID(Uniforms::TextureNormal),      2);
+            glUniform1i(currentProgram->getUniformID(Uniforms::TextureEmissive),    3);
+        }
+
+        void Renderer::start() {
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            updateUniforms();
+        }
+
+        void Renderer::end() {
+            glfwSwapBuffers(Input::getWindow()); // Possibly move window handle around
         }
 
         void Renderer::render(Model::Model & object, glm::mat4 matrix_Model) {
@@ -59,7 +74,6 @@ namespace Swarm {
 
             // Bind the Model Matrix
             glUniformMatrix4fv(currentProgram->getUniformID(Uniforms::MatrixModel), 1, GL_FALSE, &matrix_Model[0][0]);
-            updateMatrixUniforms();
 
             // Texture Binding
             // TODO: Make the texture binding code object specific

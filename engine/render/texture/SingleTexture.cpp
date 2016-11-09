@@ -9,6 +9,10 @@ namespace Swarm {
         }
 
         GLuint SingleTexture::getID() { return textureID; }
+        void SingleTexture::bind() {
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, textureID);
+        }
 
         SingleTexture &SingleTexture::operator=(const SingleTexture &rhs) {
             textureID = rhs.textureID;

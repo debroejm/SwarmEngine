@@ -46,23 +46,23 @@ namespace Swarm {
         class Texture {
         public:
             virtual GLuint getID() = 0;
+            virtual void bind() = 0;
         };
 
         class SingleTexture : public Texture {
+        public:
             SingleTexture(GLuint textureID);
-
             SingleTexture(const char *textureName);
 
             friend class AnimatedTexture;
 
             virtual GLuint getID();
+            virtual void bind();
 
             SingleTexture &operator=(const SingleTexture &rhs);
-
             SingleTexture &operator=(const GLuint &rhs);
 
             bool operator==(const SingleTexture &rhs);
-
             bool operator==(const GLuint &rhs);
 
         protected:
@@ -86,6 +86,7 @@ namespace Swarm {
             void addTexture(const char *textureName, double interval);
 
             virtual GLuint getID();
+            virtual void bind();
 
             AnimatedTexture &operator=(const AnimatedTexture &rhs);
 
@@ -406,11 +407,19 @@ namespace Swarm {
     namespace Render {
 
         namespace Uniforms {
+
             static string MatrixModel =             "_m";
             static string MatrixView =              "_v";
             static string MatrixProjection =        "_p";
+
             static string LightAmbientColor =       "_ambient_light_color";
             static string LightAmbientDirection =   "_ambient_light_direction";
+
+            static string TextureDiffuse =          "_texture_diffuse";
+            static string TextureSpecular =         "_texture_specular";
+            static string TextureNormal =           "_texture_normal";
+            static string TextureEmissive =         "_texture_emissive";
+
         }
 
 
@@ -595,7 +604,11 @@ namespace Swarm {
             Program* getShaderProfile() { return currentProgram; }
             Camera* getCamera() { return currentCamera; }
 
-            void updateMatrixUniforms();
+            void updateUniforms();
+
+            void start();
+            void end();
+
             void render(Model::Model &object, glm::mat4 matrix_Model = glm::mat4(1.0));
             void render(RenderObjectSingle &object);
             void render(RenderObjectMulti &object);

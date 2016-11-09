@@ -49,19 +49,29 @@ namespace Swarm {
             changeDelay.push_back(interval);
         }
 
-        GLuint AnimatedTexture::getID()
-        {
-            if(textureList.size() == 0) return 0;
+        GLuint AnimatedTexture::getID() {
+            if(textureList.empty()) return 0;
             int tIndex = currentIndex+1;
             if(tIndex > (changeDelay.size() - 1)) tIndex = 0;
-            if( (glfwGetTime() - lastTime) > changeDelay[tIndex] )
-            {
+            if( (glfwGetTime() - lastTime) > changeDelay[tIndex] ) {
                 currentIndex++;
                 if(currentIndex > (textureList.size() - 1)) currentIndex = 0;
                 lastTime = glfwGetTime();
             }
-            GLuint tx = textureList[currentIndex];
-            return tx;
+            return textureList[currentIndex];
+        }
+
+        void AnimatedTexture::bind() {
+            if(textureList.empty()) return;
+            int tIndex = currentIndex+1;
+            if(tIndex > (changeDelay.size() - 1)) tIndex = 0;
+            if( (glfwGetTime() - lastTime) > changeDelay[tIndex] ) {
+                currentIndex++;
+                if(currentIndex > (textureList.size() - 1)) currentIndex = 0;
+                lastTime = glfwGetTime();
+            }
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, textureList[currentIndex]);
         }
 
         AnimatedTexture &AnimatedTexture::operator=(const AnimatedTexture &rhs) {

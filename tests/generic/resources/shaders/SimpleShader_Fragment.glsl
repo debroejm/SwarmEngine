@@ -10,9 +10,12 @@ out vec4 colorOut;
 uniform vec3 _ambient_light_color;
 uniform vec3 _ambient_light_direction;
 
+uniform sampler2D _texture_diffuse;
+
 void main() {
 
-    vec3 diffuse = vec3(uv_frag.x, (uv_frag.x+uv_frag.y)/3.0, uv_frag.y);
+    //vec3 diffuse = vec3(uv_frag.x, (uv_frag.x+uv_frag.y)/3.0, uv_frag.y);
+    vec3 diffuse = texture2D( _texture_diffuse, uv_frag ).rgb;
 
     vec3 l = normalize( _ambient_light_direction );
 
