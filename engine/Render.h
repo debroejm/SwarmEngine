@@ -58,9 +58,11 @@ namespace Swarm {
 
             void setDiffuse(GLuint texID);
             void setSpecular(GLuint texID);
+            void setNormal(GLuint texID);
 
             void setDiffuse(const char *texName);
             void setSpecular(const char *texName);
+            void setNormal(const char *texName);
 
             virtual GLuint getID();
             virtual void bind();
@@ -74,6 +76,7 @@ namespace Swarm {
         protected:
             GLuint texID_diffuse;
             GLuint texID_specular = 0;
+            GLuint texID_normal = 0;
         };
 
         class AnimatedTexture : public Texture {
@@ -177,6 +180,8 @@ namespace Swarm {
             static const Type UV        ( TWO,    VecVar(glm::vec2(0.0f, 0.0f)),              2 );
             static const Type NORMAL    ( THREE,  VecVar(glm::vec3(0.0f, 1.0f, 0.0f)),        3 );
             static const Type COLOR     ( FOUR,   VecVar(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)),  4 );
+            static const Type TANGET    ( THREE,  VecVar(glm::vec3(0.0f, 1.0f, 0.0f)),        5 );
+            static const Type BITANGET  ( THREE,  VecVar(glm::vec3(0.0f, 1.0f, 0.0f)),        6 );
 
         }
 
@@ -209,6 +214,8 @@ namespace Swarm {
             const unordered_map<DataType::Type, VecArray> &getData() const { return dataMap; }
 
             unsigned int getSize() const;
+
+            void computeTangents();
 
             virtual RawModelDataIndexed* index();
 
@@ -244,7 +251,7 @@ namespace Swarm {
         };
 
 
-        RawModelDataIndexed* loadFromOBJ(const char * path);
+        RawModelDataIndexed* loadFromOBJ(const char * path, bool computeTangents = false);
 
 
         class Model {

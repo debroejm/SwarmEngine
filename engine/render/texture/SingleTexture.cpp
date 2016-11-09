@@ -8,9 +8,11 @@ namespace Swarm {
 
         void SingleTexture::setDiffuse  (GLuint texID) { texID_diffuse  = texID; }
         void SingleTexture::setSpecular (GLuint texID) { texID_specular = texID; }
+        void SingleTexture::setNormal   (GLuint texID) { texID_normal   = texID; }
 
         void SingleTexture::setDiffuse  (const char * texName) { texID_diffuse  = loadPNGTexture(texName); }
         void SingleTexture::setSpecular (const char * texName) { texID_specular = loadPNGTexture(texName); }
+        void SingleTexture::setNormal   (const char * texName) { texID_normal   = loadPNGTexture(texName); }
 
         GLuint SingleTexture::getID() { return texID_diffuse; }
         void SingleTexture::bind() {

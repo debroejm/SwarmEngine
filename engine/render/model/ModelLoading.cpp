@@ -14,7 +14,7 @@ namespace Swarm {
         std::regex pattern_vn("vn\\s+(-?\\d+\\.\\d+)\\s+(-?\\d+\\.\\d+)\\s+(-?\\d+\\.\\d+)\\s*");
         std::regex pattern_f("f\\s+(\\d+)\\/(\\d*)\\/(\\d+)\\s+(\\d+)\\/(\\d*)\\/(\\d+)\\s+(\\d+)\\/(\\d*)\\/(\\d+)(?:\\s+(\\d+)\\/(\\d*)\\/(\\d+))?\\s*");
 
-        RawModelDataIndexed* loadFromOBJ(const char * path) {
+        RawModelDataIndexed* loadFromOBJ(const char * path, bool computeTangents) {
 
             Log::log_render(INFO) << "Loading OBJ File: " << path;
 
@@ -180,6 +180,7 @@ namespace Swarm {
             data.setData          (DataType::VERTEX, VecArray(array_vertices), index_count);
             if(!noUV) data.setData(DataType::UV,     VecArray(array_uvs),      index_count);
             data.setData          (DataType::NORMAL, VecArray(array_normals),  index_count);
+            if(computeTangents) data.computeTangents();
             return data.index();
         }
 

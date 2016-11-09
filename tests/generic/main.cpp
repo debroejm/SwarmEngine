@@ -30,11 +30,11 @@ int main() {
     Config::RawConfigData keybindingConfig("keybinding.config");
     Input::Keybinding EXIT(GLFW_KEY_ESCAPE, keybindingConfig, "Exit");
     Input::addKeybinding(EXIT);
-    Input::Keybinding FORWARD(GLFW_KEY_O, keybindingConfig, "Forward");
+    Input::Keybinding FORWARD(GLFW_KEY_W, keybindingConfig, "Forward");
     Input::addKeybinding(FORWARD);
 
     // Our Object
-    Model::RawModelDataIndexed *data = Model::loadFromOBJ("resources/models/Cube.obj");
+    Model::RawModelDataIndexed *data = Model::loadFromOBJ("resources/models/Cube.obj", true);
     Model::ModelSegment model(*data);
     Render::SimpleROS object(model);
     object.scale(3.0f, 3.0f, 3.0f);
@@ -42,6 +42,7 @@ int main() {
     // Textures
     Texture::SingleTexture cube_tex("resources/textures/box_diffuse.png");
     cube_tex.setSpecular("resources/textures/box_specular.png");
+    cube_tex.setNormal("resources/textures/box_normal.png");
 
     // Some Light Settings
     glUniform3f(program.getUniformID(Render::Uniforms::LightAmbientColor), 1.0f, 1.0f, 1.0f);

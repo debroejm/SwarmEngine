@@ -222,6 +222,47 @@ namespace Swarm {
             }
         };
 
+        void RawModelData::computeTangents() {
+            if(!(hasData(DataType::VERTEX) && hasData(DataType::UV) && hasData(DataType::NORMAL))) return;
+            glm::vec3 *vertices = getData(DataType::VERTEX).v3;
+            glm::vec2 *uvs = getData(DataType::UV).v2;
+            glm::vec3 *normals = getData(DataType::NORMAL).v3;
+            glm::vec3 *tangents = new glm::vec3[size];
+            glm::vec3 *bitangents = new glm::vec3[size];
+            for(int i = 0; i < size-2; i+=3) {
+                glm::vec3 &v0 = vertices[i+0];
+                glm::vec3 &v1 = vertices[i+1];
+                glm::vec3 &v2 = vertices[i+2];
+                glm::vec2 &uv0 = uvs[i+0];
+                glm::vec2 &uv1 = uvs[i+1];
+                glm::vec2 &uv2 = uvs[i+2];
+
+                glm::vec3 deltaPos1 = v1-v0;
+                glm::vec3 deltaPos2 = v2-v0;
+                glm::vec2 deltaUV1 = uv1-uv0;
+                glm::vec2 deltaUV2 = uv2-uv0;
+
+                float r = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV1.y * deltaUV2.x);
+                glm::vec3 tangent = r * (deltaPos1 * deltaUV2.y - deltaPos2 * deltaUV1.y);
+                glm::vec3 bitangent = r * (deltaPos2 * deltaUV1.x - deltaPos1 * deltaUV2.x);
+
+                tangents[i+0] = glm::normalize(tangent - normals[i+0] * glm::dot(normals[i+0], tangent));
+                tangents[i+1] = glm::normalize(tangent - normals[i+1] * glm::dot(normals[i+1], tangent));
+                tangents[i+2] = glm::normalize(tangent - normals[i+2] * glm::dot(normals[i+2], tangent));
+                bitangents[i+0] = bitangent;
+                bitangents[i+1] = bitangent;
+                bitangents[i+2] = bitangent;
+            }
+            for(int i = 0; i < size; i++) {
+                // This line will show as an error in CLion, but compiles just fine (CLion can't read the template)
+                if(glm::dot(glm::cross(normals[i], tangents[i]), bitangents[i]) < 0.0f) {
+                    tangents[i] = tangents[i] * -1.0f;
+                }
+            }
+            setData(DataType::TANGET, VecArray(tangents), size);
+            setData(DataType::BITANGET, VecArray(bitangents), size);
+        }
+
         RawModelDataIndexed* RawModelData::index() {
 
             map<PackedData, unsigned short> dataToIndexMap;
