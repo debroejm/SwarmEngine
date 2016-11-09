@@ -8,8 +8,6 @@ using namespace Swarm::Logging;
 
 int main() {
 
-    int dud = 0;
-
     // Initialization
     if(!Init::init()) {
         return -1;
@@ -42,11 +40,12 @@ int main() {
     object.scale(3.0f, 3.0f, 3.0f);
 
     // Textures
-    Texture::SingleTexture cube_tex_diffuse("resources/models/Sample.png");
+    Texture::SingleTexture cube_tex("resources/textures/box_diffuse.png");
+    cube_tex.setSpecular("resources/textures/box_specular.png");
 
     // Some Light Settings
-    glUniform3f(program.getUniformID(Render::Uniforms::LightAmbientColor), 0.5f, 0.5f, 0.5f);
-    glUniform3f(program.getUniformID(Render::Uniforms::LightAmbientDirection), 1.0f, -1.0f, 1.0f);
+    glUniform3f(program.getUniformID(Render::Uniforms::LightAmbientColor), 1.0f, 1.0f, 1.0f);
+    glUniform3f(program.getUniformID(Render::Uniforms::LightAmbientDirection), 1.0f, 1.0f, 1.0f);
 
     // Main runtime loop
     GLFWwindow * window = Input::getWindow();
@@ -63,7 +62,7 @@ int main() {
 
         Input::computeMatricesFromInputs();
 
-        cube_tex_diffuse.bind();
+        cube_tex.bind();
         renderer.render(object);
 
         if (EXIT.isPressed())

@@ -3,33 +3,39 @@
 namespace Swarm {
     namespace Texture {
 
-        SingleTexture::SingleTexture(GLuint textureID) : textureID(textureID) {}
-        SingleTexture::SingleTexture(const char * textureName) {
-            textureID = loadPNGTexture(textureName);
-        }
+        SingleTexture::SingleTexture(GLuint texID) : texID_diffuse(texID) {}
+        SingleTexture::SingleTexture(const char * texName) : texID_diffuse(loadPNGTexture(texName)) {}
 
-        GLuint SingleTexture::getID() { return textureID; }
+        void SingleTexture::setDiffuse  (GLuint texID) { texID_diffuse  = texID; }
+        void SingleTexture::setSpecular (GLuint texID) { texID_specular = texID; }
+
+        void SingleTexture::setDiffuse  (const char * texName) { texID_diffuse  = loadPNGTexture(texName); }
+        void SingleTexture::setSpecular (const char * texName) { texID_specular = loadPNGTexture(texName); }
+
+        GLuint SingleTexture::getID() { return texID_diffuse; }
         void SingleTexture::bind() {
             glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, textureID);
+            glBindTexture(GL_TEXTURE_2D, texID_diffuse);
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, texID_specular);
         }
 
         SingleTexture &SingleTexture::operator=(const SingleTexture &rhs) {
-            textureID = rhs.textureID;
+            texID_diffuse = rhs.texID_diffuse;
             return *this;
         }
 
         SingleTexture &SingleTexture::operator=(const GLuint &rhs) {
-            textureID = rhs;
+            texID_diffuse = rhs;
             return *this;
         }
 
         bool SingleTexture::operator==(const SingleTexture &rhs) {
-            return textureID == rhs.textureID;
+            return texID_diffuse == rhs.texID_diffuse;
         }
 
         bool SingleTexture::operator==(const GLuint &rhs) {
-            return textureID == rhs;
+            return texID_diffuse == rhs;
         }
     }
 }

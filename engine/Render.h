@@ -51,10 +51,16 @@ namespace Swarm {
 
         class SingleTexture : public Texture {
         public:
-            SingleTexture(GLuint textureID);
-            SingleTexture(const char *textureName);
+            SingleTexture(GLuint texID);
+            SingleTexture(const char *texName);
 
             friend class AnimatedTexture;
+
+            void setDiffuse(GLuint texID);
+            void setSpecular(GLuint texID);
+
+            void setDiffuse(const char *texName);
+            void setSpecular(const char *texName);
 
             virtual GLuint getID();
             virtual void bind();
@@ -66,7 +72,8 @@ namespace Swarm {
             bool operator==(const GLuint &rhs);
 
         protected:
-            GLuint textureID;
+            GLuint texID_diffuse;
+            GLuint texID_specular = 0;
         };
 
         class AnimatedTexture : public Texture {
@@ -343,7 +350,7 @@ namespace Swarm {
             void operator=(Model &rhs);
 
             void addTexture(const char * textureName);
-            void addTexture(GLuint textureID);
+            void addTexture(GLuint texID_diffuse);
             void setTexture(Texture::AnimatedTexture other);
 
             //GLuint getBoneBuffer();
