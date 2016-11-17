@@ -5,19 +5,19 @@
 namespace Swarm {
     namespace Render {
 
-        void SimpleROS::translate(glm::vec3 amount) {
+        void RenderObjectSimple::translate(glm::vec3 amount) {
             matrix = matrix * glm::translate(amount);
         }
 
-        void SimpleROS::rotate(float amount, glm::vec3 angle) {
+        void RenderObjectSimple::rotate(float amount, glm::vec3 angle) {
             matrix = matrix * glm::rotate(amount, angle);
         }
 
-        void SimpleROS::scale(glm::vec3 amount) {
+        void RenderObjectSimple::scale(glm::vec3 amount) {
             matrix = matrix * glm::scale(amount);
         }
 
-        void SimpleROS::resetMatrix() {
+        void RenderObjectSimple::resetMatrix() {
             matrix = glm::mat4(1);
         }
     }

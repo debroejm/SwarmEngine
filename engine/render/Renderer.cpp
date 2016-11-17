@@ -51,6 +51,7 @@ namespace Swarm {
             glUniformMatrix4fv(currentProgram->getUniformID(Uniforms::MatrixProjection), 1, GL_FALSE, &matrix_Projection[0][0]);
 
             // Bind Texture IDs
+            // TODO: More Dynamic Binding
             glUniform1i(currentProgram->getUniformID(Uniforms::TextureDiffuse),     0);
             glUniform1i(currentProgram->getUniformID(Uniforms::TextureSpecular),    1);
             glUniform1i(currentProgram->getUniformID(Uniforms::TextureNormal),      2);
@@ -75,15 +76,6 @@ namespace Swarm {
             // Bind the Model Matrix
             glUniformMatrix4fv(currentProgram->getUniformID(Uniforms::MatrixModel), 1, GL_FALSE, &matrix_Model[0][0]);
 
-            // Texture Binding
-            // TODO: Make the texture binding code object specific
-            /*
-            glActiveTexture(GL_TEXTURE0);
-            GLuint TexID = object.getTexID();
-            glBindTexture(GL_TEXTURE_2D, TexID);
-            glUniform1i(currentProgram->getUniformID("texturemap"), 0);
-             */
-
             // Each Object has its own VAO
             glBindVertexArray(object.getVAOID());
 
@@ -98,16 +90,36 @@ namespace Swarm {
             glBindVertexArray(0);
         }
 
-        void Renderer::render(RenderObjectSingle &object) {
+        void Renderer::render(RenderObject &object) {
             object.prepareModel();
             render(object.getModel(), object.getMatrix());
         }
 
-        void Renderer::render(RenderObjectMulti &object) {
-            for(unsigned int i = 0; i < object.getCount(); i++) {
-                object.prepareModel(i);
-                render(object.getModel(i), object.getMatrix(i));
+        void Renderer::renderAll() {
+            for(auto && iter : roMap) {
+                if(iter.first == NULL) continue;
+                iter.first->bind();
+                for(RenderObject* o : iter.second)
+                    render(*o);
             }
+        }
+
+        void Renderer::registerRenderObject(RenderObject* object) {
+            if(object == NULL) return;
+            roMap[&(object->getTexture())].push_back(object);
+        }
+
+        void Renderer::unregisterRenderObject(RenderObject* object) {
+            if(object == NULL) return;
+            if(roMap.count(&(object->getTexture()))) {
+                std::vector<RenderObject *> &list = roMap[&(object->getTexture())];
+                for(unsigned int i = 0; i < list.size(); i++)
+                    if(list[i] == object) list.erase(list.begin()+i);
+            }
+        }
+
+        void Renderer::clearRenderObjects() {
+            roMap.clear();
         }
     }
 }

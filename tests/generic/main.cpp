@@ -33,16 +33,20 @@ int main() {
     Input::Keybinding FORWARD(GLFW_KEY_W, keybindingConfig, "Forward");
     Input::addKeybinding(FORWARD);
 
+    // Textures
+    Texture::SingleTexture cube_tex("resources/textures/box_diffuse.png");
+    cube_tex.setTex(Texture::MapType::SPECULAR, "resources/textures/box_specular.png");
+    cube_tex.setTex(Texture::MapType::NORMAL, "resources/textures/box_normal.png");
+    cube_tex.setTex(Texture::MapType::EMISSIVE, "resources/textures/box_emissive.png");
+
     // Our Object
     Model::RawModelDataIndexed *data = Model::loadFromOBJ("resources/models/Cube.obj", true);
     Model::ModelSegment model(*data);
-    Render::SimpleROS object(model);
+    Render::RenderObjectSimple object(model, cube_tex);
     object.scale(3.0f, 3.0f, 3.0f);
 
-    // Textures
-    Texture::SingleTexture cube_tex("resources/textures/box_diffuse.png");
-    cube_tex.setSpecular("resources/textures/box_specular.png");
-    cube_tex.setNormal("resources/textures/box_normal.png");
+    // Register Objects
+    renderer.registerRenderObject(&object);
 
     // Some Light Settings
     glUniform3f(program.getUniformID(Render::Uniforms::LightAmbientColor), 1.0f, 1.0f, 1.0f);
@@ -63,8 +67,7 @@ int main() {
 
         Input::computeMatricesFromInputs();
 
-        cube_tex.bind();
-        renderer.render(object);
+        renderer.renderAll();
 
         if (EXIT.isPressed())
             glfwSetWindowShouldClose( window, GL_TRUE );

@@ -3,41 +3,50 @@
 namespace Swarm {
     namespace Texture {
 
-        SingleTexture::SingleTexture(GLuint texID) : texID_diffuse(texID) {}
-        SingleTexture::SingleTexture(const char * texName) : texID_diffuse(loadPNGTexture(texName)) {}
+        SingleTexture::SingleTexture(GLuint texID) { texIDs[MapType::DIFFUSE] = texID; }
+        SingleTexture::SingleTexture(const char * texName) { texIDs[MapType::DIFFUSE] = loadPNGTexture(texName); }
 
-        void SingleTexture::setDiffuse  (GLuint texID) { texID_diffuse  = texID; }
-        void SingleTexture::setSpecular (GLuint texID) { texID_specular = texID; }
-        void SingleTexture::setNormal   (GLuint texID) { texID_normal   = texID; }
+        void SingleTexture::setTex(const MapType::Type &type, GLuint texID) { texIDs[type] = texID; }
+        void SingleTexture::setTex(const MapType::Type &type, const char * texName) { texIDs[type] = loadPNGTexture(texName); }
 
-        void SingleTexture::setDiffuse  (const char * texName) { texID_diffuse  = loadPNGTexture(texName); }
-        void SingleTexture::setSpecular (const char * texName) { texID_specular = loadPNGTexture(texName); }
-        void SingleTexture::setNormal   (const char * texName) { texID_normal   = loadPNGTexture(texName); }
+        GLuint SingleTexture::getTex(const MapType::Type &type) const {
+            if(texIDs.count(type)) return texIDs.at(type);
+            else return 0;
+        }
 
-        GLuint SingleTexture::getID() { return texID_diffuse; }
-        void SingleTexture::bind() {
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, texID_diffuse);
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, texID_specular);
+        GLuint SingleTexture::getTex(GLuint activeID) const {
+            MapType::Type type(GL_TEXTURE_2D, activeID, ""); // Dummy type; only activeID is used for keys.
+            if(texIDs.count(type)) return texIDs.at(type);
+            else return 0;
+        }
+
+        void SingleTexture::bind() const {
+            for(auto && iter : texIDs) {
+                glActiveTexture(GL_TEXTURE0 + iter.first.getActiveID());
+                glBindTexture(iter.first.getTarget(), iter.second);
+            }
         }
 
         SingleTexture &SingleTexture::operator=(const SingleTexture &rhs) {
-            texID_diffuse = rhs.texID_diffuse;
+            texIDs = rhs.texIDs;
             return *this;
         }
 
         SingleTexture &SingleTexture::operator=(const GLuint &rhs) {
-            texID_diffuse = rhs;
+            texIDs.clear();
+            texIDs[MapType::DIFFUSE] = rhs;
             return *this;
         }
 
-        bool SingleTexture::operator==(const SingleTexture &rhs) {
-            return texID_diffuse == rhs.texID_diffuse;
-        }
-
-        bool SingleTexture::operator==(const GLuint &rhs) {
-            return texID_diffuse == rhs;
+        int SingleTexture::compareTo(const Texture &rhs) const {
+            GLint max;
+            glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &max);
+            for(GLuint i = 0; i < max; i++) {
+                int diff = getTex(i) - rhs.getTex(i);
+                if(diff == 0 && i < max-1) continue;
+                return diff;
+            }
+            return 0;
         }
     }
 }

@@ -84,7 +84,7 @@ namespace Swarm {
 
         AnimatedTexture &AnimatedTexture::operator=(const SingleTexture &rhs) {
             this->textureList.clear();
-            this->textureList.push_back(rhs.texID_diffuse);
+            this->textureList.push_back(rhs.getTex(MapType::DIFFUSE));
             this->changeDelay.clear();
             this->changeDelay.push_back(1.0);
             this->currentIndex = 0;

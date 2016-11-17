@@ -14,6 +14,7 @@ uniform vec3 _ambient_light_direction;
 uniform sampler2D _texture_diffuse;
 uniform sampler2D _texture_specular;
 uniform sampler2D _texture_normal;
+uniform sampler2D _texture_emissive;
 
 void main() {
 
@@ -22,6 +23,7 @@ void main() {
     //vec3 diffuse = vec3(uv_frag.x, (uv_frag.x+uv_frag.y)/3.0, uv_frag.y);
     vec3 color_diffuse = texture2D( _texture_diffuse, uv_frag ).rgb;
     vec3 color_specular = texture2D( _texture_specular, uv_frag ).rgb;
+    vec4 color_emissive = texture2D( _texture_emissive, uv_frag );
 
     vec3 normal = normalize( TBN * ( texture2D( _texture_normal, uv_frag ).rgb * 2.0f - 1.0f ) );
 
@@ -34,7 +36,7 @@ void main() {
 
     float cosAlpha = clamp( dot( E,R ), 0, 1 );
 
-    vec3 colorVal = minLight * color_diffuse + ( (1 - minLight) * color_diffuse * _ambient_light_color * cosTheta ) + ( color_specular * _ambient_light_color * pow(cosAlpha,5) );
+    vec3 colorVal = (color_emissive.rgb * color_emissive.a) + minLight * color_diffuse + ( (1 - minLight) * color_diffuse * _ambient_light_color * cosTheta ) + ( color_specular * _ambient_light_color * pow(cosAlpha,5) );
     colorOut = vec4(colorVal,1);
 
 }
