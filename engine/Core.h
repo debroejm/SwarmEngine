@@ -243,6 +243,7 @@ namespace Swarm {
 
             //! Get the pressed status of this Keybinding.
             bool isPressed();
+            operator bool() { return isPressed(); }
             //! Set the pressed status of this Keybinding.
             void setPressed(bool pressed);
 

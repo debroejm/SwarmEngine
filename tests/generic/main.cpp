@@ -1,10 +1,15 @@
 #include "Core.h"
 #include "Render.h"
 
+#include <math.h>
+
 using namespace Swarm;
 using namespace std;
 
 using namespace Swarm::Logging;
+
+#define PI 3.141592f
+#define TWO_PI PI*2.0f
 
 int main() {
 
@@ -12,6 +17,8 @@ int main() {
     if(!Init::init()) {
         return -1;
     }
+
+    GLFWwindow * window = Input::getWindow();
 
     glClearColor(0.0f, 0.0f, 0.5f, 0.0f);
 
@@ -22,46 +29,104 @@ int main() {
     Render::Program program(shaders, 2);
 
     // Renderer object
-    Render::Camera camera(glm::vec3(-3.0f, 4.0f, 9.0f), glm::vec3(1.0f, 1.5f, 0.5f));
+    Render::Camera camera(window, glm::vec3(0.0f, 4.0f, 9.0f), glm::vec3(0.0f, 0.0f, 0.0f));
     Render::Renderer renderer(&program);
     renderer.changeCamera(&camera);
 
     // Keybindings
     Config::RawConfigData keybindingConfig("keybinding.config");
-    Input::Keybinding EXIT(GLFW_KEY_ESCAPE, keybindingConfig, "Exit");
-    Input::addKeybinding(EXIT);
-    Input::Keybinding FORWARD(GLFW_KEY_O, keybindingConfig, "Forward");
-    Input::addKeybinding(FORWARD);
+    Input::Keybinding EXIT(GLFW_KEY_ESCAPE, keybindingConfig, "Exit"); Input::addKeybinding(EXIT);
+    Input::Keybinding FORWARD(GLFW_KEY_W, keybindingConfig, "Forward"); Input::addKeybinding(FORWARD);
+    Input::Keybinding BACKWARD(GLFW_KEY_S, keybindingConfig, "Backward"); Input::addKeybinding(BACKWARD);
+    Input::Keybinding LEFT(GLFW_KEY_A, keybindingConfig, "Left"); Input::addKeybinding(LEFT);
+    Input::Keybinding RIGHT(GLFW_KEY_D, keybindingConfig, "Right"); Input::addKeybinding(RIGHT);
+    Input::Keybinding COLOR_R_UP(GLFW_KEY_KP_7, keybindingConfig, "ColorRUp"); Input::addKeybinding(COLOR_R_UP);
+    Input::Keybinding COLOR_R_DOWN(GLFW_KEY_KP_4, keybindingConfig, "ColorRDown"); Input::addKeybinding(COLOR_R_DOWN);
+    Input::Keybinding COLOR_G_UP(GLFW_KEY_KP_8, keybindingConfig, "ColorGUp"); Input::addKeybinding(COLOR_G_UP);
+    Input::Keybinding COLOR_G_DOWN(GLFW_KEY_KP_5, keybindingConfig, "ColorGDown"); Input::addKeybinding(COLOR_G_DOWN);
+    Input::Keybinding COLOR_B_UP(GLFW_KEY_KP_9, keybindingConfig, "ColorBUp"); Input::addKeybinding(COLOR_B_UP);
+    Input::Keybinding COLOR_B_DOWN(GLFW_KEY_KP_6, keybindingConfig, "ColorBDown"); Input::addKeybinding(COLOR_B_DOWN);
+
+    // Textures
+    Texture::SingleTexture cube_tex("resources/textures/box_diffuse.png");
+    cube_tex.setTex(Texture::MapType::SPECULAR, "resources/textures/box_specular.png");
+    cube_tex.setTex(Texture::MapType::NORMAL, "resources/textures/box_normal.png");
+    cube_tex.setTex(Texture::MapType::EMISSIVE, "resources/textures/box_emissive.png");
 
     // Our Object
-    Model::RawModelDataIndexed *data = Model::loadFromOBJ("resources/models/Cube.obj");
+    Model::RawModelDataIndexed *data = Model::loadFromOBJ("resources/models/Cube.obj", true);
     Model::ModelSegment model(*data);
-    Render::SimpleROS object(model);
+    Render::RenderObjectSimple object(model, cube_tex);
     object.scale(3.0f, 3.0f, 3.0f);
+    Render::RenderObjectSimple object2(object);
+    object2.translate(0.0f, -4.0f, 0.0f);
+    Render::RenderObjectSimple object3(object);
+    object3.translate(0.0f, 4.0f, 0.0f);
+
+    // Register Objects
+    renderer.registerRenderObject(&object);
+    renderer.registerRenderObject(&object2);
+    renderer.registerRenderObject(&object3);
 
     // Some Light Settings
-    glUniform3f(program.getUniformID(Render::Uniforms::LightAmbientColor), 0.5f, 0.5f, 0.5f);
-    glUniform3f(program.getUniformID(Render::Uniforms::LightAmbientDirection), 1.0f, -1.0f, 1.0f);
+    glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
+    float speed = 0.01f;
+    glUniform3f(program.getUniformID(Render::Uniforms::LightAmbientColor), lightColor.r, lightColor.g, lightColor.b);
+    glUniform3f(program.getUniformID(Render::Uniforms::LightAmbientDirection), 1.0f, 1.0f, 1.0f);
+
+    float yaw = 0.0f;
+    float pitch = 0.0f;
 
     // Main runtime loop
-    GLFWwindow * window = Input::getWindow();
     while (!glfwWindowShouldClose(window))
     {
 
-        // Do something fun to the object
-        object.rotate(0.01f, 0.5f, 1.0f, 0.5f);
+        bool input = false;
+        if (LEFT) { yaw -= 0.01f; input = true; }
+        if (RIGHT) { yaw += 0.01f; input = true; }
+        if (FORWARD) { pitch -= 0.01f; input = true; }
+        if (BACKWARD) { pitch += 0.01f; input = true; }
+        if(!input) { yaw += 0.001f; pitch -= 0.001f; }
 
-        // Clear the screen
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        if(yaw > TWO_PI) yaw = fmod(yaw, TWO_PI);
+        if(pitch > TWO_PI) pitch = fmod(pitch, TWO_PI);
+        if(yaw < 0.0f) yaw = TWO_PI - fmod(-yaw, TWO_PI);
+        if(pitch < 0.0f) pitch = TWO_PI - fmod(-pitch, TWO_PI);
 
-        Input::computeMatricesFromInputs();
+        input = false;
+        if (COLOR_R_UP)   { lightColor.r += speed; input = true; }
+        if (COLOR_R_DOWN) { lightColor.r -= speed; input = true; }
+        if (COLOR_G_UP)   { lightColor.g += speed; input = true; }
+        if (COLOR_G_DOWN) { lightColor.g -= speed; input = true; }
+        if (COLOR_B_UP)   { lightColor.b += speed; input = true; }
+        if (COLOR_B_DOWN) { lightColor.b -= speed; input = true; }
+        if(lightColor.r < 0.0f) lightColor.r = 0.0f;
+        if(lightColor.r > 1.0f) lightColor.r = 1.0f;
+        if(lightColor.g < 0.0f) lightColor.g = 0.0f;
+        if(lightColor.g > 1.0f) lightColor.g = 1.0f;
+        if(lightColor.b < 0.0f) lightColor.b = 0.0f;
+        if(lightColor.b > 1.0f) lightColor.b = 1.0f;
+        if(input) glUniform3f(program.getUniformID(Render::Uniforms::LightAmbientColor), lightColor.r, lightColor.g, lightColor.b);
 
-        renderer.render(object);
+        double cursorX, cursorY;
+        glfwGetCursorPos(window, &cursorX, &cursorY);
+        int width, height;
+        glfwGetWindowSize(window, &width, &height);
+        glUniform3f(program.getUniformID(Render::Uniforms::LightAmbientDirection), (float)(cursorX - width/2), (float)-(cursorY - height/2), 1.0f);
 
-        if (EXIT.isPressed())
+        object.resetMatrix();
+        object.scale(3.0f, 3.0f, 3.0f);
+        object.rotate(pitch, 1.0f, 0.0f, 0.0f);
+        object.rotate(yaw, 0.0f, 1.0f, 0.0f);
+
+        renderer.start();
+        //Input::computeMatricesFromInputs();
+        renderer.renderAll();
+        renderer.end();
+
+        if (EXIT)
             glfwSetWindowShouldClose( window, GL_TRUE );
 
-        glfwSwapBuffers(window);
         glfwPollEvents();
     }
 

@@ -24,6 +24,7 @@ using namespace std;
 
 #include <glm/glm.hpp>
 #include <set>
+#include <glm/gtx/transform.hpp>
 
 
 
@@ -37,39 +38,100 @@ namespace Swarm {
 
     namespace Texture {
 
+        namespace MapType {
+
+            class Type {
+            public:
+                Type(GLenum target, GLuint activeID, string uniform) : target(target), active(activeID), uniform(uniform) { }
+
+                Type(const Type &other) { *this = other; }
+                Type &operator=(const Type &other) {
+                    active = other.active;
+                    uniform = other.uniform;
+                    target = other.target;
+                    return *this;
+                }
+
+                bool operator==(const Type &other) const { return hash() == other.hash(); }
+                bool operator<(const Type &other) const { return hash() < other.hash(); }
+                bool operator>(const Type &other) const { return hash() > other.hash(); }
+
+                string getUniform() const { return uniform; }
+                void setUniform(string uniform) { this->uniform = uniform; }
+                GLuint getActiveID() const { return active; }
+                GLenum getTarget() const { return target; }
+
+                size_t hash() const { return hasher(active); }
+
+            protected:
+                GLuint active;
+                string uniform;
+                GLenum target;
+
+                std::hash<unsigned int> hasher;
+            };
+
+            static const Type DIFFUSE   (GL_TEXTURE_2D, 0, "_texture_diffuse");
+            static const Type SPECULAR  (GL_TEXTURE_2D, 1, "_texture_specular");
+            static const Type NORMAL    (GL_TEXTURE_2D, 2, "_texture_normal");
+            static const Type EMISSIVE  (GL_TEXTURE_2D, 3, "_texture_emissive");
+        }
+    }
+}
+
+namespace std {
+    template<> struct hash<Swarm::Texture::MapType::Type> {
+        size_t operator() (const Swarm::Texture::MapType::Type &var) const {
+            return var.hash();
+        }
+    };
+}
+
+namespace Swarm {
+    namespace Texture {
+
         GLuint loadPNGTexture(const char *filename);
 
         void registerTexture(GLuint textureID);
-
         void cleanupTextures();
 
         class Texture {
         public:
-            virtual GLuint getID() = 0;
+            virtual GLuint getTex(const MapType::Type &type) const = 0;
+            virtual GLuint getTex(GLuint activeID) const = 0;
+            //virtual map<MapType::Type, GLuint> &getAllTex() const = 0; // TODO: Remove for iteration
+            virtual void bind() const = 0;
+            virtual int compareTo(const Texture &rhs) const = 0;
+            bool operator<(const Texture &rhs) const { return compareTo(rhs) < 0; }
+            bool operator>(const Texture &rhs) const { return compareTo(rhs) > 0; }
+            bool operator==(const Texture &rhs) const { return compareTo(rhs) == 0; }
         };
 
         class SingleTexture : public Texture {
-            SingleTexture(GLuint textureID);
-
-            SingleTexture(const char *textureName);
+        public:
+            SingleTexture(GLuint texID);
+            SingleTexture(const char * texName);
 
             friend class AnimatedTexture;
 
-            virtual GLuint getID();
+            void setTex(const MapType::Type &type, GLuint texID);
+            void setTex(const MapType::Type &type, const char * texName);
+            virtual GLuint getTex(const MapType::Type &type) const;
+            virtual GLuint getTex(GLuint activeID) const;
+            //virtual map<MapType::Type, GLuint> &getAllTex() const;
+
+            virtual void bind() const;
 
             SingleTexture &operator=(const SingleTexture &rhs);
-
             SingleTexture &operator=(const GLuint &rhs);
 
-            bool operator==(const SingleTexture &rhs);
-
-            bool operator==(const GLuint &rhs);
+            virtual int compareTo(const Texture &rhs) const;
 
         protected:
-            GLuint textureID;
+            map<MapType::Type, GLuint> texIDs;
         };
 
-        class AnimatedTexture : public Texture {
+        class AnimatedTexture {
         public:
             AnimatedTexture(GLuint textureID);
 
@@ -86,6 +148,7 @@ namespace Swarm {
             void addTexture(const char *textureName, double interval);
 
             virtual GLuint getID();
+            virtual void bind();
 
             AnimatedTexture &operator=(const AnimatedTexture &rhs);
 
@@ -157,6 +220,7 @@ namespace Swarm {
                 VecVar getDefault() const { return defaultVal; }
                 float getEpsilon() const { return epsilon; }
                 GLuint getAttribID() const { return attribID; }
+                void setAttribID(GLuint attribID) { this->attribID = attribID; }
 
             private:
                 VecType type;
@@ -169,6 +233,8 @@ namespace Swarm {
             static const Type UV        ( TWO,    VecVar(glm::vec2(0.0f, 0.0f)),              2 );
             static const Type NORMAL    ( THREE,  VecVar(glm::vec3(0.0f, 1.0f, 0.0f)),        3 );
             static const Type COLOR     ( FOUR,   VecVar(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)),  4 );
+            static const Type TANGET    ( THREE,  VecVar(glm::vec3(0.0f, 1.0f, 0.0f)),        5 );
+            static const Type BITANGET  ( THREE,  VecVar(glm::vec3(0.0f, 1.0f, 0.0f)),        6 );
 
         }
 
@@ -201,6 +267,8 @@ namespace Swarm {
             const unordered_map<DataType::Type, VecArray> &getData() const { return dataMap; }
 
             unsigned int getSize() const;
+
+            void computeTangents();
 
             virtual RawModelDataIndexed* index();
 
@@ -236,7 +304,7 @@ namespace Swarm {
         };
 
 
-        RawModelDataIndexed* loadFromOBJ(const char * path);
+        RawModelDataIndexed* loadFromOBJ(const char * path, bool computeTangents = false);
 
 
         class Model {
@@ -271,184 +339,77 @@ namespace Swarm {
 
         void cleanupBuffers();
 
-        /*
-        class Bone
-        {
-        public:
-            Bone(glm::vec3 pos = glm::vec3(0), string name = "Unnamed", Bone* parent = NULL);
-            Bone(Bone &bone);
-            Bone(Bone &bone, string name);
-
-            void revertPosition();
-            void addPosition(glm::vec3 newPos);
-            void setPosition(glm::vec3 newPos);
-            void rotatePosition(float angle, glm::vec3 amount);
-            void rotatePosition(glm::mat4 rotMatrix);
-
-            void updateBoneBuffer();
-
-            void setParent(Bone &parent) { this->parent = &parent; }
-            Bone* getParent() { return parent; }
-
-            void addChild(Bone &child);
-            vector<Bone*> getChildren() { return children; }
-
-            void addBonePosition(glm::vec3 &bonePos);
-            void addNormal(glm::vec3 &normal);
-            void addNormal(glm::vec3 &normal, glm::vec3 &normalStatic);
-            vector<glm::vec3*> getBonePositions() { return bonePositions; }
-            vector<glm::vec3*> getNormals() { return normals; }
-
-            glm::vec3 getPosition();
-            glm::vec3 getRelativePosition();
-            glm::mat4 getRotationMatrix();
-
-            string getName() { return name; }
-
-            void operator=(const Bone &rhs);
-
-        private:
-            string name;
-            glm::vec3 originalPos;
-            glm::vec3 position;
-            glm::mat4 rotationMatrix = glm::mat4(1.0f);
-            Bone* parent;
-            vector<Bone*> children;
-            vector<glm::vec3*> bonePositions;
-            vector<glm::vec3*> normals;
-            vector<glm::vec3*> normalsStatic;
-        };
-
-        struct bVert{
-            float x;
-            float y;
-            float z;
-            Bone* modifier;
-        };
-         */
-
-        /*
-        class Model
-        {
-        public:
-            Model();
-            Model(string name);
-            Model(Model &other);
-            ~Model();
-            bool loadOBJ(const char * path);
-            bool loadMMD(const char * path);
-            bool loadData(Bone skeleton[], glm::vec3 bones[], glm::vec2 uvs[], glm::vec3 normals[], glm::vec3 normalsStatic[], unsigned int elementCount, unsigned short indices[], unsigned int indexCount);
-
-            void operator=(Model &rhs);
-
-            void addTexture(const char * textureName);
-            void addTexture(GLuint textureID);
-            void setTexture(Texture::AnimatedTexture other);
-
-            //GLuint getBoneBuffer();
-            //GLuint getUVBuffer();
-            //GLuint getNormalBuffer();
-            //GLuint getElementBuffer();
-            GLuint getVaoID();
-            int getElementCount();
-            GLuint getTexture();
-
-            Bone* getBone(int index);
-            Bone* getBone(string tag);
-
-            bool isLoaded();
-            string getName() { return name; }
-
-            glm::vec3 getMaxDimensions();
-            glm::vec3 getMinDimensions();
-
-            glm::vec3 getBonePosition(int index);
-            void addBonePosition(int index, glm::vec3 pos);
-            void setBonePosition(int index, glm::vec3 pos);
-            void rotateBonePosition(int index, float angle, glm::vec3 amount);
-
-            void updateBoneBuffer();
-
-        private:
-            bool loaded;
-            string name;
-
-            GLuint vao;
-
-            GLuint bonebuffer;
-            GLuint uvbuffer;
-            GLuint normalbuffer;
-            GLuint elementbuffer;
-            unsigned int indexCount;
-
-            Bone* skeleton = NULL;
-            int boneCount;
-            glm::vec3* bonePositions = NULL;
-            glm::vec2* uvs = NULL;
-            glm::vec3* normals = NULL;
-            glm::vec3* normalsStatic = NULL;
-            unsigned short* indexArray = NULL;
-            unsigned int elementCount;
-
-            //vector<Bone> skeleton;
-            //vector<glm::vec3> bones;
-            //vector<glm::vec3> normals;
-
-            glm::vec3 maxDim;
-            glm::vec3 minDim;
-
-            Texture::AnimatedTexture texture;
-        };
-         */
     }
 
 
     namespace Render {
 
         namespace Uniforms {
+
             static string MatrixModel =             "_m";
             static string MatrixView =              "_v";
             static string MatrixProjection =        "_p";
+
             static string LightAmbientColor =       "_ambient_light_color";
             static string LightAmbientDirection =   "_ambient_light_direction";
+
+            static string TextureDiffuse =          "_texture_diffuse";
+            static string TextureSpecular =         "_texture_specular";
+            static string TextureNormal =           "_texture_normal";
+            static string TextureEmissive =         "_texture_emissive";
+
         }
 
 
-        class RenderObjectSingle {
+        class ModelMatrixWrapper {
         public:
-            virtual Model::Model &getModel() = 0;
-            virtual glm::mat4 &getMatrix() = 0;
-            virtual void setMatrix(glm::mat4 matrix) = 0;
-            virtual void prepareModel() {}
-        };
-
-        class RenderObjectMulti {
-        public:
-            virtual unsigned int getCount() = 0;
-            virtual Model::Model &getModel(unsigned int index) = 0;
-            virtual glm::mat4 &getMatrix(unsigned int index) = 0;
-            virtual void setMatrix(unsigned int index, glm::mat4 matrix) = 0;
-            virtual void prepareModel(unsigned int index) {}
-        };
-
-        class SimpleROS : public RenderObjectSingle {
-        public:
-            SimpleROS(Model::Model &model, glm::mat4 matrix = glm::mat4(1.0)) : model(model), matrix(matrix) {}
-            virtual Model::Model &getModel() { return model; }
-            virtual glm::mat4 &getMatrix() { return matrix; }
+            virtual glm::mat4 getMatrix() { return matrix; }
             virtual void setMatrix(glm::mat4 matrix) { this->matrix = matrix; }
             void translate(float x, float y, float z) { translate(glm::vec3(x, y, z)); }
-            virtual void translate(glm::vec3 amount);
+            virtual void translate(glm::vec3 amount) { matrix = glm::translate(amount) * matrix; }
             void rotate(float amount, float x, float y, float z) { rotate(amount, glm::vec3(x, y, z)); }
-            virtual void rotate(float amount, glm::vec3 angle);
+            virtual void rotate(float amount, glm::vec3 angle) { matrix = glm::rotate(amount, angle) * matrix; }
             void scale(float x, float y, float z) { scale(glm::vec3(x, y, z)); }
-            virtual void scale(glm::vec3 amount);
-            virtual void resetMatrix();
+            virtual void scale(glm::vec3 amount) { matrix = glm::scale(amount) * matrix; }
+            virtual void resetMatrix() { matrix = glm::mat4(1); }
         protected:
-            Model::Model &model;
             glm::mat4 matrix;
         };
 
+        class RenderObject : public ModelMatrixWrapper {
+        public:
+            virtual Model::Model &getModel() = 0;
+            virtual Texture::Texture &getTexture() = 0;
+            virtual void prepareModel() {}
+        };
+
+        class RenderObjectSimple : public RenderObject {
+        public:
+            RenderObjectSimple(Model::Model &model, Texture::Texture &texture, glm::mat4 matrix = glm::mat4(1.0)) : model(model), texture(texture) { setMatrix(matrix); }
+            virtual Model::Model &getModel() { return model; }
+            virtual Texture::Texture &getTexture() { return texture; }
+        protected:
+            Model::Model &model;
+            Texture::Texture &texture;
+        };
+
+        class RenderObjectMultiPart;
+
+        class RenderObjectMulti : public ModelMatrixWrapper {
+        public:
+            virtual void add(RenderObjectMultiPart &part);
+        protected:
+            std::vector<RenderObjectMultiPart> parts;
+        };
+
+        class RenderObjectMultiPart : public RenderObjectSimple {
+        public:
+            RenderObjectMultiPart(RenderObjectMulti &parent, Model::Model &model, Texture::Texture &texture, glm::mat4 matrix = glm::mat4(1.0));
+            RenderObjectMulti &getParent() { return parent; }
+            virtual glm::mat4 getMatrix() { return RenderObjectSimple::getMatrix() * parent.getMatrix(); }
+        protected:
+            RenderObjectMulti &parent;
+        };
 
 
 
@@ -556,8 +517,8 @@ namespace Swarm {
 
         class Camera {
         public:
-            Camera(float speed = 1.0f, CameraMovementMode mode = INSTANT);
-            Camera(glm::vec3 position, glm::vec3 lookAt, glm::vec3 up = glm::vec3(0,1,0), float speed = 1.0f, CameraMovementMode mode = INSTANT);
+            Camera(GLFWwindow *window, float speed = 1.0f, CameraMovementMode mode = INSTANT);
+            Camera(GLFWwindow *window, glm::vec3 position, glm::vec3 lookAt, glm::vec3 up = glm::vec3(0,1,0), float speed = 1.0f, CameraMovementMode mode = INSTANT);
 
             void setMovementMode(CameraMovementMode mode) { movementMode = mode; }
             CameraMovementMode getMovementMode() { return movementMode; }
@@ -568,11 +529,22 @@ namespace Swarm {
             void setTargetPosition(CamPos pos) { targetPos = pos; }
             CamPos getTargetPosition() { return targetPos; }
 
+            void setFOV(float fov) { this->fov = fov; }
+            float getFOV() { return fov; }
+
+            void setViewDistance(float dist) { viewDistance = dist; }
+            float getViewDistance() { return viewDistance; }
+
             void update(double deltaTime);
 
             glm::mat4 getViewMatrix();
+            glm::mat4 getProjectionMatrix();
         protected:
             CameraMovementMode movementMode = INSTANT;
+            GLFWwindow *window;
+
+            float fov = 45.0f;
+            float viewDistance = 1000.0f;
 
             float moveSpeed;
 
@@ -583,6 +555,14 @@ namespace Swarm {
 
         void init();
         void cleanup();
+
+        struct TexPntrComp {
+            bool operator() (Texture::Texture* lhs, Texture::Texture* rhs) const {
+                if(lhs == NULL) return rhs != NULL;
+                if(rhs == NULL) return false;
+                return (*lhs) < (*rhs);
+            }
+        };
 
         class Renderer {
         public:
@@ -595,14 +575,25 @@ namespace Swarm {
             Program* getShaderProfile() { return currentProgram; }
             Camera* getCamera() { return currentCamera; }
 
-            void updateMatrixUniforms();
+            void updateUniforms();
+
+            void start();
+            void end();
+
             void render(Model::Model &object, glm::mat4 matrix_Model = glm::mat4(1.0));
-            void render(RenderObjectSingle &object);
-            void render(RenderObjectMulti &object);
+            void render(RenderObject &object);
+            void renderAll();
+
+            void registerRenderObject(RenderObject* object);
+            void unregisterRenderObject(RenderObject* object);
+            void clearRenderObjects();
 
         protected:
             Program* currentProgram;
             Camera* currentCamera;
+
+            // Texture Type -> Texture ID -> RO List
+            std::map<Texture::Texture*, std::vector<RenderObject*>, TexPntrComp> roMap;
         };
 
     }
