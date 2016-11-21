@@ -41,10 +41,10 @@ namespace Swarm {
             if(!currentProgram->isLinked()) return;
 
             // Grab the Matrices from the respective locations
-            glm::mat4 matrix_Projection = Input::getProjectionMatrix(); // NEED
+            glm::mat4 matrix_Projection; // = Input::getProjectionMatrix(); // NEED
             glm::mat4 matrix_View; // = Input::getViewMatrix(); // NEED
-            if(currentCamera == NULL) { matrix_View = glm::mat4(1.0); Logging::Log::log_render(Logging::ERR) << "NULL Camera when Rendering"; }
-            else matrix_View = currentCamera->getViewMatrix();
+            if(currentCamera == NULL) { matrix_View = glm::mat4(1.0); matrix_Projection = glm::mat4(1.0); Logging::Log::log_render(Logging::ERR) << "NULL Camera when Rendering"; }
+            else { matrix_View = currentCamera->getViewMatrix(); matrix_Projection = currentCamera->getProjectionMatrix(); }
 
             // Bind the VP Matrices
             glUniformMatrix4fv(currentProgram->getUniformID(Uniforms::MatrixView),       1, GL_FALSE, &matrix_View[0][0]);

@@ -8,15 +8,15 @@ namespace Swarm {
 
 
 
-        Camera::Camera(float speed, CameraMovementMode mode)
-                : moveSpeed(speed), movementMode(mode) {
+        Camera::Camera(GLFWwindow *window, float speed, CameraMovementMode mode)
+                : window(window), moveSpeed(speed), movementMode(mode) {
             currentPos.position = glm::vec3(0);
             currentPos.lookAt = glm::vec3(0,0,1);
             currentPos.up = glm::vec3(0,1,0);
         }
 
-        Camera::Camera(glm::vec3 position, glm::vec3 lookAt, glm::vec3 up, float speed, CameraMovementMode mode)
-                : moveSpeed(speed), movementMode(mode) {
+        Camera::Camera(GLFWwindow *window, glm::vec3 position, glm::vec3 lookAt, glm::vec3 up, float speed, CameraMovementMode mode)
+                : window(window), moveSpeed(speed), movementMode(mode) {
             currentPos.position = position;
             currentPos.lookAt = lookAt;
             currentPos.up = up;
@@ -42,6 +42,12 @@ namespace Swarm {
 
         glm::mat4 Camera::getViewMatrix() {
             return glm::lookAt(currentPos.position, currentPos.lookAt, currentPos.up);
+        }
+
+        glm::mat4 Camera::getProjectionMatrix() {
+            int width, height;
+            glfwGetWindowSize(window, &width, &height);
+            return glm::perspective(fov, (float)width / (float)height, 0.1f, viewDistance);
         }
 
     }

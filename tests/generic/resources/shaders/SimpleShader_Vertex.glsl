@@ -37,6 +37,6 @@ void main(){
 	n = normalize(( _mv * vec4(normal,0)).xyz);
 
 	uv_frag = uv;
-	//UV.y = 1.0 - vertexUV.y;\
+	uv_frag.y = 1.0 - uv.y;
 
 }

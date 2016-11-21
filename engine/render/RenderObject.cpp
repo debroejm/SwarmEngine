@@ -5,20 +5,13 @@
 namespace Swarm {
     namespace Render {
 
-        void RenderObjectSimple::translate(glm::vec3 amount) {
-            matrix = matrix * glm::translate(amount);
+        RenderObjectMultiPart::RenderObjectMultiPart(RenderObjectMulti &parent, Model::Model &model, Texture::Texture &texture, glm::mat4 matrix)
+                : parent(parent), RenderObjectSimple(model, texture, matrix) {
+            parent.add(*this);
         }
 
-        void RenderObjectSimple::rotate(float amount, glm::vec3 angle) {
-            matrix = matrix * glm::rotate(amount, angle);
-        }
-
-        void RenderObjectSimple::scale(glm::vec3 amount) {
-            matrix = matrix * glm::scale(amount);
-        }
-
-        void RenderObjectSimple::resetMatrix() {
-            matrix = glm::mat4(1);
+        void RenderObjectMulti::add(RenderObjectMultiPart &part) {
+            parts.push_back(part);
         }
     }
 }

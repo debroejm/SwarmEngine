@@ -24,6 +24,7 @@ using namespace std;
 
 #include <glm/glm.hpp>
 #include <set>
+#include <glm/gtx/transform.hpp>
 
 
 
@@ -360,44 +361,54 @@ namespace Swarm {
         }
 
 
-        class RenderObject {
+        class ModelMatrixWrapper {
+        public:
+            virtual glm::mat4 getMatrix() { return matrix; }
+            virtual void setMatrix(glm::mat4 matrix) { this->matrix = matrix; }
+            void translate(float x, float y, float z) { translate(glm::vec3(x, y, z)); }
+            virtual void translate(glm::vec3 amount) { matrix = glm::translate(amount) * matrix; }
+            void rotate(float amount, float x, float y, float z) { rotate(amount, glm::vec3(x, y, z)); }
+            virtual void rotate(float amount, glm::vec3 angle) { matrix = glm::rotate(amount, angle) * matrix; }
+            void scale(float x, float y, float z) { scale(glm::vec3(x, y, z)); }
+            virtual void scale(glm::vec3 amount) { matrix = glm::scale(amount) * matrix; }
+            virtual void resetMatrix() { matrix = glm::mat4(1); }
+        protected:
+            glm::mat4 matrix;
+        };
+
+        class RenderObject : public ModelMatrixWrapper {
         public:
             virtual Model::Model &getModel() = 0;
             virtual Texture::Texture &getTexture() = 0;
-            virtual glm::mat4 &getMatrix() = 0;
-            virtual void setMatrix(glm::mat4 matrix) = 0;
             virtual void prepareModel() {}
         };
 
-        /*
-        class RenderObjectCollection : RenderObject {
-        public:
-            virtual unsigned int getCount() = 0;
-            virtual Model::Model &getModel(unsigned int index) = 0;
-            virtual glm::mat4 &getMatrix(unsigned int index) = 0;
-            virtual void setMatrix(unsigned int index, glm::mat4 matrix) = 0;
-            virtual void prepareModel(unsigned int index) {}
-        };
-         */
-
         class RenderObjectSimple : public RenderObject {
         public:
-            RenderObjectSimple(Model::Model &model, Texture::Texture &texture, glm::mat4 matrix = glm::mat4(1.0)) : model(model), texture(texture), matrix(matrix) {}
+            RenderObjectSimple(Model::Model &model, Texture::Texture &texture, glm::mat4 matrix = glm::mat4(1.0)) : model(model), texture(texture) { setMatrix(matrix); }
             virtual Model::Model &getModel() { return model; }
             virtual Texture::Texture &getTexture() { return texture; }
-            virtual glm::mat4 &getMatrix() { return matrix; }
-            virtual void setMatrix(glm::mat4 matrix) { this->matrix = matrix; }
-            void translate(float x, float y, float z) { translate(glm::vec3(x, y, z)); }
-            virtual void translate(glm::vec3 amount);
-            void rotate(float amount, float x, float y, float z) { rotate(amount, glm::vec3(x, y, z)); }
-            virtual void rotate(float amount, glm::vec3 angle);
-            void scale(float x, float y, float z) { scale(glm::vec3(x, y, z)); }
-            virtual void scale(glm::vec3 amount);
-            virtual void resetMatrix();
         protected:
             Model::Model &model;
             Texture::Texture &texture;
-            glm::mat4 matrix;
+        };
+
+        class RenderObjectMultiPart;
+
+        class RenderObjectMulti : public ModelMatrixWrapper {
+        public:
+            virtual void add(RenderObjectMultiPart &part);
+        protected:
+            std::vector<RenderObjectMultiPart> parts;
+        };
+
+        class RenderObjectMultiPart : public RenderObjectSimple {
+        public:
+            RenderObjectMultiPart(RenderObjectMulti &parent, Model::Model &model, Texture::Texture &texture, glm::mat4 matrix = glm::mat4(1.0));
+            RenderObjectMulti &getParent() { return parent; }
+            virtual glm::mat4 getMatrix() { return RenderObjectSimple::getMatrix() * parent.getMatrix(); }
+        protected:
+            RenderObjectMulti &parent;
         };
 
 
@@ -506,8 +517,8 @@ namespace Swarm {
 
         class Camera {
         public:
-            Camera(float speed = 1.0f, CameraMovementMode mode = INSTANT);
-            Camera(glm::vec3 position, glm::vec3 lookAt, glm::vec3 up = glm::vec3(0,1,0), float speed = 1.0f, CameraMovementMode mode = INSTANT);
+            Camera(GLFWwindow *window, float speed = 1.0f, CameraMovementMode mode = INSTANT);
+            Camera(GLFWwindow *window, glm::vec3 position, glm::vec3 lookAt, glm::vec3 up = glm::vec3(0,1,0), float speed = 1.0f, CameraMovementMode mode = INSTANT);
 
             void setMovementMode(CameraMovementMode mode) { movementMode = mode; }
             CameraMovementMode getMovementMode() { return movementMode; }
@@ -518,11 +529,22 @@ namespace Swarm {
             void setTargetPosition(CamPos pos) { targetPos = pos; }
             CamPos getTargetPosition() { return targetPos; }
 
+            void setFOV(float fov) { this->fov = fov; }
+            float getFOV() { return fov; }
+
+            void setViewDistance(float dist) { viewDistance = dist; }
+            float getViewDistance() { return viewDistance; }
+
             void update(double deltaTime);
 
             glm::mat4 getViewMatrix();
+            glm::mat4 getProjectionMatrix();
         protected:
             CameraMovementMode movementMode = INSTANT;
+            GLFWwindow *window;
+
+            float fov = 45.0f;
+            float viewDistance = 1000.0f;
 
             float moveSpeed;
 
