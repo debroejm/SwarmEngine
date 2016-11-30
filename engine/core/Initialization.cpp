@@ -8,18 +8,18 @@ using namespace Swarm::Logging;
 namespace Swarm {
     namespace Init {
 
-        bool init(Type type) {
-            return init( "Swarm Engine Instance", type );
+        bool init(unsigned int flags) {
+            return init( "Swarm Engine Instance", flags );
         }
 
-        bool init(string windowName, Type type) {
+        bool init(string windowName, unsigned int flags) {
             // TODO: Modify so that default size is determined by screen capabilities
-            return init( 1600, 900, windowName, type );
+            return init( 1600, 900, windowName, flags );
         }
 
-        bool init(int windowX, int windowY, string windowName, Type type) {
+        bool init(int windowX, int windowY, string windowName, unsigned int flags) {
 
-            if(type >= RENDERING) {
+            if(flags & SWM_INIT_RENDER) {
                 GLFWwindow *window;
 
                 // Initialize GLFW

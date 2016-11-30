@@ -30,6 +30,7 @@ include_directories("external/glew/include")
 include_directories("external/glfw/include")
 include_directories("external/glm")
 include_directories("external/lodepng")
+include_directories("external")
 
 
 ###############################################################

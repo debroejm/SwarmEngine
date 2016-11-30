@@ -36,6 +36,16 @@ using namespace std;
 #include <glm/gtx/transform.hpp>
 
 
+#define SWM_INIT_MINIMAL            0x0
+#define SWM_INIT_MULTITHREAD        0x1
+#define SWM_INIT_CL                 0x2
+#define SWM_INIT_MODEL              0x4
+#define SWM_INIT_RENDER             0x8  | SWM_INIT_MODEL | SWM_INIT_MULTITHREAD
+#define SWM_INIT_PHYSICS            0x10 | SWM_INIT_CL
+
+#define SWM_INIT_ALL                SWM_INIT_RENDER | SWM_INIT_PHYSICS
+
+
 // ************
 //  Code Begin
 // ************
@@ -156,15 +166,9 @@ namespace Swarm {
 
     namespace Init {
 
-        enum Type {
-            FULL = 2,
-            RENDERING = 1,
-            MINIMAL = 0
-        };
-
-        bool init(Type type);
-        bool init(string windowName = "Swarm Engine Instance", Type type = FULL);
-        bool init(int windowX, int windowY, string windowName = "Swarm Engine Instance", Type type = FULL);
+        bool init(unsigned int flags);
+        bool init(string windowName = "Swarm Engine Instance", unsigned int flags = SWM_INIT_ALL);
+        bool init(int windowX, int windowY, string windowName = "Swarm Engine Instance", unsigned int flags = SWM_INIT_ALL);
 
         void cleanup();
 
