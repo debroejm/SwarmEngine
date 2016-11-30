@@ -29,9 +29,8 @@ int main() {
     Render::Program program(shaders, 2);
 
     // Renderer object
-    Render::Camera camera(window, glm::vec3(0.0f, 4.0f, 9.0f), glm::vec3(0.0f, 0.0f, 0.0f));
     Render::Renderer renderer(&program);
-    renderer.changeCamera(&camera);
+    Render::Camera camera(renderer, window, glm::vec3(0.0f, 4.0f, 9.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 
     // Keybindings
     Config::RawConfigData keybindingConfig("keybinding.config");
@@ -71,15 +70,18 @@ int main() {
     // Some Light Settings
     glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
     float speed = 0.01f;
-    glUniform3f(program.getUniformID(Render::Uniforms::LightAmbientColor), lightColor.r, lightColor.g, lightColor.b);
-    glUniform3f(program.getUniformID(Render::Uniforms::LightAmbientDirection), 1.0f, 1.0f, 1.0f);
 
     float yaw = 0.0f;
     float pitch = 0.0f;
 
+    double lastTime = glfwGetTime();
+
     // Main runtime loop
     while (!glfwWindowShouldClose(window))
     {
+        double newTime = glfwGetTime();
+        double deltaTime = newTime - lastTime;
+        lastTime = newTime;
 
         bool input = false;
         if (LEFT) { yaw -= 0.01f; input = true; }
@@ -106,18 +108,24 @@ int main() {
         if(lightColor.g > 1.0f) lightColor.g = 1.0f;
         if(lightColor.b < 0.0f) lightColor.b = 0.0f;
         if(lightColor.b > 1.0f) lightColor.b = 1.0f;
-        if(input) glUniform3f(program.getUniformID(Render::Uniforms::LightAmbientColor), lightColor.r, lightColor.g, lightColor.b);
+        if(input) Render::Uniforms::LightAmbientColor.setf(renderer, 1, 3, &lightColor[0]);
 
         double cursorX, cursorY;
         glfwGetCursorPos(window, &cursorX, &cursorY);
         int width, height;
         glfwGetWindowSize(window, &width, &height);
-        glUniform3f(program.getUniformID(Render::Uniforms::LightAmbientDirection), (float)(cursorX - width/2), (float)-(cursorY - height/2), 1.0f);
+        glm::vec3 lightDir((float)-((cursorX - width/2) / (width/2)), (float)((cursorY - height/2) / (height/2)), 1.0f);
+        Render::Uniforms::LightAmbientDirection.setf(renderer, 1, 3, &lightDir[0]);
 
         object.resetMatrix();
         object.scale(3.0f, 3.0f, 3.0f);
         object.rotate(pitch, 1.0f, 0.0f, 0.0f);
         object.rotate(yaw, 0.0f, 1.0f, 0.0f);
+
+        object2.rotate(0.001f, 0.0f, 1.0f, 0.0f);
+        object3.rotate(-0.001f, 0.0f, 1.0f, 0.0f);
+
+        camera.update(deltaTime);
 
         renderer.start();
         //Input::computeMatricesFromInputs();

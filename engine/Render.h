@@ -25,6 +25,7 @@ using namespace std;
 #include <glm/glm.hpp>
 #include <set>
 #include <glm/gtx/transform.hpp>
+#include <queue>
 
 
 
@@ -36,13 +37,18 @@ using namespace std;
 
 namespace Swarm {
 
+    namespace Render {
+        class Renderer;
+    }
+
     namespace Texture {
 
         namespace MapType {
 
             class Type {
             public:
-                Type(GLenum target, GLuint activeID, string uniform) : target(target), active(activeID), uniform(uniform) { }
+
+                Type(GLenum target, GLuint activeID, string uniform);
 
                 Type(const Type &other) { *this = other; }
                 Type &operator=(const Type &other) {
@@ -68,7 +74,8 @@ namespace Swarm {
                 string uniform;
                 GLenum target;
 
-                std::hash<unsigned int> hasher;
+                static std::hash<unsigned int> hasher;
+                //static std::map<GLuint, Type*> uniform_map;
             };
 
             static const Type DIFFUSE   (GL_TEXTURE_2D, 0, "_texture_diffuse");
@@ -346,6 +353,42 @@ namespace Swarm {
 
         namespace Uniforms {
 
+            class Uniform {
+            public:
+                Uniform(string name) : name(name) {}
+                string &getName() { return name; }
+                void setName(const string &name) { this->name = name; }
+                void setName(string name) { this->name = name; }
+
+                friend class Swarm::Render::Renderer;
+
+                void setf (Renderer &render, GLsizei count, GLsizei stride, GLfloat *data);
+                void seti (Renderer &render, GLsizei count, GLsizei stride, GLint   *data);
+                void setui(Renderer &render, GLsizei count, GLsizei stride, GLuint  *data);
+                void setm (Renderer &render, GLsizei count, GLsizei width, GLsizei height, GLfloat *data);
+
+            protected:
+                string name;
+
+                enum {
+                    F, I, UI, M
+                } type;
+                union {
+                    struct { GLsizei count; GLsizei stride; GLfloat* data; } f;
+                    struct { GLsizei count; GLsizei stride; GLint*   data; } i;
+                    struct { GLsizei count; GLsizei stride; GLuint*  data; } ui;
+                    struct { GLsizei count; GLsizei width; GLsizei height; GLfloat* data; } m;
+                } data;
+            };
+
+            static Uniform MatrixModel          ("_m");
+            static Uniform MatrixView           ("_v");
+            static Uniform MatrixProjection     ("_p");
+
+            static Uniform LightAmbientColor    ("_ambient_light_color");
+            static Uniform LightAmbientDirection("_ambient_light_direction");
+
+            /*
             static string MatrixModel =             "_m";
             static string MatrixView =              "_v";
             static string MatrixProjection =        "_p";
@@ -357,6 +400,7 @@ namespace Swarm {
             static string TextureSpecular =         "_texture_specular";
             static string TextureNormal =           "_texture_normal";
             static string TextureEmissive =         "_texture_emissive";
+             */
 
         }
 
@@ -481,6 +525,48 @@ namespace Swarm {
         //! Cleans up any and all shader Programs.
         void cleanupPrograms();
 
+        void init();
+        void cleanup();
+
+        struct TexPntrComp {
+            bool operator() (Texture::Texture* lhs, Texture::Texture* rhs) const {
+                if(lhs == NULL) return rhs != NULL;
+                if(rhs == NULL) return false;
+                return (*lhs) < (*rhs);
+            }
+        };
+
+        class Renderer {
+        public:
+            Renderer() : currentProgram(NULL) {};
+            Renderer(Program* program);
+
+            void changeShaderProfile(Program* program);
+
+            Program* getShaderProfile() { return currentProgram; }
+
+            //void updateUniforms();
+            void markUniformDirty(Uniforms::Uniform &uniform) { dirty_uniforms.insert(&uniform); }
+
+            void start();
+            void end();
+
+            void render(Model::Model &object, glm::mat4 matrix_Model = glm::mat4(1.0));
+            void render(RenderObject &object);
+            void renderAll();
+
+            void registerRenderObject(RenderObject* object);
+            void unregisterRenderObject(RenderObject* object);
+            void clearRenderObjects();
+
+        protected:
+            Program* currentProgram;
+
+            // Texture Type -> Texture ID -> RO List
+            std::map<Texture::Texture*, std::vector<RenderObject*>, TexPntrComp> roMap;
+
+            std::set<Uniforms::Uniform*> dirty_uniforms;
+        };
 
         //! Enumeration representing different possible camera movements.
         /*!
@@ -517,8 +603,8 @@ namespace Swarm {
 
         class Camera {
         public:
-            Camera(GLFWwindow *window, float speed = 1.0f, CameraMovementMode mode = INSTANT);
-            Camera(GLFWwindow *window, glm::vec3 position, glm::vec3 lookAt, glm::vec3 up = glm::vec3(0,1,0), float speed = 1.0f, CameraMovementMode mode = INSTANT);
+            Camera(Renderer &renderer, GLFWwindow *window, float speed = 1.0f, CameraMovementMode mode = INSTANT);
+            Camera(Renderer &renderer, GLFWwindow *window, glm::vec3 position, glm::vec3 lookAt, glm::vec3 up = glm::vec3(0,1,0), float speed = 1.0f, CameraMovementMode mode = INSTANT);
 
             void setMovementMode(CameraMovementMode mode) { movementMode = mode; }
             CameraMovementMode getMovementMode() { return movementMode; }
@@ -541,6 +627,8 @@ namespace Swarm {
             glm::mat4 getProjectionMatrix();
         protected:
             CameraMovementMode movementMode = INSTANT;
+
+            Renderer &renderer;
             GLFWwindow *window;
 
             float fov = 45.0f;
@@ -550,50 +638,9 @@ namespace Swarm {
 
             CamPos currentPos;
             CamPos targetPos;
-        };
 
-
-        void init();
-        void cleanup();
-
-        struct TexPntrComp {
-            bool operator() (Texture::Texture* lhs, Texture::Texture* rhs) const {
-                if(lhs == NULL) return rhs != NULL;
-                if(rhs == NULL) return false;
-                return (*lhs) < (*rhs);
-            }
-        };
-
-        class Renderer {
-        public:
-            Renderer() : currentProgram(NULL) {};
-            Renderer(Program* program);
-
-            void changeShaderProfile(Program* program);
-            void changeCamera(Camera* camera);
-
-            Program* getShaderProfile() { return currentProgram; }
-            Camera* getCamera() { return currentCamera; }
-
-            void updateUniforms();
-
-            void start();
-            void end();
-
-            void render(Model::Model &object, glm::mat4 matrix_Model = glm::mat4(1.0));
-            void render(RenderObject &object);
-            void renderAll();
-
-            void registerRenderObject(RenderObject* object);
-            void unregisterRenderObject(RenderObject* object);
-            void clearRenderObjects();
-
-        protected:
-            Program* currentProgram;
-            Camera* currentCamera;
-
-            // Texture Type -> Texture ID -> RO List
-            std::map<Texture::Texture*, std::vector<RenderObject*>, TexPntrComp> roMap;
+            glm::mat4 viewMatrix;
+            glm::mat4 projectionMatrix;
         };
 
     }

@@ -23,6 +23,7 @@ set(ENGINE_SOURCE_CORE
         render/RenderObject.cpp
         render/Shaders.cpp
         render/Camera.cpp
+        render/Uniforms.cpp
         render/texture/Texture.cpp
         render/texture/AnimatedTexture.cpp
         render/texture/SingleTexture.cpp

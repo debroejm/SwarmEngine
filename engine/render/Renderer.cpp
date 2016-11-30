@@ -30,10 +30,7 @@ namespace Swarm {
             if(currentProgram != NULL) glUseProgram(currentProgram->getProgramID());
         }
 
-        void Renderer::changeCamera(Camera* camera) {
-            currentCamera = camera;
-        }
-
+        /*
         void Renderer::updateUniforms() {
 
             // Safety Check
@@ -57,10 +54,17 @@ namespace Swarm {
             glUniform1i(currentProgram->getUniformID(Uniforms::TextureNormal),      2);
             glUniform1i(currentProgram->getUniformID(Uniforms::TextureEmissive),    3);
         }
+         */
 
         void Renderer::start() {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            updateUniforms();
+            //updateUniforms();
+
+            if(currentProgram == NULL) return;
+            glUniform1i(currentProgram->getUniformID(Texture::MapType::DIFFUSE.getUniform()), Texture::MapType::DIFFUSE.getActiveID());
+            glUniform1i(currentProgram->getUniformID(Texture::MapType::SPECULAR.getUniform()), Texture::MapType::SPECULAR.getActiveID());
+            glUniform1i(currentProgram->getUniformID(Texture::MapType::NORMAL.getUniform()), Texture::MapType::NORMAL.getActiveID());
+            glUniform1i(currentProgram->getUniformID(Texture::MapType::EMISSIVE.getUniform()), Texture::MapType::EMISSIVE.getActiveID());
         }
 
         void Renderer::end() {
@@ -73,8 +77,58 @@ namespace Swarm {
             if(currentProgram == NULL) return;
             if(!currentProgram->isLinked()) return;
 
+            // Update dirty uniforms
+            for(auto && uniform : dirty_uniforms) {
+                if(uniform == NULL) continue;
+                switch(uniform->type) {
+                    case Uniforms::Uniform::F: {
+                        switch(uniform->data.f.stride) {
+                            case 1:  glUniform1fv(currentProgram->getUniformID(uniform->name), uniform->data.f.count, uniform->data.f.data); break;
+                            case 2:  glUniform2fv(currentProgram->getUniformID(uniform->name), uniform->data.f.count, uniform->data.f.data); break;
+                            case 3:  glUniform3fv(currentProgram->getUniformID(uniform->name), uniform->data.f.count, uniform->data.f.data); break;
+                            default: glUniform4fv(currentProgram->getUniformID(uniform->name), uniform->data.f.count, uniform->data.f.data); break;
+                        } } break;
+                    case Uniforms::Uniform::I: {
+                        switch(uniform->data.i.stride) {
+                            case 1:  glUniform1iv(currentProgram->getUniformID(uniform->name), uniform->data.i.count, uniform->data.i.data); break;
+                            case 2:  glUniform2iv(currentProgram->getUniformID(uniform->name), uniform->data.i.count, uniform->data.i.data); break;
+                            case 3:  glUniform3iv(currentProgram->getUniformID(uniform->name), uniform->data.i.count, uniform->data.i.data); break;
+                            default: glUniform4iv(currentProgram->getUniformID(uniform->name), uniform->data.i.count, uniform->data.i.data); break;
+                        } } break;
+                    case Uniforms::Uniform::UI: {
+                        switch(uniform->data.ui.stride) {
+                            case 1:  glUniform1uiv(currentProgram->getUniformID(uniform->name), uniform->data.ui.count, uniform->data.ui.data); break;
+                            case 2:  glUniform2uiv(currentProgram->getUniformID(uniform->name), uniform->data.ui.count, uniform->data.ui.data); break;
+                            case 3:  glUniform3uiv(currentProgram->getUniformID(uniform->name), uniform->data.ui.count, uniform->data.ui.data); break;
+                            default: glUniform4uiv(currentProgram->getUniformID(uniform->name), uniform->data.ui.count, uniform->data.ui.data); break;
+                        } } break;
+                    case Uniforms::Uniform::M: {
+                        switch(uniform->data.m.width) {
+                            case 2: {
+                                switch(uniform->data.m.height) {
+                                    case 2:  glUniformMatrix2fv  (currentProgram->getUniformID(uniform->name), uniform->data.m.count, GL_FALSE, uniform->data.m.data); break;
+                                    case 3:  glUniformMatrix2x3fv(currentProgram->getUniformID(uniform->name), uniform->data.m.count, GL_FALSE, uniform->data.m.data); break;
+                                    default: glUniformMatrix2x4fv(currentProgram->getUniformID(uniform->name), uniform->data.m.count, GL_FALSE, uniform->data.m.data); break;
+                                } } break;
+                            case 3: {
+                                switch(uniform->data.m.height) {
+                                    case 2:  glUniformMatrix3x2fv(currentProgram->getUniformID(uniform->name), uniform->data.m.count, GL_FALSE, uniform->data.m.data); break;
+                                    case 3:  glUniformMatrix3fv  (currentProgram->getUniformID(uniform->name), uniform->data.m.count, GL_FALSE, uniform->data.m.data); break;
+                                    default: glUniformMatrix3x4fv(currentProgram->getUniformID(uniform->name), uniform->data.m.count, GL_FALSE, uniform->data.m.data); break;
+                                } } break;
+                            default: {
+                                switch(uniform->data.m.height) {
+                                    case 2:  glUniformMatrix4x2fv(currentProgram->getUniformID(uniform->name), uniform->data.m.count, GL_FALSE, uniform->data.m.data); break;
+                                    case 3:  glUniformMatrix4x3fv(currentProgram->getUniformID(uniform->name), uniform->data.m.count, GL_FALSE, uniform->data.m.data); break;
+                                    default: glUniformMatrix4fv  (currentProgram->getUniformID(uniform->name), uniform->data.m.count, GL_FALSE, uniform->data.m.data); break;
+                                } } break;
+                        } } break;
+                    default: break;
+                }
+            }
+
             // Bind the Model Matrix
-            glUniformMatrix4fv(currentProgram->getUniformID(Uniforms::MatrixModel), 1, GL_FALSE, &matrix_Model[0][0]);
+            glUniformMatrix4fv(currentProgram->getUniformID(Uniforms::MatrixModel.getName()), 1, GL_FALSE, &matrix_Model[0][0]);
 
             // Each Object has its own VAO
             glBindVertexArray(object.getVAOID());
