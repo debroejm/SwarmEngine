@@ -7,3 +7,6 @@
 [submodule "external/CL"]
 	path = external/CL
 	url = https://github.com/KhronosGroup/OpenCL-Headers.git
+[submodule "external/CL-IDC-Loader"]
+	path = external/CL-IDC-Loader
+	url = https://github.com/KhronosGroup/OpenCL-ICD-Loader.git
