@@ -1,5 +1,6 @@
 #include "Core.h"
 #include "Render.h"
+#include "CLEngine.h"
 
 #include <math.h>
 
@@ -17,6 +18,9 @@ int main() {
     if(!Init::init()) {
         return -1;
     }
+
+    //if(CL::all_device_info.empty()) Log::log_cl(DEBUG) << "No CL Devices Found";
+    //else Log::log_cl(DEBUG) << "Auto-Selected CL Device: " << CL::all_device_info.end()->deviceName;
 
     GLFWwindow * window = Input::getWindow();
 

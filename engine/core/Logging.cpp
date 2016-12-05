@@ -94,6 +94,7 @@ namespace Swarm {
 
         Log Log::log_core("Core", true);
         Log Log::log_render("Render", true);
+        Log Log::log_cl("CL", true);
 
         void Log::setDefaultFilepath(const char * path) {
             defaultFilepath = path;

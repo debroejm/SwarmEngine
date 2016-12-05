@@ -1,6 +1,7 @@
 #include "../Core.h"
 
 #include "../Render.h"
+#include "../CLEngine.h"
 #include "GLFWCallbacks.h"
 
 using namespace Swarm::Logging;
@@ -58,6 +59,10 @@ namespace Swarm {
                 Render::init();
             }
 
+            if(flags & SWM_INIT_CL) {
+                CL::init();
+            }
+
             return true;
 
         }
@@ -68,6 +73,7 @@ namespace Swarm {
             Render::cleanupShaders();
             Render::cleanupPrograms();
             Render::cleanup();
+            CL::cleanup();
 
             Log::cleanupAll();
         }

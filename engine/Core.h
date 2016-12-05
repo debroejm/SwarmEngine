@@ -142,6 +142,8 @@ namespace Swarm {
             static Log log_core;
             //! Render Log, used to document the render cycle + model loading.
             static Log log_render;
+            //! CL Log, used to document CL commands and lifecycle
+            static Log log_cl;
 
         protected:
             string time();

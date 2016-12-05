@@ -3,6 +3,7 @@
 set(ENGINE_HEADERS_CORE
         Core.h
         Render.h
+        CLEngine.h
         core/GLFWCallbacks.h
         Util.h
         )
@@ -28,6 +29,8 @@ set(ENGINE_SOURCE_CORE
         render/texture/AnimatedTexture.cpp
         render/texture/SingleTexture.cpp
         render/texture/TextureHandler.cpp
+        cl/init.cpp
+        cl/context.cpp
         )
 
 set(ENGINE_EXTERNAL_SOURCES
