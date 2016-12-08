@@ -7,7 +7,7 @@ using namespace Swarm::Logging;
 
 int main() {
 
-    if (!Init::init(Init::MINIMAL)) {
+    if (!Init::init(SWM_INIT_MODEL)) {
         return -1;
     }
 

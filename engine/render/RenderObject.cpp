@@ -1,7 +1,5 @@
 #include "../Render.h"
 
-#include <glm/gtx/transform.hpp>
-
 namespace Swarm {
     namespace Render {
 

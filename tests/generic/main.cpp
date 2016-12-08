@@ -19,8 +19,8 @@ int main() {
         return -1;
     }
 
-    //if(CL::all_device_info.empty()) Log::log_cl(DEBUG) << "No CL Devices Found";
-    //else Log::log_cl(DEBUG) << "Auto-Selected CL Device: " << CL::all_device_info.end()->deviceName;
+    if(CL::getAllDevices().empty()) Log::log_cl(DEBUG) << "No CL Devices Found";
+    else Log::log_cl(DEBUG) << "Auto-Selected CL Device: " << CL::getAllDevices().rbegin()->deviceName;
 
     GLFWwindow * window = Input::getWindow();
 

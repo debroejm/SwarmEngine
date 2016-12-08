@@ -12,14 +12,19 @@ namespace Swarm {
         void init();
         void cleanup();
 
-        /*
         struct DeviceInfo {
             cl_platform_id platform;
-            operator cl_platform_id() const { return platform; }
             cl_device_id device;
-            operator cl_device_id() const { return device; }
             cl_uint maxComputeUnits;
             std::string deviceName;
+            DeviceInfo(cl_platform_id platform, cl_device_id device, cl_uint maxComputeUnits, std::string deviceName) {
+                this->platform = platform;
+                this->device = device;
+                this->maxComputeUnits = maxComputeUnits;
+                this->deviceName = deviceName;
+            }
+            operator cl_platform_id() const { return platform; }
+            operator cl_device_id() const { return device; }
             friend bool operator<(const DeviceInfo &lhs, const DeviceInfo &rhs) { return lhs.maxComputeUnits < rhs.maxComputeUnits; }
             DeviceInfo &operator=(const DeviceInfo &other) {
                 platform = other.platform;
@@ -30,7 +35,8 @@ namespace Swarm {
             }
         };
 
-        static std::set<DeviceInfo> all_device_info;
+        //static std::set<DeviceInfo> all_device_info;
+        std::set<DeviceInfo> &getAllDevices();
 
         struct DeviceContextListing {
             void addDevice(DeviceInfo &info);
@@ -51,7 +57,6 @@ namespace Swarm {
         private:
             cl_context createContext(DeviceContextListing &listing);
         };
-         */
 
     }
 }

@@ -349,6 +349,7 @@ namespace Swarm {
         void RawModelDataIndexed::cleanup() {
             RawModelData::cleanup();
             delete [] indices;
+            indices = NULL;
         }
 
         unsigned short* RawModelDataIndexed::getIndices() const { return indices; }

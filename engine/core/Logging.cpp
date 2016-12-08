@@ -182,17 +182,45 @@ namespace Swarm {
             return *this;
         }
 
-        Log &Log::operator<<(GLuint input) {
+        Log &Log::operator<<(unsigned int input) {
             if(file != NULL) fprintf(file, "%u", input);
             if(console && (severity == ERR || severity == FATAL)) fprintf(stderr, "%u", input);
             else if(console) fprintf(stdout, "%u", input);
             return *this;
         }
 
-        Log &Log::operator<<(GLint input) {
+        Log &Log::operator<<(int input) {
             if(file != NULL) fprintf(file, "%i", input);
             if(console && (severity == ERR || severity == FATAL)) fprintf(stderr, "%i", input);
             else if(console) fprintf(stdout, "%i", input);
+            return *this;
+        }
+
+        Log &Log::operator<<(unsigned long input) {
+            if(file != NULL) fprintf(file, "%lu", input);
+            if(console && (severity == ERR || severity == FATAL)) fprintf(stderr, "%lu", input);
+            else if(console) fprintf(stdout, "%lu", input);
+            return *this;
+        }
+
+        Log &Log::operator<<(long input) {
+            if(file != NULL) fprintf(file, "%li", input);
+            if(console && (severity == ERR || severity == FATAL)) fprintf(stderr, "%li", input);
+            else if(console) fprintf(stdout, "%li", input);
+            return *this;
+        }
+
+        Log &Log::operator<<(unsigned long long input) {
+            if(file != NULL) fprintf(file, "%llu", input);
+            if(console && (severity == ERR || severity == FATAL)) fprintf(stderr, "%llu", input);
+            else if(console) fprintf(stdout, "%llu", input);
+            return *this;
+        }
+
+        Log &Log::operator<<(long long input) {
+            if(file != NULL) fprintf(file, "%lli", input);
+            if(console && (severity == ERR || severity == FATAL)) fprintf(stderr, "%lli", input);
+            else if(console) fprintf(stdout, "%lli", input);
             return *this;
         }
 

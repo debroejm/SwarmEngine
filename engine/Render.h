@@ -24,8 +24,8 @@ using namespace std;
 
 #include <glm/glm.hpp>
 #include <set>
-#include <glm/gtx/transform.hpp>
 #include <queue>
+#include <glm/gtc/matrix_transform.hpp>
 
 
 
@@ -306,7 +306,7 @@ namespace Swarm {
             virtual void cleanup();
 
         protected:
-            unsigned short* indices; // TODO: Possibly make this an unsigned int
+            unsigned short* indices = NULL; // TODO: Possibly make this an unsigned int
             unsigned int indexCount;
         };
 
@@ -410,11 +410,11 @@ namespace Swarm {
             virtual glm::mat4 getMatrix() { return matrix; }
             virtual void setMatrix(glm::mat4 matrix) { this->matrix = matrix; }
             void translate(float x, float y, float z) { translate(glm::vec3(x, y, z)); }
-            virtual void translate(glm::vec3 amount) { matrix = glm::translate(amount) * matrix; }
+            virtual void translate(glm::vec3 amount) { matrix = glm::translate(matrix, amount); }
             void rotate(float amount, float x, float y, float z) { rotate(amount, glm::vec3(x, y, z)); }
-            virtual void rotate(float amount, glm::vec3 angle) { matrix = glm::rotate(amount, angle) * matrix; }
+            virtual void rotate(float amount, glm::vec3 angle) { matrix = glm::rotate(matrix, amount, angle); }
             void scale(float x, float y, float z) { scale(glm::vec3(x, y, z)); }
-            virtual void scale(glm::vec3 amount) { matrix = glm::scale(amount) * matrix; }
+            virtual void scale(glm::vec3 amount) { matrix = glm::scale(matrix, amount); }
             virtual void resetMatrix() { matrix = glm::mat4(1); }
         protected:
             glm::mat4 matrix;

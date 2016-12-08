@@ -33,7 +33,6 @@ using namespace std;
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/transform.hpp>
 
 
 #define SWM_INIT_MINIMAL            0x0
@@ -115,11 +114,18 @@ namespace Swarm {
             Log &operator<<(const char * input);
             //! Adds a string to the log stream.
             Log &operator<<(string input);
-            // TODO: Possibly combine these two to one 'int' function
             //! Adds an unsigned int to the log stream.
-            Log &operator<<(GLuint input);
+            Log &operator<<(unsigned int input);
             //! Adds a signed int to the log stream.
-            Log &operator<<(GLint input);
+            Log &operator<<(int input);
+            //! Adds an unsigned long to the log stream.
+            Log &operator<<(unsigned long input);
+            //! Adds a signed long to the log stream.
+            Log &operator<<(long input);
+            //! Adds an unsigned long long to the log stream.
+            Log &operator<<(unsigned long long input);
+            //! Adds a signed long long to the log stream.
+            Log &operator<<(long long input);
             //! Adds a double to the log stream.
             Log &operator<<(double input);
             //! Adds a char to the log stream.

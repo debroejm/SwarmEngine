@@ -9,7 +9,6 @@ using namespace Swarm::Logging;
 namespace Swarm {
     namespace CL {
 
-        /*
         DeviceContextListing::DeviceContextListing(DeviceInfo &info)
                 : platform(info.platform) {
             devices.clear();
@@ -75,6 +74,5 @@ namespace Swarm {
         void Context::cleanup() {
             for(auto && iter : registered_contexts) clReleaseContext( iter.second );
         }
-         */
     }
 }

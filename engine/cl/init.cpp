@@ -6,9 +6,11 @@ using namespace Swarm::Logging;
 namespace Swarm {
     namespace CL {
 
+        std::set<DeviceInfo> all_device_info;
+        std::set<DeviceInfo> &getAllDevices() { return all_device_info; }
+
         void init() {
 
-            /*
             // Get a list of platforms on the current system
             cl_uint platformIDCount = 0;
             clGetPlatformIDs(0, nullptr, &platformIDCount);
@@ -53,14 +55,13 @@ namespace Swarm {
                     clGetDeviceInfo(did, CL_DEVICE_MAX_COMPUTE_UNITS, 4, &computeUnits, nullptr);
 
                     // Register Device Info
-                    all_device_info.insert({pid, did, computeUnits, string(dname)});
+                    all_device_info.insert(DeviceInfo(pid, did, computeUnits, string(dname)));
                 }
             }
-             */
         }
 
         void cleanup() {
-            //Context::cleanup();
+            Context::cleanup();
         }
     }
 }
