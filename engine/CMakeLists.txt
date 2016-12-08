@@ -37,6 +37,9 @@ set(ENGINE_SOURCE_CORE
         render/texture/TextureHandler.cpp
         cl/init.cpp
         cl/context.cpp
+        cl/program.cpp
+        cl/buffer.cpp
+        cl/cmdqueue.cpp
 )
 
 set(ENGINE_EXTERNAL_SOURCES

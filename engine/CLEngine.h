@@ -35,15 +35,15 @@ namespace Swarm {
             }
         };
 
-        //static std::set<DeviceInfo> all_device_info;
         std::set<DeviceInfo> &getAllDevices();
 
         struct DeviceContextListing {
-            void addDevice(DeviceInfo &info);
+            void addDevice(const DeviceInfo &info);
             DeviceContextListing() : platform(nullptr) {}
-            DeviceContextListing(DeviceInfo &info);
+            DeviceContextListing(const DeviceInfo &info);
         private:
             friend struct Context;
+            friend struct Program;
             cl_platform_id platform;
             std::vector<cl_device_id> devices;
         };
@@ -55,7 +55,44 @@ namespace Swarm {
             Context(DeviceContextListing &listing);
             static void cleanup();
         private:
+            friend struct Program;
+            DeviceContextListing info;
             cl_context createContext(DeviceContextListing &listing);
+        };
+
+        struct Program {
+            cl_program program;
+            operator cl_program() const { return program; }
+            Program(std::string src, const Context &ctx);
+            static void cleanup();
+        };
+
+        struct Buffer {
+            cl_mem buffer;
+            operator cl_mem() const { return buffer; }
+            Buffer(const Context &ctx, cl_mem_flags flags, size_t size, void* data);
+            void release();
+            static void cleanup();
+        };
+
+        struct Kernel {
+            cl_kernel kernel;
+            operator cl_kernel() const { return kernel; }
+            Kernel(const Program &program, std::string name);
+            void setArgument(cl_uint index, size_t size, const void* data);
+            void setArgument(cl_uint index, const Buffer &buffer);
+            static void cleanup();
+        };
+
+        struct CommandQueue {
+            cl_command_queue queue;
+            operator cl_command_queue() const { return queue; }
+            CommandQueue(const Context &ctx, const DeviceInfo &device);
+            // TODO: Error Checking on Enqueues
+            // TODO: Event Handling on Enqueues
+            void enqueueCommand(const Kernel &kernel, size_t size);
+            void enqueueRead(const Buffer &buffer, bool blocking, size_t size, void* data);
+            static void cleanup();
         };
 
     }

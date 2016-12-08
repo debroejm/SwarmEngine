@@ -9,13 +9,13 @@ using namespace Swarm::Logging;
 namespace Swarm {
     namespace CL {
 
-        DeviceContextListing::DeviceContextListing(DeviceInfo &info)
+        DeviceContextListing::DeviceContextListing(const DeviceInfo &info)
                 : platform(info.platform) {
             devices.clear();
             devices.push_back(info.device);
         }
 
-        void DeviceContextListing::addDevice(DeviceInfo &info) {
+        void DeviceContextListing::addDevice(const DeviceInfo &info) {
             if(platform != info.platform) {
                 Log::log_cl(WARNING) << "Tried to add a Device with a different Platform to a ContextListing; Device '" << info.deviceName << "'";
                 return;
@@ -26,15 +26,17 @@ namespace Swarm {
         std::unordered_map<cl_platform_id, cl_context> registered_contexts;
 
         Context::Context(DeviceInfo &info) {
+            DeviceContextListing listing(info);
+            this->info = info;
             if(registered_contexts.count(info.platform) > 1)
                 context = registered_contexts[info.platform];
             else {
-                DeviceContextListing listing(info);
                 context = createContext(listing);
             }
         }
 
         Context::Context(DeviceContextListing &listing) {
+            this->info = listing;
             if (registered_contexts.count(listing.platform) > 1)
                 context = registered_contexts[listing.platform];
             else
@@ -62,7 +64,26 @@ namespace Swarm {
 
             // Check Error
             if(error != CL_SUCCESS) {
-                Log::log_cl(ERR) << "Error creating CL Context; code '" << error << "'";
+                switch(error) {
+                    case CL_INVALID_PLATFORM:
+                        Log::log_cl(ERR) << "Invalid Platform to create CL Context with";
+                        break;
+                    case CL_INVALID_VALUE:
+                        Log::log_cl(ERR) << "Invalid Value when creating CL Context; unsupported Property name, no/null Devices, or failure to provide callback with user_data";
+                        break;
+                    case CL_INVALID_DEVICE:
+                        Log::log_cl(ERR) << "Invalid Device or Device not associated with Platform when creating CL Context";
+                        break;
+                    case CL_DEVICE_NOT_AVAILABLE:
+                        Log::log_cl(ERR) << "Device Not Available to create CL Context with";
+                        break;
+                    case CL_OUT_OF_HOST_MEMORY:
+                        Log::log_cl(ERR) << "Host out of Memory when creating CL Context";
+                        break;
+                    default:
+                        Log::log_cl(ERR) << "Unknown Error when creating CL Context; '" << error << "'";
+                        break;
+                }
                 return nullptr;
             }
 
@@ -73,6 +94,7 @@ namespace Swarm {
 
         void Context::cleanup() {
             for(auto && iter : registered_contexts) clReleaseContext( iter.second );
+            registered_contexts.clear();
         }
     }
 }

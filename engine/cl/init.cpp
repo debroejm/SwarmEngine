@@ -61,6 +61,9 @@ namespace Swarm {
         }
 
         void cleanup() {
+            CommandQueue::cleanup();
+            Kernel::cleanup();
+            Program::cleanup();
             Context::cleanup();
         }
     }
