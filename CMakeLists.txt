@@ -13,9 +13,6 @@ set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set (CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set (CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-# Needed to make cygwin set the WIN32 flag so that GLFW can build properly
-set(CMAKE_LEGACY_CYGWIN_WIN32 1)
-
 ###############################################################
 # ADD OPENGL
 ###############################################################
@@ -48,8 +45,6 @@ include_directories(external/glm)
 # ADD OPENCL
 ###############################################################
 include_directories(external/CL)
-#include_directories(BEFORE "I:/Win10 SDK/Include/10.0.14393.0/um")
-# Might need to enable this if the above include_directories doesn't trickle down
 file(COPY ${CMAKE_SOURCE_DIR}/external/CL DESTINATION ${CMAKE_SOURCE_DIR}/external/CL-IDC-Loader/inc)
 add_subdirectory(external/CL-IDC-Loader)
 
