@@ -6,7 +6,6 @@ namespace Swarm {
         glm::mat4 ViewMatrix;
         glm::mat4 ProjectionMatrix;
 
-        GLFWwindow* windowHandle;
 
         glm::mat4 getViewMatrix(){
             return ViewMatrix;
@@ -14,10 +13,6 @@ namespace Swarm {
         glm::mat4 getProjectionMatrix(){
             return ProjectionMatrix;
         }
-        void setWindow(GLFWwindow* windowIN){
-            windowHandle = windowIN;
-        }
-        GLFWwindow* getWindow() { return windowHandle; }
 
 
         // Initial position : on +Z

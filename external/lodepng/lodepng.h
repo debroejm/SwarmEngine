@@ -469,9 +469,9 @@ typedef struct LodePNGInfo
 
     /*
     unknown chunks
-    There are 3 buffers, one for each position in the PNG where unknown chunks can appear
+    There are 3 data_buffers, one for each position in the PNG where unknown chunks can appear
     each buffer contains all unknown chunks for that position consecutively
-    The 3 buffers are the unknown chunks between certain critical chunks:
+    The 3 data_buffers are the unknown chunks between certain critical chunks:
     0: IHDR-PLTE, 1: PLTE-IDAT, 2: IDAT-IEND
     Do not allocate or traverse this data yourself. Use the chunk traversing functions declared
     later, such as lodepng_chunk_next and lodepng_chunk_append, to read/write this struct.
@@ -972,7 +972,7 @@ a single function call, and extended versions of these functions taking a
 LodePNGState struct allowing to specify or get more information. By default
 the colors of the raw image are always RGB or RGBA, no matter what color type
 the PNG file uses. To read and write files, there are simple functions to
-convert the files to/from buffers in memory.
+convert the files to/from data_buffers in memory.
 
 This all makes LodePNG suitable for loading textures in games, demos and small
 programs, ... It's less suitable for full fledged image editors, loading PNGs
@@ -1023,7 +1023,7 @@ The following features are _not_ supported:
 2. C and C++ version
 --------------------
 
-The C version uses buffers allocated with alloc that you need to free()
+The C version uses data_buffers allocated with alloc that you need to free()
 yourself. You need to use init and cleanup functions for each struct whenever
 using a struct from the C version to avoid exploits and memory leaks.
 
@@ -1418,7 +1418,7 @@ name of the chunk.
 -----------------------
 
 The LodePNGInfo struct contains fields with the unknown chunk in it. It has 3
-buffers (each with size) to contain 3 types of unknown chunks:
+data_buffers (each with size) to contain 3 types of unknown chunks:
 the ones that come before the PLTE chunk, the ones that come between the PLTE
 and the IDAT chunks, and the ones that come after the IDAT chunks.
 It's necessary to make the distionction between these 3 cases because the PNG
@@ -1429,7 +1429,7 @@ info_png.unknown_chunks_data[0] is the chunks before PLTE
 info_png.unknown_chunks_data[1] is the chunks after PLTE, before IDAT
 info_png.unknown_chunks_data[2] is the chunks after IDAT
 
-The chunks in these 3 buffers can be iterated through and read by using the same
+The chunks in these 3 data_buffers can be iterated through and read by using the same
 way described in the previous subchapter.
 
 When using the decoder to decode a PNG, you can make it store all unknown chunks
@@ -1658,7 +1658,7 @@ symbol.
      Reorganized the documentation and the declaration order in the header.
 *) 08 aug 2010: only changed some comments and external samples.
 *) 05 jul 2010: fixed bug thanks to warnings in the new gcc version.
-*) 14 mar 2010: fixed bug where too much memory was allocated for char buffers.
+*) 14 mar 2010: fixed bug where too much memory was allocated for char data_buffers.
 *) 02 sep 2008: fixed bug where it could create empty tree that linux apps could
     read by ignoring the problem but windows apps couldn't.
 *) 06 jun 2008: added more error checks for out of memory cases.

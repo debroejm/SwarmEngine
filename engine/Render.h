@@ -5,7 +5,7 @@
 //  External Libraries
 // ********************
 
-#include <stdio.h>
+//#include <stdio.h>
 #include <string>
 #include <sstream>
 #include <cstring>
@@ -48,40 +48,40 @@ namespace Swarm {
             class Type {
             public:
 
-                Type(GLenum target, GLuint activeID, string uniform);
+                Type(GLenum target, GLuint activeID);
 
                 Type(const Type &other) { *this = other; }
                 Type &operator=(const Type &other) {
                     active = other.active;
-                    uniform = other.uniform;
                     target = other.target;
                     return *this;
                 }
 
+                // Comparison Operators
                 bool operator==(const Type &other) const { return hash() == other.hash(); }
-                bool operator<(const Type &other) const { return hash() < other.hash(); }
-                bool operator>(const Type &other) const { return hash() > other.hash(); }
+                bool operator< (const Type &other) const { return hash() < other.hash(); }
+                bool operator<=(const Type &other) const { return hash() <= other.hash(); }
+                bool operator> (const Type &other) const { return hash() > other.hash(); }
+                bool operator>=(const Type &other) const { return hash() >= other.hash(); }
 
-                string getUniform() const { return uniform; }
-                void setUniform(string uniform) { this->uniform = uniform; }
                 GLuint getActiveID() const { return active; }
                 GLenum getTarget() const { return target; }
 
                 size_t hash() const { return hasher(active); }
 
+                operator GLuint() { return active;}
+
             protected:
                 GLuint active;
-                string uniform;
                 GLenum target;
 
                 static std::hash<unsigned int> hasher;
-                //static std::map<GLuint, Type*> uniform_map;
             };
 
-            static const Type DIFFUSE   (GL_TEXTURE_2D, 0, "_texture_diffuse");
-            static const Type SPECULAR  (GL_TEXTURE_2D, 1, "_texture_specular");
-            static const Type NORMAL    (GL_TEXTURE_2D, 2, "_texture_normal");
-            static const Type EMISSIVE  (GL_TEXTURE_2D, 3, "_texture_emissive");
+            static const Type DIFFUSE   (GL_TEXTURE_2D, 0);
+            static const Type SPECULAR  (GL_TEXTURE_2D, 1);
+            static const Type NORMAL    (GL_TEXTURE_2D, 2);
+            static const Type EMISSIVE  (GL_TEXTURE_2D, 3);
         }
     }
 }
@@ -102,73 +102,34 @@ namespace Swarm {
         void registerTexture(GLuint textureID);
         void cleanupTextures();
 
+        struct TexData {
+            GLuint ID;
+            GLenum target;
+        };
+
         class Texture {
         public:
-            virtual GLuint getTex(const MapType::Type &type) const = 0;
-            virtual GLuint getTex(GLuint activeID) const = 0;
-            //virtual map<MapType::Type, GLuint> &getAllTex() const = 0; // TODO: Remove for iteration
-            virtual void bind() const = 0;
-            virtual int compareTo(const Texture &rhs) const = 0;
-            bool operator<(const Texture &rhs) const { return compareTo(rhs) < 0; }
-            bool operator>(const Texture &rhs) const { return compareTo(rhs) > 0; }
+            void bind() const;
+
+            void setTex(MapType::Type type, GLuint ID) { setTex(type.getActiveID(), ID, type.getTarget()); }
+            void setTex(GLuint active, GLuint ID, GLenum target);
+
+            GLuint getTex(GLuint active) const;
+            GLuint operator[](GLuint active) const;
+
+            // Comparison Operators
+            int compareTo(const Texture &rhs) const;
+            bool operator< (const Texture &rhs) const { return compareTo(rhs) < 0; }
+            bool operator<=(const Texture &rhs) const { return compareTo(rhs) <= 0; }
+            bool operator> (const Texture &rhs) const { return compareTo(rhs) > 0; }
+            bool operator>=(const Texture &rhs) const { return compareTo(rhs) >= 0; }
             bool operator==(const Texture &rhs) const { return compareTo(rhs) == 0; }
-        };
-
-        class SingleTexture : public Texture {
-        public:
-            SingleTexture(GLuint texID);
-            SingleTexture(const char * texName);
-
-            friend class AnimatedTexture;
-
-            void setTex(const MapType::Type &type, GLuint texID);
-            void setTex(const MapType::Type &type, const char * texName);
-            virtual GLuint getTex(const MapType::Type &type) const;
-            virtual GLuint getTex(GLuint activeID) const;
-            //virtual map<MapType::Type, GLuint> &getAllTex() const;
-
-            virtual void bind() const;
-
-            SingleTexture &operator=(const SingleTexture &rhs);
-            SingleTexture &operator=(const GLuint &rhs);
-
-            virtual int compareTo(const Texture &rhs) const;
+            Texture &operator=(const Texture &rhs);
 
         protected:
-            map<MapType::Type, GLuint> texIDs;
+            map<GLuint, TexData> data;
         };
 
-        class AnimatedTexture {
-        public:
-            AnimatedTexture(GLuint textureID);
-
-            AnimatedTexture(const char *textureName);
-
-            AnimatedTexture();
-
-            void addTexture(GLuint textureID);
-
-            void addTexture(const char *textureName);
-
-            void addTexture(GLuint textureID, double interval);
-
-            void addTexture(const char *textureName, double interval);
-
-            virtual GLuint getID();
-            virtual void bind();
-
-            AnimatedTexture &operator=(const AnimatedTexture &rhs);
-
-            AnimatedTexture &operator=(const SingleTexture &rhs);
-
-            AnimatedTexture &operator=(const GLuint &rhs);
-
-        protected:
-            vector<GLuint> textureList;
-            int currentIndex;
-            vector<double> changeDelay;
-            double lastTime;
-        };
     }
 
 
@@ -316,8 +277,9 @@ namespace Swarm {
 
         class Model {
         public:
-            virtual GLuint getVAOID() = 0;
-            virtual unsigned int getElementCount() = 0;
+            virtual GLint getVAOID() = 0;
+            virtual unsigned int getElementCount() const = 0;
+            virtual bool operator==(Model &rhs);
         };
 
         void cleanupBuffers();
@@ -330,15 +292,25 @@ namespace Swarm {
             ModelSegment(const ModelSegment &other);
             ModelSegment &operator=(const ModelSegment &other);
 
-            virtual GLuint getVAOID() { return vao; }
-            virtual unsigned int getElementCount() { return elementCount; }
+            virtual GLint getVAOID();
+            virtual unsigned int getElementCount() const { return elementCount; }
 
             bool isLoaded() { return loaded; }
             void cleanup();
 
         protected:
-            GLuint vao;
-            std::set<GLuint> buffers;
+            void regenVAO();
+
+            struct BufferEntry {
+                GLuint buffer;
+                GLuint attrib;
+                VecType type;
+                friend bool operator<(const BufferEntry &lhs, const BufferEntry &rhs) { return lhs.buffer < rhs.buffer; }
+            };
+
+            std::map<GLFWwindow*, GLuint> vao_map;
+            std::set<BufferEntry> data_buffers;
+            GLuint element_buffer;
             unsigned int elementCount = 0;
             bool loaded = false;
         };
@@ -355,20 +327,26 @@ namespace Swarm {
 
             class Uniform {
             public:
+                friend class Swarm::Render::Renderer;
+
                 Uniform(string name) : name(name) {}
                 string &getName() { return name; }
                 void setName(const string &name) { this->name = name; }
                 void setName(string name) { this->name = name; }
 
-                friend class Swarm::Render::Renderer;
+                void setf (GLsizei count, GLsizei stride, GLfloat *data);
+                void seti (GLsizei count, GLsizei stride, GLint   *data);
+                void setui(GLsizei count, GLsizei stride, GLuint  *data);
+                void setm (GLsizei count, GLsizei width, GLsizei height, GLfloat *data);
 
-                void setf (Renderer &render, GLsizei count, GLsizei stride, GLfloat *data);
-                void seti (Renderer &render, GLsizei count, GLsizei stride, GLint   *data);
-                void setui(Renderer &render, GLsizei count, GLsizei stride, GLuint  *data);
-                void setm (Renderer &render, GLsizei count, GLsizei width, GLsizei height, GLfloat *data);
+                void bind(Renderer &render);
+
+                void clear();
+                bool empty() { return hasData; }
 
             protected:
                 string name;
+                bool hasData = false;
 
                 enum {
                     F, I, UI, M
@@ -380,27 +358,6 @@ namespace Swarm {
                     struct { GLsizei count; GLsizei width; GLsizei height; GLfloat* data; } m;
                 } data;
             };
-
-            static Uniform MatrixModel          ("_m");
-            static Uniform MatrixView           ("_v");
-            static Uniform MatrixProjection     ("_p");
-
-            static Uniform LightAmbientColor    ("_ambient_light_color");
-            static Uniform LightAmbientDirection("_ambient_light_direction");
-
-            /*
-            static string MatrixModel =             "_m";
-            static string MatrixView =              "_v";
-            static string MatrixProjection =        "_p";
-
-            static string LightAmbientColor =       "_ambient_light_color";
-            static string LightAmbientDirection =   "_ambient_light_direction";
-
-            static string TextureDiffuse =          "_texture_diffuse";
-            static string TextureSpecular =         "_texture_specular";
-            static string TextureNormal =           "_texture_normal";
-            static string TextureEmissive =         "_texture_emissive";
-             */
 
         }
 
@@ -422,16 +379,10 @@ namespace Swarm {
 
         class RenderObject : public ModelMatrixWrapper {
         public:
-            virtual Model::Model &getModel() = 0;
-            virtual Texture::Texture &getTexture() = 0;
-            virtual void prepareModel() {}
-        };
-
-        class RenderObjectSimple : public RenderObject {
-        public:
-            RenderObjectSimple(Model::Model &model, Texture::Texture &texture, glm::mat4 matrix = glm::mat4(1.0)) : model(model), texture(texture) { setMatrix(matrix); }
-            virtual Model::Model &getModel() { return model; }
-            virtual Texture::Texture &getTexture() { return texture; }
+            RenderObject(Model::Model &model, Texture::Texture &texture, glm::mat4 matrix = glm::mat4(1.0)) : model(model), texture(texture) { setMatrix(matrix); }
+            virtual Model::Model &getModel() const { return model; }
+            virtual Texture::Texture &getTexture() const { return texture; }
+            virtual bool operator==(const RenderObject &rhs) const { return model == rhs.model && texture == rhs.texture; }
         protected:
             Model::Model &model;
             Texture::Texture &texture;
@@ -446,13 +397,24 @@ namespace Swarm {
             std::vector<RenderObjectMultiPart> parts;
         };
 
-        class RenderObjectMultiPart : public RenderObjectSimple {
+        class RenderObjectMultiPart : public RenderObject {
         public:
             RenderObjectMultiPart(RenderObjectMulti &parent, Model::Model &model, Texture::Texture &texture, glm::mat4 matrix = glm::mat4(1.0));
             RenderObjectMulti &getParent() { return parent; }
-            virtual glm::mat4 getMatrix() { return RenderObjectSimple::getMatrix() * parent.getMatrix(); }
+            virtual glm::mat4 getMatrix() { return RenderObject::getMatrix() * parent.getMatrix(); }
         protected:
             RenderObjectMulti &parent;
+        };
+
+        class RenderObjectCollection {
+        public:
+            void add(RenderObject &object);
+            void remove(RenderObject &object);
+            void clear();
+            std::vector<RenderObject*> getList(const Texture::Texture &tex);
+            std::map<Texture::Texture, std::vector<RenderObject*>> &getData() { return data; };
+        protected:
+            std::map<Texture::Texture, std::vector<RenderObject*>> data;
         };
 
 
@@ -528,46 +490,6 @@ namespace Swarm {
         void init();
         void cleanup();
 
-        struct TexPntrComp {
-            bool operator() (Texture::Texture* lhs, Texture::Texture* rhs) const {
-                if(lhs == NULL) return rhs != NULL;
-                if(rhs == NULL) return false;
-                return (*lhs) < (*rhs);
-            }
-        };
-
-        class Renderer {
-        public:
-            Renderer() : currentProgram(NULL) {};
-            Renderer(Program* program);
-
-            void changeShaderProfile(Program* program);
-
-            Program* getShaderProfile() { return currentProgram; }
-
-            //void updateUniforms();
-            void markUniformDirty(Uniforms::Uniform &uniform) { dirty_uniforms.insert(&uniform); }
-
-            void start();
-            void end();
-
-            void render(Model::Model &object, glm::mat4 matrix_Model = glm::mat4(1.0));
-            void render(RenderObject &object);
-            void renderAll();
-
-            void registerRenderObject(RenderObject* object);
-            void unregisterRenderObject(RenderObject* object);
-            void clearRenderObjects();
-
-        protected:
-            Program* currentProgram;
-
-            // Texture Type -> Texture ID -> RO List
-            std::map<Texture::Texture*, std::vector<RenderObject*>, TexPntrComp> roMap;
-
-            std::set<Uniforms::Uniform*> dirty_uniforms;
-        };
-
         //! Enumeration representing different possible camera movements.
         /*!
          * This enumeration is used to tell Camera objects how they need to move through worldspace.
@@ -600,11 +522,34 @@ namespace Swarm {
             glm::vec3 up;
         };
 
+        //! Structure representing a unique window.
+        /*!
+         * This structure serves as a wrapper to a GLFWwindow, in addition to holding a reference to a Camera object.
+         * In addition, this structure is constructed with a reference to a RenderObjectCollection. Render Objects are
+         * registered with said collection, telling the internal renderer what objects to render.
+         * \sa Camera, RenderObjectCollection
+         */
+        struct Window {
+            operator GLFWwindow*() const { return window; }
+            GLFWwindow* getWindow() const { return window; }
+            int getWidth() const;
+            int getHeight() const;
+            void getSize(int &width, int &height) const;
+            RenderObjectCollection &getRenderObjectCollection() { return renderObjects; }
+            void makeCurrent();
+            // TODO: Options for different monitors
+            Window(int width, int height, RenderObjectCollection &renderObjects, const char* name = "Swarm Engine Instance");
+            static Window* getCurrent();
+        private:
+            GLFWwindow* window = nullptr;
+            RenderObjectCollection &renderObjects;
+            //static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+        };
 
         class Camera {
         public:
-            Camera(Renderer &renderer, GLFWwindow *window, float speed = 1.0f, CameraMovementMode mode = INSTANT);
-            Camera(Renderer &renderer, GLFWwindow *window, glm::vec3 position, glm::vec3 lookAt, glm::vec3 up = glm::vec3(0,1,0), float speed = 1.0f, CameraMovementMode mode = INSTANT);
+            Camera(Window &window, float speed = 1.0f, CameraMovementMode mode = INSTANT);
+            Camera(Window &window, glm::vec3 position, glm::vec3 lookAt, glm::vec3 up = glm::vec3(0,1,0), float speed = 1.0f, CameraMovementMode mode = INSTANT);
 
             void setMovementMode(CameraMovementMode mode) { movementMode = mode; }
             CameraMovementMode getMovementMode() { return movementMode; }
@@ -621,15 +566,14 @@ namespace Swarm {
             void setViewDistance(float dist) { viewDistance = dist; }
             float getViewDistance() { return viewDistance; }
 
+            Window &getWindow() const { return window; }
+
             void update(double deltaTime);
 
             glm::mat4 getViewMatrix();
             glm::mat4 getProjectionMatrix();
         protected:
             CameraMovementMode movementMode = INSTANT;
-
-            Renderer &renderer;
-            GLFWwindow *window;
 
             float fov = 45.0f;
             float viewDistance = 1000.0f;
@@ -641,6 +585,56 @@ namespace Swarm {
 
             glm::mat4 viewMatrix;
             glm::mat4 projectionMatrix;
+
+            struct Window& window;
+        };
+
+        class Renderer {
+        public:
+            typedef void (*RenderCycleFunc)(Renderer&, Camera&);
+
+            Renderer(Program &program, RenderCycleFunc custom_render_cycle = nullptr);
+
+            Program &getProgram() { return program; }
+
+            void doRenderCycle(Camera &camera);
+
+            void start(Camera &camera);
+            void end(Camera &camera);
+
+            // TODO: Add option for custom uniforms per object
+            void render(Model::Model &object, glm::mat4 matrix_Model = glm::mat4(1.0));
+            void render(RenderObject &object);
+            void render(RenderObjectCollection &collection);
+
+            void setUniformNameModel     (std::string name) { uniform_model      = name; }
+            void setUniformNameView      (std::string name) { uniform_view       = name; }
+            void setUniformNameProjection(std::string name) { uniform_projection = name; }
+
+            std::string getUniformNameModel     () const { return uniform_model; }
+            std::string getUniformNameView      () const { return uniform_view; }
+            std::string getUniformNameProjection() const { return uniform_projection; }
+
+            void setUniformNameTexture(GLuint activeID, std::string name) { uniform_map_textures[activeID] = name; }
+            std::string getUniformNameTexture(GLuint activeID) {
+                if(uniform_map_textures.count(activeID)) return uniform_map_textures[activeID];
+                else return "";
+            }
+
+            // Developer retains ownership
+            void addCustomUniform(Uniforms::Uniform* uniform);
+
+        protected:
+            Program program;
+
+            RenderCycleFunc custom_render_cycle;
+
+            std::string uniform_model;
+            std::string uniform_view;
+            std::string uniform_projection;
+            std::map<GLuint, std::string> uniform_map_textures;
+
+            std::set<Uniforms::Uniform*> uniform_custom_set;
         };
 
     }

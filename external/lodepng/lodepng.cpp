@@ -1465,7 +1465,7 @@ static unsigned encodeLZ77(uivector* out, Hash* hash,
 
   for(pos = inpos; pos < insize; ++pos)
   {
-    size_t wpos = pos & (windowsize - 1); /*position for in 'circular' hash buffers*/
+    size_t wpos = pos & (windowsize - 1); /*position for in 'circular' hash data_buffers*/
     unsigned chainlength = 0;
 
     hashval = getHash(in, insize, pos);
@@ -4067,7 +4067,7 @@ static void removePaddingBits(unsigned char* out, const unsigned char* in,
 {
   /*
   After filtering there are still padding bits if scanlines have non multiple of 8 bit amounts. They need
-  to be removed (except at last scanline of (Adam7-reduced) image) before working with pure image buffers
+  to be removed (except at last scanline of (Adam7-reduced) image) before working with pure image data_buffers
   for the Adam7 code, the color convert code and the output to the user.
   in and out are allowed to be the same buffer, in may also be higher but still overlapping; in must
   have >= ilinebits*h bits, out must have >= olinebits*h bits, olinebits must be <= ilinebits

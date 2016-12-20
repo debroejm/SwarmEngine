@@ -20,7 +20,6 @@ set(ENGINE_SOURCE_CORE
         core/Logging.cpp
         core/MiscUtil.cpp
         core/config/Configuration.cpp
-        core/config/Controls.cpp
         core/config/Keybindings.cpp
         render/model/Animation.cpp
         render/model/Model.cpp
@@ -31,9 +30,8 @@ set(ENGINE_SOURCE_CORE
         render/Shaders.cpp
         render/Camera.cpp
         render/Uniforms.cpp
+        render/Window.cpp
         render/texture/Texture.cpp
-        render/texture/AnimatedTexture.cpp
-        render/texture/SingleTexture.cpp
         render/texture/TextureHandler.cpp
         cl/init.cpp
         cl/context.cpp

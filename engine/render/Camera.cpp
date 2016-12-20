@@ -6,22 +6,23 @@
 namespace Swarm {
     namespace Render {
 
-        Camera::Camera(Renderer &renderer, GLFWwindow *window, float speed, CameraMovementMode mode)
-                : renderer(renderer), window(window), moveSpeed(speed), movementMode(mode) {
+        Camera::Camera(Window &window, float speed, CameraMovementMode mode)
+                : window(window), moveSpeed(speed), movementMode(mode) {
             currentPos.position = glm::vec3(0);
             currentPos.lookAt = glm::vec3(0,0,1);
             currentPos.up = glm::vec3(0,1,0);
+            targetPos = currentPos;
         }
 
-        Camera::Camera(Renderer &renderer, GLFWwindow *window, glm::vec3 position, glm::vec3 lookAt, glm::vec3 up, float speed, CameraMovementMode mode)
-                : renderer(renderer), window(window), moveSpeed(speed), movementMode(mode) {
+        Camera::Camera(Window &window, glm::vec3 position, glm::vec3 lookAt, glm::vec3 up, float speed, CameraMovementMode mode)
+                : window(window), moveSpeed(speed), movementMode(mode) {
             currentPos.position = position;
             currentPos.lookAt = lookAt;
             currentPos.up = up;
+            targetPos = currentPos;
         }
 
         void Camera::update(double deltaTime) {
-            /*
             switch(movementMode) {
                 case INSTANT:
                     currentPos = targetPos;
@@ -37,13 +38,8 @@ namespace Swarm {
                         currentPos.up = Util::movePoint(currentPos.up, targetPos.up, moveSpeed * deltaTime);
                     break;
             }
-             */
             viewMatrix = glm::lookAt(currentPos.position, currentPos.lookAt, currentPos.up);
-            Uniforms::MatrixView.setm(renderer, 1, 4, 4, &viewMatrix[0][0]);
-            int width, height;
-            glfwGetWindowSize(window, &width, &height);
-            projectionMatrix = glm::perspective(fov, (float)width / (float)height, 0.1f, viewDistance);
-            Uniforms::MatrixProjection.setm(renderer, 1, 4, 4, &projectionMatrix[0][0]);
+            projectionMatrix = glm::perspective(fov, (float)window.getWidth() / (float)window.getHeight(), 0.1f, viewDistance);
         }
 
         glm::mat4 Camera::getViewMatrix() {

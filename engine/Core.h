@@ -174,10 +174,7 @@ namespace Swarm {
 
     namespace Init {
 
-        bool init(unsigned int flags);
-        bool init(string windowName = "Swarm Engine Instance", unsigned int flags = SWM_INIT_ALL);
-        bool init(int windowX, int windowY, string windowName = "Swarm Engine Instance", unsigned int flags = SWM_INIT_ALL);
-
+        bool init(unsigned int flags = SWM_INIT_ALL);
         void cleanup();
 
     }
@@ -240,12 +237,6 @@ namespace Swarm {
     }
 
     namespace Input {
-
-        void computeMatricesFromInputs();
-        glm::mat4 getViewMatrix();
-        glm::mat4 getProjectionMatrix();
-        void setWindow(GLFWwindow* windowIN);
-        GLFWwindow* getWindow();
 
         class Keybinding {
         public:
