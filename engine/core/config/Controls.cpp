@@ -1,4 +1,5 @@
-#include "../../Core.h"
+#define SWARM_INCLUDE_GLM
+#include "api/Core.h"
 
 namespace Swarm {
     namespace Input {

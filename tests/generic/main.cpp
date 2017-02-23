@@ -1,8 +1,11 @@
-#include "Core.h"
-#include "Render.h"
-#include "CLEngine.h"
+#include "api/Core.h"
+#include "api/Logging.h"
+#include "api/Render.h"
+#include "api/CLEngine.h"
+#include "api/Util.h"
 
 #include <math.h>
+#include <iostream>
 
 using namespace Swarm;
 using namespace std;
@@ -12,211 +15,261 @@ using namespace Swarm::Logging;
 #define PI 3.141592f
 #define TWO_PI PI*2.0f
 
+// Keybindings
+Input::Keybinding EXIT;
+Input::Keybinding FORWARD;
+Input::Keybinding BACKWARD;
+Input::Keybinding LEFT;
+Input::Keybinding RIGHT;
+Input::Keybinding COLOR_R_UP;
+Input::Keybinding COLOR_R_DOWN;
+Input::Keybinding COLOR_G_UP;
+Input::Keybinding COLOR_G_DOWN;
+Input::Keybinding COLOR_B_UP;
+Input::Keybinding COLOR_B_DOWN;
+Input::Keybinding SHOW_ALPHA;
+Input::Keybinding SHOW_BETA;
+Input::Keybinding DEBUG_KEY;
+
+// Light Settings
+float light_color[3]{1.0f, 1.0f, 1.0f};
+float speed = 1.0f;
+
+// Position Settings
+float yaw = 0.0f;
+float pitch = 0.0f;
+
+// Custom Uniforms
+Render::Uniform uniform_light_ambient_color("_ambient_light_color");
+Render::Uniform uniform_light_ambient_direction("_ambient_light_direction");
+
+// Windows
+Render::Window window1;
+Render::Window window2;
+
+void main_cycle(double delta_time);
+
 int main() {
 
     try {
 
         // Initialization
-        if (!Init::init()) {
+        if (!Core::init()) {
             return -1;
         }
 
-        if (CL::getAllDevices().empty()) Log::log_cl(DEBUG) << "No CL Devices Found";
-        else Log::log_cl(DEBUG) << "Auto-Selected CL Device: " << CL::getAllDevices().rbegin()->deviceName;
+        std::set<CL::Device*> all_devices = CL::Device::getAll();
+        CL::Device* best_device = *all_devices.rbegin();
+        if (all_devices.empty()) Log::log_cl(DEBUG) << "No CL Devices Found";
+        else Log::log_cl(DEBUG) << "Auto-Selected CL Device: " << best_device->name();
 
         Render::RenderObjectCollection all_render_objects;
 
-        Render::Window window1(1600, 900, all_render_objects, "Swarm Engine Test - Generic Alpha");
-        Render::Window window2(800, 600, all_render_objects, "Swarm Engine Test - Generic Beta");
-
-        glClearColor(0.0f, 0.0f, 0.5f, 0.0f);
-
         // Load our Shaders
-        Render::Shader vertexShader("resources/shaders/SimpleShader_Vertex.glsl", GL_VERTEX_SHADER);
-        Render::Shader fragmentShader("resources/shaders/SimpleShader_Fragment.glsl", GL_FRAGMENT_SHADER);
-        Render::Shader *shaders[]{&vertexShader, &fragmentShader};
-        Render::Program program(shaders, 2);
+        Render::Shader* shader_vertex   = Render::Shader::compileFromFile("resources/shaders/SimpleShader_Vertex.glsl",   Render::ShaderType::VERTEX);
+        Render::Shader* shader_fragment = Render::Shader::compileFromFile("resources/shaders/SimpleShader_Fragment.glsl", Render::ShaderType::FRAGMENT);
+        Render::Shader* shaders[]{shader_vertex, shader_fragment};
+        Render::Program* program = Render::Program::compile(shaders, 2);
 
         // Renderer object
-        Render::Renderer renderer(program);
-        Render::Camera camera1(window1, glm::vec3(0.0f, 4.0f, 9.0f), glm::vec3(0.0f, 0.0f, 0.0f));
-        Render::Camera camera2(window2, glm::vec3(9.0f, 4.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+        Render::Renderer* renderer = Render::Renderer::create(program);
+
+        window1 = Render::Window(1600, 900, "Swarm Engine Test - Generic Alpha");
+        window2 = Render::Window(800, 600,  "Swarm Engine Test - Generic Beta");
+
+        window1.attachRenderer(renderer, all_render_objects);
+        window2.attachRenderer(renderer, all_render_objects);
+
+        window1.setClearColor(0.0f, 0.0f, 0.75f);
+        window2.setClearColor(0.75f, 0.0f, 0.0f);
+
+        // Cameras
+        Render::Camera* cam1 = Render::Camera::create(Render::CameraPosition(
+                0.0f, 4.0f, 9.0f,   // Position
+                0.0f, 0.0f, 0.0f,   // LookAt
+                0.0f, 1.0f, 0.0f)); // Up
+        Render::Camera* cam2 = Render::Camera::create(Render::CameraPosition(
+                0.0f, -4.0f, 9.0f,   // Position
+                0.0f, 0.0f, 0.0f,   // LookAt
+                0.0f, 1.0f, 0.0f)); // Up
+
+        window1.setCamera(cam1);
+        window2.setCamera(cam2);
 
         // Keybindings
         Config::RawConfigData keybindingConfig("keybinding.config");
-        Input::Keybinding EXIT(GLFW_KEY_ESCAPE, keybindingConfig, "Exit");
-        Input::addKeybinding(EXIT);
-        Input::Keybinding FORWARD(GLFW_KEY_W, keybindingConfig, "Forward");
-        Input::addKeybinding(FORWARD);
-        Input::Keybinding BACKWARD(GLFW_KEY_S, keybindingConfig, "Backward");
-        Input::addKeybinding(BACKWARD);
-        Input::Keybinding LEFT(GLFW_KEY_A, keybindingConfig, "Left");
-        Input::addKeybinding(LEFT);
-        Input::Keybinding RIGHT(GLFW_KEY_D, keybindingConfig, "Right");
-        Input::addKeybinding(RIGHT);
-        Input::Keybinding COLOR_R_UP(GLFW_KEY_KP_7, keybindingConfig, "ColorRUp");
-        Input::addKeybinding(COLOR_R_UP);
-        Input::Keybinding COLOR_R_DOWN(GLFW_KEY_KP_4, keybindingConfig, "ColorRDown");
-        Input::addKeybinding(COLOR_R_DOWN);
-        Input::Keybinding COLOR_G_UP(GLFW_KEY_KP_8, keybindingConfig, "ColorGUp");
-        Input::addKeybinding(COLOR_G_UP);
-        Input::Keybinding COLOR_G_DOWN(GLFW_KEY_KP_5, keybindingConfig, "ColorGDown");
-        Input::addKeybinding(COLOR_G_DOWN);
-        Input::Keybinding COLOR_B_UP(GLFW_KEY_KP_9, keybindingConfig, "ColorBUp");
-        Input::addKeybinding(COLOR_B_UP);
-        Input::Keybinding COLOR_B_DOWN(GLFW_KEY_KP_6, keybindingConfig, "ColorBDown");
-        Input::addKeybinding(COLOR_B_DOWN);
+        EXIT = Input::Keybinding(         Input::KeyType::K_ESCAPE, keybindingConfig, "Exit");
+        FORWARD = Input::Keybinding(      Input::KeyType::K_W,      keybindingConfig, "Forward");
+        BACKWARD = Input::Keybinding(     Input::KeyType::K_S,      keybindingConfig, "Backward");
+        LEFT = Input::Keybinding(         Input::KeyType::K_A,      keybindingConfig, "Left");
+        RIGHT = Input::Keybinding(        Input::KeyType::K_D,      keybindingConfig, "Right");
+        COLOR_R_UP = Input::Keybinding(   Input::KeyType::K_KP_7,   keybindingConfig, "ColorRUp");
+        COLOR_R_DOWN = Input::Keybinding( Input::KeyType::K_KP_4,   keybindingConfig, "ColorRDown");
+        COLOR_G_UP = Input::Keybinding(   Input::KeyType::K_KP_8,   keybindingConfig, "ColorGUp");
+        COLOR_G_DOWN = Input::Keybinding( Input::KeyType::K_KP_5,   keybindingConfig, "ColorGDown");
+        COLOR_B_UP = Input::Keybinding(   Input::KeyType::K_KP_9,   keybindingConfig, "ColorBUp");
+        COLOR_B_DOWN = Input::Keybinding( Input::KeyType::K_KP_6,   keybindingConfig, "ColorBDown");
+        SHOW_ALPHA = Input::Keybinding(   Input::KeyType::K_LEFT_CONTROL, keybindingConfig, "ShowAlpha");
+        SHOW_BETA = Input::Keybinding(    Input::KeyType::K_RIGHT_CONTROL, keybindingConfig, "ShowBeta");
+        DEBUG_KEY = Input::Keybinding(    Input::KeyType::K_KP_0,   keybindingConfig, "Debug");
 
         // Load Texture
-        Texture::Texture cube_tex;
-        cube_tex.setTex(Texture::MapType::DIFFUSE, Texture::loadPNGTexture("resources/textures/box_diffuse.png"));
-        cube_tex.setTex(Texture::MapType::SPECULAR, Texture::loadPNGTexture("resources/textures/box_specular.png"));
-        cube_tex.setTex(Texture::MapType::NORMAL, Texture::loadPNGTexture("resources/textures/box_normal.png"));
-        cube_tex.setTex(Texture::MapType::EMISSIVE, Texture::loadPNGTexture("resources/textures/box_emissive.png"));
+        Texture::TexMap tex_cube_diffuse  = Texture::loadTexFromFile("resources/textures/box_diffuse.png",  Texture::PNG);
+        Texture::TexMap tex_cube_specular = Texture::loadTexFromFile("resources/textures/box_specular.png", Texture::PNG);
+        Texture::TexMap tex_cube_normal   = Texture::loadTexFromFile("resources/textures/box_normal.png",   Texture::PNG);
+        Texture::TexMap tex_cube_emissive = Texture::loadTexFromFile("resources/textures/box_emissive.png", Texture::PNG);
+        Texture::Texture tex_cube;
+        tex_cube.put(Texture::Type::DIFFUSE,  tex_cube_diffuse);
+        tex_cube.put(Texture::Type::SPECULAR, tex_cube_specular);
+        tex_cube.put(Texture::Type::NORMAL,   tex_cube_normal);
+        tex_cube.put(Texture::Type::EMISSIVE, tex_cube_emissive);
 
         // Setup Texture Uniforms
-        renderer.setUniformNameTexture(Texture::MapType::DIFFUSE.getActiveID(), "_texture_diffuse");
-        renderer.setUniformNameTexture(Texture::MapType::SPECULAR.getActiveID(), "_texture_specular");
-        renderer.setUniformNameTexture(Texture::MapType::NORMAL.getActiveID(), "_texture_normal");
-        renderer.setUniformNameTexture(Texture::MapType::EMISSIVE.getActiveID(), "_texture_emissive");
+        renderer->setTextureName(Texture::Type::DIFFUSE,  "_texture_diffuse");
+        renderer->setTextureName(Texture::Type::SPECULAR, "_texture_specular");
+        renderer->setTextureName(Texture::Type::NORMAL,   "_texture_normal");
+        renderer->setTextureName(Texture::Type::EMISSIVE, "_texture_emissive");
 
         // Our Object
-        Model::RawModelDataIndexed *data = Model::loadFromOBJ("resources/models/Cube.obj", true);
-        Model::ModelSegment model(*data);
-        Render::RenderObject object(model, cube_tex);
-        object.scale(3.0f, 3.0f, 3.0f);
-        Render::RenderObject object2(object);
-        object2.translate(0.0f, -4.0f, 0.0f);
-        Render::RenderObject object3(object);
-        object3.translate(0.0f, 4.0f, 0.0f);
+        Model::RawModelData model_cube_data = Model::loadFromOBJ("resources/models/Cube.obj");
+        Model::computeTangents(model_cube_data);
+        Model::RawModelDataIndexed model_cube_data_indexed = model_cube_data.index();
+        Model::Model model_cube(model_cube_data_indexed);
+        Render::RenderObject* render_object_cube_1 = Render::RenderObject::createStaticRenderObject(
+                model_cube, tex_cube,
+                0.0f, 0.0f, 0.0f,
+                3.0f, 3.0f, 3.0f,
+                0.0f, 0.0f, 0.0f);
+        Render::RenderObject* render_object_cube_2 = Render::RenderObject::createStaticRenderObject(
+                model_cube, tex_cube,
+                0.0f, -4.0f, 0.0f,
+                3.0f,  3.0f, 3.0f,
+                0.0f,  0.5f, 0.0f);
+        Render::RenderObject* render_object_cube_3 = Render::RenderObject::createStaticRenderObject(
+                model_cube, tex_cube,
+                0.0f, 4.0f, 0.0f,
+                3.0f, 3.0f, 3.0f,
+                0.0f, -0.5f, 0.0f);
 
         // Register Objects
-        all_render_objects.add(object);
-        all_render_objects.add(object2);
-        all_render_objects.add(object3);
+        all_render_objects.insert(render_object_cube_1);
+        all_render_objects.insert(render_object_cube_2);
+        all_render_objects.insert(render_object_cube_3);
 
         // Setup Custom Uniforms
-        Render::Uniforms::Uniform uniform_light_ambient_color("_ambient_light_color");
-        renderer.addCustomUniform(&uniform_light_ambient_color);
-        Render::Uniforms::Uniform uniform_light_ambient_direction("_ambient_light_direction");
-        renderer.addCustomUniform(&uniform_light_ambient_direction);
+        renderer->insertUniform(uniform_light_ambient_color);
+        renderer->insertUniform(uniform_light_ambient_direction);
 
-        // Some Light Settings
-        glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
-        float speed = 0.01f;
+        uniform_light_ambient_color.setf(1, 3, &light_color[0]);
 
-        float yaw = 0.0f;
-        float pitch = 0.0f;
+        window1.setVisible(true);
+        //window2->setVisible(true);
 
-        double lastTime = glfwGetTime();
+        // A thing
+
+        Log::log_core(DEBUG) << "Starting Main Cycle Loop";
 
         // Main runtime loop
-        while (!glfwWindowShouldClose(window1) && !glfwWindowShouldClose(window2)) {
-            double newTime = glfwGetTime();
-            double deltaTime = newTime - lastTime;
-            lastTime = newTime;
-
-            bool input = false;
-            if (LEFT) {
-                yaw -= 0.01f;
-                input = true;
-            }
-            if (RIGHT) {
-                yaw += 0.01f;
-                input = true;
-            }
-            if (FORWARD) {
-                pitch -= 0.01f;
-                input = true;
-            }
-            if (BACKWARD) {
-                pitch += 0.01f;
-                input = true;
-            }
-            if (!input) {
-                yaw += 0.001f;
-                pitch -= 0.001f;
-            }
-
-            if (yaw > TWO_PI) yaw = fmod(yaw, TWO_PI);
-            if (pitch > TWO_PI) pitch = fmod(pitch, TWO_PI);
-            if (yaw < 0.0f) yaw = TWO_PI - fmod(-yaw, TWO_PI);
-            if (pitch < 0.0f) pitch = TWO_PI - fmod(-pitch, TWO_PI);
-
-            input = false;
-            if (COLOR_R_UP) {
-                lightColor.r += speed;
-                input = true;
-            }
-            if (COLOR_R_DOWN) {
-                lightColor.r -= speed;
-                input = true;
-            }
-            if (COLOR_G_UP) {
-                lightColor.g += speed;
-                input = true;
-            }
-            if (COLOR_G_DOWN) {
-                lightColor.g -= speed;
-                input = true;
-            }
-            if (COLOR_B_UP) {
-                lightColor.b += speed;
-                input = true;
-            }
-            if (COLOR_B_DOWN) {
-                lightColor.b -= speed;
-                input = true;
-            }
-            if (lightColor.r < 0.0f) lightColor.r = 0.0f;
-            if (lightColor.r > 1.0f) lightColor.r = 1.0f;
-            if (lightColor.g < 0.0f) lightColor.g = 0.0f;
-            if (lightColor.g > 1.0f) lightColor.g = 1.0f;
-            if (lightColor.b < 0.0f) lightColor.b = 0.0f;
-            if (lightColor.b > 1.0f) lightColor.b = 1.0f;
-            if (input) uniform_light_ambient_color.setf(1, 3, &lightColor[0]);
-
-            double cursorX, cursorY;
-            glfwGetCursorPos(window1, &cursorX, &cursorY);
-            int width, height;
-            glfwGetWindowSize(window1, &width, &height);
-            glm::vec3 lightDir((float) -((cursorX - width / 2) / (width / 2)),
-                               (float) ((cursorY - height / 2) / (height / 2)), 1.0f);
-            uniform_light_ambient_direction.setf(1, 3, &lightDir[0]);
-
-            object.resetMatrix();
-            object.scale(3.0f, 3.0f, 3.0f);
-            object.rotate(pitch, 1.0f, 0.0f, 0.0f);
-            object.rotate(yaw, 0.0f, 1.0f, 0.0f);
-
-            object2.rotate(0.001f, 0.0f, 1.0f, 0.0f);
-            object3.rotate(-0.001f, 0.0f, 1.0f, 0.0f);
-
-            camera1.update(deltaTime);
-            camera2.update(deltaTime);
-
-            renderer.doRenderCycle(camera1);
-            renderer.doRenderCycle(camera2);
-
-            if (EXIT) {
-                glfwSetWindowShouldClose(window1, GL_TRUE);
-                glfwSetWindowShouldClose(window2, GL_TRUE);
-            }
-
-            glfwPollEvents();
-        }
+        Core::start(main_cycle);
 
         // Clean everything up
-        Init::cleanup();
-        glfwDestroyWindow(window1);
-        glfwDestroyWindow(window2);
-        glfwTerminate();
+        Log::log_core(DEBUG) << "Cleaning Up";
+        Core::cleanup();
 
         keybindingConfig.writeConfigData();
 
     } catch(exception &e) {
-        cerr << e.what() << endl;
+        std::cerr << "Exception: " << e.what() << endl;
     }
 
     return 0;
+}
+
+void main_cycle(double delta_time) {
+    bool input = false;
+    if (LEFT) {
+        yaw -= 0.01f;
+        input = true;
+    }
+    if (RIGHT) {
+        yaw += 0.01f;
+        input = true;
+    }
+    if (FORWARD) {
+        pitch -= 0.01f;
+        input = true;
+    }
+    if (BACKWARD) {
+        pitch += 0.01f;
+        input = true;
+    }
+    if (!input) {
+        yaw += 0.001f;
+        pitch -= 0.001f;
+    }
+
+    if (yaw > TWO_PI) yaw = fmod(yaw, TWO_PI);
+    if (pitch > TWO_PI) pitch = fmod(pitch, TWO_PI);
+    if (yaw < 0.0f) yaw = TWO_PI - fmod(-yaw, TWO_PI);
+    if (pitch < 0.0f) pitch = TWO_PI - fmod(-pitch, TWO_PI);
+
+    input = false;
+    if (COLOR_R_UP) {
+        light_color[0] += speed * delta_time;
+        input = true;
+    }
+    if (COLOR_R_DOWN) {
+        light_color[0] -= speed * delta_time;
+        input = true;
+    }
+    if (COLOR_G_UP) {
+        light_color[1] += speed * delta_time;
+        input = true;
+    }
+    if (COLOR_G_DOWN) {
+        light_color[1] -= speed * delta_time;
+        input = true;
+    }
+    if (COLOR_B_UP) {
+        light_color[2] += speed * delta_time;
+        input = true;
+    }
+    if (COLOR_B_DOWN) {
+        light_color[2] -= speed * delta_time;
+        input = true;
+    }
+    if (light_color[0] < 0.0f) light_color[0] = 0.0f;
+    if (light_color[0] > 1.0f) light_color[0] = 1.0f;
+    if (light_color[1] < 0.0f) light_color[1] = 0.0f;
+    if (light_color[1] > 1.0f) light_color[1] = 1.0f;
+    if (light_color[2] < 0.0f) light_color[2] = 0.0f;
+    if (light_color[2] > 1.0f) light_color[2] = 1.0f;
+    if (input) uniform_light_ambient_color.setf(1, 3, &light_color[0]);
+
+    double cursorX, cursorY;
+    window1.cursorPos(cursorX, cursorY);
+    int width = window1.width();
+    int height = window1.height();
+    float light_dir[3]{(float) -((cursorX - width / 2) / (width / 2)),
+                       (float)((cursorY - height / 2) / (height / 2)), 1.0f};
+    uniform_light_ambient_direction.setf(1, 3, &light_dir[0]);
+
+    if (EXIT) Core::stop();
+    if(!(window1.visible() || window2.visible())) Core::stop();
+
+    if (SHOW_ALPHA) window1.setVisible(true);
+    if (SHOW_BETA) window2.setVisible(true);
+
+    if (DEBUG_KEY) {
+        Log::log_core(DEBUG) << "Window 1 Size: " << window1.width() << ", " << window1.height();
+        Log::log_core(DEBUG) << "Window 2 Size: " << window2.width() << ", " << window2.height();
+    }
+
+    //object.resetMatrix();
+    //object.scale(3.0f, 3.0f, 3.0f);
+    //object.rotate(pitch, 1.0f, 0.0f, 0.0f);
+    //object.rotate(yaw, 0.0f, 1.0f, 0.0f);
+
+    //object2.rotate(0.001f, 0.0f, 1.0f, 0.0f);
+    //object3.rotate(-0.001f, 0.0f, 1.0f, 0.0f);
 }

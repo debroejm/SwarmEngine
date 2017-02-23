@@ -1,144 +1,116 @@
-#include "../CLEngine.h"
-#include "../Core.h"
+#include "CLInternal.h"
+
+#include "api/Exception.h"
+#include "api/Logging.h"
+
+#include <map>
 
 using namespace Swarm::Logging;
 
 namespace Swarm {
     namespace CL {
 
-        std::vector<cl_program> registered_programs;
-        std::unordered_map<cl_program, std::unordered_map<std::string, cl_kernel>> registered_kernels;
+        std::set<ProgramInternal*> _static_registered_programs;
 
-        Program::Program(std::string src, const Context &ctx) {
+        void ProgramInternal::cleanup() {
+            for(ProgramInternal* program : _static_registered_programs) delete program;
+            _static_registered_programs.clear();
+        }
+
+        Program::Program(const std::string &src, const Context* ctx) {
+            _program = new ProgramInternal(src, (ContextInternal*)ctx);
+            _static_registered_programs.insert(_program);
+        }
+
+        Kernel Program::kernel(const std::string &name) {
+            if(_program->_kernel_map.count(name)) return _program->_kernel_map.at(name);
+            else {
+                _program->_kernel_map[name] = Kernel(*this, name);
+                return _program->_kernel_map[name];
+            }
+        }
+
+        cl_program Program::program() const {
+            return _program->_program;
+        }
+
+
+
+        ProgramInternal::ProgramInternal(const std::string &src, const ContextInternal* ctx) {
+
+            if(ctx == nullptr) throw Exception::CLObjectCreationException::Program(CL_INVALID_CONTEXT);
+
             size_t lengths[1]{ src.size() };
             const char* srcs[1]{ src.data() };
 
+            // Create Program
             cl_int err = 0;
-            program = clCreateProgramWithSource(ctx, 1, srcs, lengths, &err);
+            _program = clCreateProgramWithSource(ctx->context(), 1, srcs, lengths, &err);
 
             // Check Error
-            if(err != CL_SUCCESS) {
-                switch(err) {
-                    case CL_INVALID_CONTEXT:
-                        Log::log_cl(ERR) << "Invalid Context to create CL Program with";
-                        break;
-                    case CL_INVALID_VALUE:
-                        Log::log_cl(ERR) << "Missing Data to create CL Program with";
-                        break;
-                    case CL_OUT_OF_HOST_MEMORY:
-                        Log::log_cl(ERR) << "Host out of Memory when creating CL Program";
-                        break;
-                    default:
-                        Log::log_cl(ERR) << "Unknown Error when creating CL Program; '" << err << "'";
-                        break;
-                }
-                program = nullptr;
-                return;
-            }
+            if(err != CL_SUCCESS) throw Exception::CLObjectCreationException::Program(err);
 
-            err = clBuildProgram(program, (cl_uint)ctx.info.devices.size(), ctx.info.devices.data(), nullptr, nullptr, nullptr);
+            // Build Program
+            std::set<Device*> devices = ctx->devices();
+            cl_device_id* device_data = new cl_device_id[devices.size()];
+            size_t i = 0;
+            for(Device* dvc : devices) device_data[i++] = ((DeviceInternal*)dvc)->device();
+            err = clBuildProgram(_program, (cl_uint)devices.size(), device_data, nullptr, nullptr, nullptr);
 
             // Check Error
-            if(err != CL_SUCCESS) {
-                switch(err) {
-                    case CL_INVALID_PROGRAM:
-                        Log::log_cl(ERR) << "Invalid CL Program to build";
-                        break;
-                    case CL_INVALID_VALUE:
-                        Log::log_cl(ERR) << "Invalid Value when building CL Program; no/null Devices, or failure to provide callback with user_data";
-                        break;
-                    case CL_INVALID_DEVICE:
-                        Log::log_cl(ERR) << "Device not associated with CL Program trying to build";
-                        break;
-                    case CL_INVALID_BINARY:
-                        Log::log_cl(ERR) << "No Binary loaded for Devices associated with CL Program trying to build";
-                        break;
-                    case CL_INVALID_BUILD_OPTIONS:
-                        Log::log_cl(ERR) << "Invalid specified build options when building CL Program";
-                        break;
-                    case CL_COMPILER_NOT_AVAILABLE:
-                        Log::log_cl(ERR) << "Compiler not available to build CL Program with";
-                        break;
-                    case CL_BUILD_PROGRAM_FAILURE:
-                        Log::log_cl(ERR) << "CL Program failed to build";
-                        break;
-                    case CL_INVALID_OPERATION:
-                        Log::log_cl(ERR) << "Invalid Operation when building CL Program; previous Program still building or Kernels already attached to Program";
-                        break;
-                    case CL_OUT_OF_HOST_MEMORY:
-                        Log::log_cl(ERR) << "Host out of Memory when building CL Program";
-                        break;
-                    default:
-                        Log::log_cl(ERR) << "Unknown Error when building CL Program; '" << err << "'";
-                        break;
-                }
-                program = nullptr;
-                return;
-            }
-
-            registered_programs.push_back(program);
+            if(err != CL_SUCCESS) throw Exception::CLObjectCreationException::ProgramBuild(err);
         }
 
-        void Program::cleanup() {
-            for(int i = 0; i < registered_programs.size(); i++) clReleaseProgram(registered_programs[i]);
-            registered_programs.clear();
+        ProgramInternal::~ProgramInternal() {
+            if(_program != nullptr) clReleaseProgram(_program);
         }
 
-        Kernel::Kernel(const Program &program, std::string name) {
-            if(registered_kernels.count(program.program) > 1 && registered_kernels[program.program].count(name) > 1) {
-                kernel = registered_kernels[program.program][name];
-            }  else {
-                cl_int err = 0;
-                kernel = clCreateKernel(program, name.c_str(), &err);
 
-                // Error Checking
-                if(err != CL_SUCCESS) {
-                    switch(err) {
-                        case CL_INVALID_PROGRAM:
-                            Log::log_cl(ERR) << "Invalid Program to attach CL Kernel to";
-                            break;
-                        case CL_INVALID_PROGRAM_EXECUTABLE:
-                            Log::log_cl(ERR) << "Attempting to attach CL Kernel to Program with no executable";
-                            break;
-                        case CL_INVALID_KERNEL_NAME:
-                            Log::log_cl(ERR) << "CL Kernel '" << name << "' not found in Program";
-                            break;
-                        case CL_INVALID_KERNEL_DEFINITION:
-                            Log::log_cl(ERR) << "CL Kernel has a definition mismatch";
-                            break;
-                        case CL_INVALID_VALUE:
-                            Log::log_cl(ERR) << "Trying to create CL Kernel with null name";
-                            break;
-                        case CL_OUT_OF_HOST_MEMORY:
-                            Log::log_cl(ERR) << "Host out of Memory when creating CL Kernel";
-                            break;
-                        default:
-                            Log::log_cl(ERR) << "Unknown Error when creating CL Kernel; '" << err << "'";
-                            break;
-                    }
-                    kernel = nullptr;
-                    return;
-                }
 
-                registered_kernels[program.program][name] = kernel;
-            }
+
+
+        std::set<KernelInternal*> _static_registered_kernels;
+
+        void KernelInternal::cleanup() {
+            for(KernelInternal* kernel : _static_registered_kernels) delete kernel;
+            _static_registered_kernels.clear();
         }
 
-        void Kernel::setArgument(cl_uint index, size_t size, const void* data) {
-            clSetKernelArg(kernel, index, size, data);
+        Kernel::Kernel(const Program &program, const std::string &name) {
+            _kernel = new KernelInternal(program, name);
+            _static_registered_kernels.insert(_kernel);
         }
 
-        void Kernel::setArgument(cl_uint index, const Buffer &buffer) {
-            clSetKernelArg(kernel, index, sizeof(cl_mem), &buffer.buffer);
+        template<typename T> void Kernel::argument(unsigned int index, const Buffer<T> &buffer) {
+            if(_kernel == nullptr) return;
+            clSetKernelArg(_kernel->_kernel, index, sizeof(cl_mem), buffer.buffer());
         }
 
-        void Kernel::cleanup() {
-            for(auto && iter_prog : registered_kernels) {
-                for(auto && iter_name : iter_prog.second) {
-                    clReleaseKernel(iter_name.second);
-                }
-            }
-            registered_kernels.clear();
+        template<typename T> void Kernel::argument(unsigned int index, size_t size, T* data) {
+            if(_kernel == nullptr) return;
+            clSetKernelArg(_kernel->_kernel, index, sizeof(T)*size, data);
+        }
+
+        cl_kernel Kernel::kernel() const {
+            if(_kernel == nullptr) return nullptr;
+            else return _kernel->_kernel;
+        }
+
+
+
+        KernelInternal::KernelInternal(const Program &program, const std::string &name) {
+
+            //if(program == nullptr) throw Exception::CLObjectCreationException::Kernel(CL_INVALID_PROGRAM, name);
+
+            cl_int err = 0;
+            _kernel = clCreateKernel(program.program(), name.c_str(), &err);
+
+            // Error Checking
+            if(err != CL_SUCCESS) throw Exception::CLObjectCreationException::Kernel(err, name);
+        }
+
+        KernelInternal::~KernelInternal() {
+            if(_kernel != nullptr) clReleaseKernel(_kernel);
         }
     }
 }

@@ -1,13 +1,19 @@
-#include "../CLEngine.h"
-#include "../Core.h"
+#include "CLInternal.h"
+
+#include "api/Logging.h"
+
+#include <set>
 
 using namespace Swarm::Logging;
 
 namespace Swarm {
     namespace CL {
 
-        std::set<DeviceInfo> all_device_info;
-        std::set<DeviceInfo> &getAllDevices() { return all_device_info; }
+        std::set<Platform*> all_platforms;
+        std::set<Device*> all_devices;
+
+        const std::set<Platform*> Platform::getAll() { return all_platforms; }
+        std::set<Device*> Device::getAll() { return all_devices; }
 
         void init() {
 
@@ -27,6 +33,10 @@ namespace Swarm {
                 // Get the Platform Name
                 char pname[256];
                 clGetPlatformInfo(pid, CL_PLATFORM_NAME, 256, &pname[0], nullptr);
+
+                // Create new Platform object and register it
+                PlatformInternal* platform = new PlatformInternal(pid, std::string(pname));
+                all_platforms.insert(&(*platform));
 
                 // Get a list of devices for the current platform
                 cl_uint deviceIDCount = 0;
@@ -54,17 +64,25 @@ namespace Swarm {
                     cl_uint computeUnits = 0;
                     clGetDeviceInfo(did, CL_DEVICE_MAX_COMPUTE_UNITS, 4, &computeUnits, nullptr);
 
-                    // Register Device Info
-                    all_device_info.insert(DeviceInfo(pid, did, computeUnits, string(dname)));
+                    // Create a new Device object and register it
+                    DeviceInternal* device = new DeviceInternal(*platform, did, std::string(dname), computeUnits);
+                    all_devices.insert(&(*device));
                 }
             }
         }
 
         void cleanup() {
-            CommandQueue::cleanup();
-            Kernel::cleanup();
-            Program::cleanup();
-            Context::cleanup();
+            CommandQueueInternal::cleanup();
+            KernelInternal::cleanup();
+            BufferInternalBase::cleanup();
+            ProgramInternal::cleanup();
+            ContextInternal::cleanup();
+
+            for(Device* device : all_devices) delete device;
+            all_devices.clear();
+
+            for(Platform* platform : all_platforms) delete platform;
+            all_platforms.clear();
         }
     }
 }

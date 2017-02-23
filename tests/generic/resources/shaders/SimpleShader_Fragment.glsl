@@ -38,5 +38,6 @@ void main() {
 
     vec3 colorVal = (color_emissive.rgb * color_emissive.a) + minLight * color_diffuse + ( (1 - minLight) * color_diffuse * _ambient_light_color * cosTheta ) + ( color_specular * _ambient_light_color * pow(cosAlpha,5) );
     colorOut = vec4(colorVal,1);
+    //colorOut = vec4(1.0f,0.0f,1.0f,1.0f);
 
 }

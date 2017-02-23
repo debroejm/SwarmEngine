@@ -1,5 +1,9 @@
-#include "../../Core.h"
+#include "api/Core.h"
 
+#include "api/Logging.h"
+
+#include <fstream>
+#include <iostream>
 #include <sstream>
 
 using namespace Swarm::Logging;
@@ -10,16 +14,16 @@ namespace Swarm {
         RawConfigData::RawConfigData(const char * filepath) {
             Log::log_core(INFO) << "Reading configuration file '" << filepath << "'";
             this->filepath = filepath;
-            ifstream dataStream(filepath, ios::in);
+            std::ifstream dataStream(filepath, std::ios::in);
             if(dataStream.is_open()) {
-                string line = "";
+                std::string line = "";
                 while(getline(dataStream, line)) {
                     size_t splitIndex = line.find_first_of(":=");
-                    if(splitIndex == string::npos) continue;
-                    string key = line.substr(0, splitIndex);
-                    string value = line.substr(splitIndex+1, line.size()-splitIndex-1);
+                    if(splitIndex == std::string::npos) continue;
+                    std::string key = line.substr(0, splitIndex);
+                    std::string value = line.substr(splitIndex+1, line.size()-splitIndex-1);
                     int testInt;
-                    if(stringstream(value)>>testInt) {
+                    if(std::stringstream(value)>>testInt) {
                         dataMap_int[key] = testInt;
                     } else {
                         dataMap_str[key] = value;
@@ -37,16 +41,16 @@ namespace Swarm {
         }
 
         void RawConfigData::writeConfigData(const char * filepath) {
-            ofstream outputStream;
-            outputStream.open(filepath, ios::out | ios::trunc);
+            std::ofstream outputStream;
+            outputStream.open(filepath, std::ios::out | std::ios::trunc);
 
-            unordered_map<string, int>::iterator iInt = dataMap_int.begin();
+            std::unordered_map<std::string, int>::iterator iInt = dataMap_int.begin();
             while(iInt != dataMap_int.end()) {
                 outputStream << iInt->first << "=" << iInt->second << "\n";
                 iInt++;
             }
 
-            unordered_map<string, string>::iterator iStr = dataMap_str.begin();
+            std::unordered_map<std::string, std::string>::iterator iStr = dataMap_str.begin();
             while(iStr != dataMap_str.end()) {
                 outputStream << iStr->first << "=" << iStr->second << "\n";
                 iStr++;
@@ -55,25 +59,25 @@ namespace Swarm {
             outputStream.close();
         }
 
-        int RawConfigData::getInteger(string key, int defaultValue) {
-            unordered_map<string, int>::iterator i = dataMap_int.find(key);
+        int RawConfigData::getInteger(std::string key, int defaultValue) {
+            std::unordered_map<std::string, int>::iterator i = dataMap_int.find(key);
             if(i == dataMap_int.end()) {
                 setInteger(key, defaultValue);
                 return defaultValue;
             }
             else return i->second;
         }
-        void RawConfigData::setInteger(string key, int value) { dataMap_int[key] = value; }
+        void RawConfigData::setInteger(std::string key, int value) { dataMap_int[key] = value; }
 
-        string RawConfigData::getString(string key, string defaultValue) {
-            unordered_map<string, string>::iterator i = dataMap_str.find(key);
+        std::string RawConfigData::getString(std::string key, std::string defaultValue) {
+            std::unordered_map<std::string, std::string>::iterator i = dataMap_str.find(key);
             if(i == dataMap_str.end()) {
                 setString(key, defaultValue);
                 return defaultValue;
             }
             else return i->second;
         }
-        void RawConfigData::setString(string key, string value) { dataMap_str[key] = value; }
+        void RawConfigData::setString(std::string key, std::string value) { dataMap_str[key] = value; }
 
     }
 }

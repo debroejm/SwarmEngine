@@ -12,7 +12,7 @@ add_custom_command(TARGET SwarmEngineTest_Generic POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/tests/generic/resources $<TARGET_FILE_DIR:SwarmEngineTest_Generic>/resources
         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:OpenCL> $<TARGET_FILE_DIR:SwarmEngineTest_Generic>
 )
-target_link_libraries(SwarmEngineTest_Generic SwarmEngineCore ${OPENGL_LIBRARIES} glfw ${GLFW_LIBRARIES})
+target_link_libraries(SwarmEngineTest_Generic SwarmEngineCore)
 set_target_properties(SwarmEngineTest_Generic
         PROPERTIES
         ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tests/Generic

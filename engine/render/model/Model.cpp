@@ -1,22 +1,24 @@
-#include "../../Render.h"
+#define SWARM_INCLUDE_GLFW
+#include "render/RenderInternal.h"
 
-#include "../../Core.h"
-
-#include <set>
+#include "api/Logging.h"
 
 using namespace Swarm::Logging;
 
 namespace Swarm {
     namespace Model {
 
-        bool Model::operator==(Model &rhs) {
-            return getVAOID() == rhs.getVAOID();
-        }
+        // Mapping: GLFWwindow -> Element Buffer ID -> VAO ID
+        std::unordered_map<GLFWwindow*, std::unordered_map<GLuint, GLuint>> static_vao_map;
 
         std::set<GLuint> registeredVAOs;
         std::set<GLuint> registeredBuffers;
 
-        void cleanupBuffers() {
+        void cleanup() {
+            Model::cleanup();
+        }
+
+        void Model::cleanup() {
 
             // Cleanup Buffers
             for(GLuint buffer : registeredBuffers) {
@@ -32,53 +34,73 @@ namespace Swarm {
 
         }
 
-        ModelSegment::ModelSegment(RawModelDataIndexed &data) {
+        Model::Model(const RawModelDataIndexed &data) {
             genBuffers(data);
         }
 
-        void ModelSegment::genBuffers(RawModelDataIndexed &data) {
-            if(loaded) cleanup();
+        Model::Model(const Model &other) {
+            operator=(other);
+        }
 
-            Render::Window* window = Render::Window::getCurrent();
-            if(window == nullptr) {
-                Log::log_render(ERR) << "Trying to create model data without a GL Context being bound!";
-                return;
-            }
+        Model &Model::operator=(const Model &other) {
+            _loaded = other._loaded;
+            _element_count = other._element_count;
+            _element_buffer = other._element_buffer;
+            _data_buffers = other._data_buffers;
+            return *this;
+        }
 
+        SWMuint Model::vao() {
+            GLFWwindow* window = glfwGetCurrentContext();
+            if(window == nullptr || !_loaded) return 0; // Safety check
+            if(static_vao_map[window].count(_element_buffer) < 1) genVAO();
+            return static_vao_map[window][_element_buffer];
+        }
+
+        bool Model::operator==(const Model &rhs) const {
+            // Assumes Models with same Element Buffer will have same other Buffers
+            return _element_buffer == rhs._element_buffer;
+        }
+
+        bool Model::operator<(const Model &rhs) const {
+            // Assumes Models with same Element Buffer will have same other Buffers
+            return _element_buffer < rhs._element_buffer;
+        }
+
+        void Model::genBuffers(const RawModelDataIndexed &data) {
+
+            // Create Data Context VAO
             GLuint vao;
             glGenVertexArrays(1, &vao);
             registeredVAOs.insert(vao);
             glBindVertexArray(vao);
 
-            unordered_map<DataType::Type, VecArray> const &dataMap = data.getData();
-
             // Create Data Buffers
-            for(auto && iter : dataMap) {
+            for(auto && iter : data) {
                 GLuint bufferID;
                 glGenBuffers(1, &bufferID);
-                data_buffers.insert(BufferEntry{ bufferID, iter.first.getAttribID(), iter.first.getType() });
+                _data_buffers.insert(BufferEntry{ bufferID, iter.first.attribID(), iter.first.type() });
                 registeredBuffers.insert(bufferID);
                 glBindBuffer(GL_ARRAY_BUFFER, bufferID);
-                switch(iter.first.getType()) {
-                    case ONE:
-                        glBufferData(GL_ARRAY_BUFFER, data.getSize() * sizeof(float), &iter.second.v1[0], GL_STATIC_DRAW);
-                        break;
-                    case TWO:
-                        glBufferData(GL_ARRAY_BUFFER, data.getSize() * sizeof(glm::vec2), &iter.second.v2[0], GL_STATIC_DRAW);
-                        break;
-                    case THREE:
-                        glBufferData(GL_ARRAY_BUFFER, data.getSize() * sizeof(glm::vec3), &iter.second.v3[0], GL_STATIC_DRAW);
-                        break;
-                    case FOUR:
-                        glBufferData(GL_ARRAY_BUFFER, data.getSize() * sizeof(glm::vec4), &iter.second.v4[0], GL_STATIC_DRAW);
-                        break;
-                    default: break;
+                size_t size = data.size();
+                unsigned int stride = iter.first.type();
+                float fdata[ size * stride ];
+                for(size_t i = 0; i < size; i++) {
+                    for(unsigned int j = 0; j < stride; j++) {
+                        fdata[i*stride+j] = j < 2 ?
+                                            j == 0 ? iter.second.at(i).val.v4.x
+                                                   : iter.second.at(i).val.v4.y :
+                                            j == 2 ? iter.second.at(i).val.v4.z
+                                                   : iter.second.at(i).val.v4.w ;
+
+                    }
                 }
 
-                glEnableVertexAttribArray(iter.first.getAttribID());
+                glBufferData(GL_ARRAY_BUFFER, size * stride * sizeof(float), &fdata[0], GL_STATIC_DRAW);
+                glEnableVertexAttribArray(iter.first.attribID());
                 glVertexAttribPointer(
-                        iter.first.getAttribID(),
-                        (int)iter.first.getType(),
+                        iter.first.attribID(),
+                        (int)iter.first.type(),
                         GL_FLOAT,
                         GL_FALSE,
                         0,
@@ -87,81 +109,60 @@ namespace Swarm {
             }
 
             // Create Index Buffer
-            glGenBuffers(1, &element_buffer);
-            registeredBuffers.insert(element_buffer);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, data.getIndexCount() * sizeof(unsigned short), &data.getIndices()[0], GL_STATIC_DRAW);
+            glGenBuffers(1, &_element_buffer);
+            registeredBuffers.insert(_element_buffer);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _element_buffer);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, data.indexSize() * sizeof(unsigned int), &data.indices()[0], GL_STATIC_DRAW);
 
+            _element_count = data.indexSize();
+
+            static_vao_map[glfwGetCurrentContext()][_element_buffer] = vao;
             glBindVertexArray(0);
 
-            vao_map[window->getWindow()] = vao;
-            elementCount = data.getIndexCount();
+            glfwSwapBuffers(glfwGetCurrentContext());
 
             Log::log_render(INFO) << "Model Created [Buffers: ";
-            for(BufferEntry entry : data_buffers) Log::log_render << entry.buffer << ", ";
-            Log::log_render << "Initial VAO: " << vao << ", ElementCount: " << elementCount << "]";
+            for(BufferEntry entry : _data_buffers) Log::log_render << entry.buffer << ", ";
+            Log::log_render << "ElementCount: " << _element_count << "]";
 
-            loaded = true;
+            _loaded = true;
         }
 
-        void ModelSegment::regenVAO() {
-            Render::Window* window = Render::Window::getCurrent();
-            if(window == nullptr) return; // Safety check
+        void Model::genVAO() {
 
-            // Delete the old VAO if it exists
-            if(vao_map.count(window->getWindow())) {
-                GLuint old_vao = vao_map.at(window->getWindow());
-                Log::log_render(INFO) << "Deleting Old VAO [" << old_vao << "]";
-                registeredVAOs.erase(old_vao);
-                glDeleteVertexArrays(1, &old_vao);
-            }
+            // Get current context in this thread
+            GLFWwindow* window = glfwGetCurrentContext();
+            if(window == nullptr || !_loaded) return;
 
-            // Generate new VAO
+            Log::log_render(DEBUG) << "VAO Generating...";
+
+            // Create new VAO object
             GLuint vao;
             glGenVertexArrays(1, &vao);
             registeredVAOs.insert(vao);
             glBindVertexArray(vao);
 
-            // Bind the Data Buffers
-            for(BufferEntry entry : data_buffers) {
-                glBindBuffer(GL_ARRAY_BUFFER, entry.buffer);
-                glEnableVertexAttribArray(entry.attrib);
-                glVertexAttribPointer(entry.attrib, (int)entry.type, GL_FLOAT, GL_FALSE, 0, (void*)0);
+            for(BufferEntry buffer : _data_buffers) {
+                glBindBuffer(GL_ARRAY_BUFFER, buffer.buffer);
+                glEnableVertexAttribArray(buffer.attrib);
+                glVertexAttribPointer(
+                        buffer.attrib,
+                        (int)buffer.type,
+                        GL_FLOAT,
+                        GL_FALSE,
+                        0,
+                        (void*)0
+                );
             }
 
-            // Bind the Element Buffer
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _element_buffer);
 
-            // Unbind new VAO
             glBindVertexArray(0);
 
-            vao_map[window->getWindow()] = vao;
-            Log::log_render(INFO) << "Created new VAO on request: " << vao;
+            static_vao_map[window][_element_buffer] = vao;
         }
 
-        ModelSegment::ModelSegment(const ModelSegment &other) {
-            *this = other;
-        }
-
-        ModelSegment &ModelSegment::operator=(const ModelSegment &other) {
-            vao_map = other.vao_map;
-            data_buffers = other.data_buffers;
-            elementCount = other.elementCount;
-            return *this;
-        }
-
-        GLint ModelSegment::getVAOID() {
-            Render::Window* window = Render::Window::getCurrent();
-            if(window == nullptr) return -1; // Safety check
-            if(vao_map.count(window->getWindow())) return vao_map.at(window->getWindow());
-            else {
-                regenVAO();
-                if(vao_map.count(window->getWindow())) return vao_map.at(window->getWindow());
-                else return -1; // Shouldn't ever happen, but just in case regenVAO fails
-            }
-        }
-
-
+        /*
         void ModelSegment::cleanup() {
 
             // Cleanup Buffers
@@ -182,6 +183,7 @@ namespace Swarm {
             loaded = false;
 
         }
+         */
 
 
     }

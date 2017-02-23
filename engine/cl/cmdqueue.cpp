@@ -1,61 +1,55 @@
-#include "../CLEngine.h"
-#include "../Core.h"
+#include "CLInternal.h"
+
+#include "api/Exception.h"
+#include "api/Logging.h"
 
 using namespace Swarm::Logging;
 
 namespace Swarm {
     namespace CL {
 
-        std::vector<cl_command_queue> registered_queues;
+        std::set<CommandQueueInternal*> _static_registered_queues;
 
-        CommandQueue::CommandQueue(const Context &ctx, const DeviceInfo &device) {
-            cl_int err = 0;
-            queue = clCreateCommandQueue(ctx, device, 0, &err);
+        void CommandQueueInternal::cleanup() {
+            for(CommandQueueInternal* queue : _static_registered_queues) delete queue;
+            _static_registered_queues.clear();
+        }
 
-            // Check Error
-            if(err != CL_SUCCESS) {
-                switch(err) {
-                    case CL_INVALID_CONTEXT:
-                        Log::log_cl(ERR) << "Invalid Context to create CL Command Queue with";
-                        break;
-                    case CL_INVALID_DEVICE:
-                        Log::log_cl(ERR) << "Attepted to create CL Command Queue with Invalid Device or Device not attached to given Context";
-                        break;
-                    case CL_INVALID_VALUE:
-                        Log::log_cl(ERR) << "One or more Invalid Values in Properties used to create CL Command Queue";
-                        break;
-                    case CL_INVALID_QUEUE_PROPERTIES:
-                        Log::log_cl(ERR) << "One or more Properties used to create CL Command Queue are not supported by the given Device";
-                        break;
-                    case CL_OUT_OF_RESOURCES:
-                        Log::log_cl(ERR) << "Device out of Resources when creating CL Command Queue";
-                        break;
-                    case CL_OUT_OF_HOST_MEMORY:
-                        Log::log_cl(ERR) << "Host out of Memory when creating CL Command Queue";
-                        break;
-                    default:
-                        Log::log_cl(ERR) << "Unknown Error when creating CL Command Queue; '" << err << "'";
-                        break;
-                }
-                queue = nullptr;
-                return;
-            }
-
-            registered_queues.push_back(queue);
+        CommandQueue::CommandQueue(const Context* context, const Device* device) {
+            _command_queue = new CommandQueueInternal((ContextInternal*)context, (DeviceInternal*)device);
+            _static_registered_queues.insert(_command_queue);
         }
 
         void CommandQueue::enqueueCommand(const Kernel &kernel, size_t size) {
             const size_t gws[]{ size, 0, 0 };
-            clEnqueueNDRangeKernel(queue, kernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+            clEnqueueNDRangeKernel(_command_queue->_command_queue, kernel.kernel(), 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
         }
 
-        void CommandQueue::enqueueRead(const Buffer &buffer, bool blocking, size_t size, void* data) {
-            clEnqueueReadBuffer(queue, buffer, blocking ? CL_TRUE : CL_FALSE, 0, size, data, 0, nullptr, nullptr);
+        template<typename T> void CommandQueue::enqueueRead(const Buffer<T> &buffer, bool blocking) {
+            clEnqueueReadBuffer(_command_queue->_command_queue, buffer.buffer(), blocking ? CL_TRUE : CL_FALSE, 0, buffer.size(), buffer.data(), 0, nullptr, nullptr);
         }
 
-        void CommandQueue::cleanup() {
-            for(int i = 0; i < registered_queues.size(); i++) clReleaseCommandQueue(registered_queues[i]);
-            registered_queues.clear();
+        cl_command_queue CommandQueue::queue() const {
+            return _command_queue->_command_queue;
+        }
+
+
+
+        CommandQueueInternal::CommandQueueInternal(const ContextInternal* context, const DeviceInternal* device) {
+
+            if(context == nullptr) throw Exception::CLObjectCreationException::CommandQueue(CL_INVALID_CONTEXT);
+            if(device == nullptr) throw Exception::CLObjectCreationException::CommandQueue(CL_INVALID_DEVICE);
+
+            cl_int err = 0;
+            // TODO: Update to non-deprecated Command Queue creation method
+            _command_queue = clCreateCommandQueue(context->context(), device->device(), 0, &err);
+
+            // Check Error
+            if(err != CL_SUCCESS) throw Exception::CLObjectCreationException::CommandQueue(err);
+        }
+
+        CommandQueueInternal::~CommandQueueInternal() {
+            clReleaseCommandQueue(_command_queue);
         }
     }
 }

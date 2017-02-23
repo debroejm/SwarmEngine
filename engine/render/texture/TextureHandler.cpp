@@ -1,3 +1,4 @@
+#define SWARM_INCLUDE_GLEW
 #include "../../Render.h"
 
 #include "../../Core.h"
@@ -9,7 +10,7 @@ using namespace Swarm::Logging;
 namespace Swarm {
     namespace Texture {
 
-        std::vector<GLuint> registeredTextures;
+        std::set<GLuint> registeredTextures;
 
         GLuint loadPNGTexture(const char* filename) {
             std::vector<unsigned char> image;
@@ -33,28 +34,18 @@ namespace Swarm {
 
             glBindTexture(GL_TEXTURE_2D, 0);
 
-            registerTexture(textureID);
-            return textureID;
-        }
-
-        void registerTexture(GLuint textureID)
-        {
-            for(int i = 0; i < registeredTextures.size(); i++)
-            {
-                if( registeredTextures[i] == textureID ) return;
-            }
-            registeredTextures.push_back(textureID);
-
+            registeredTextures.insert(textureID);
             Log::log_render(INFO) << "Texture ID Registered: " << textureID;
+
+            return textureID;
         }
 
         void cleanupTextures()
         {
-            for(int i = 0; i < registeredTextures.size(); i++)
+            for(GLuint texID : registeredTextures)
             {
-                Log::log_render(INFO) << "Deleting Texture [" << registeredTextures[i] << "]";
-                // Yes, thats formatted properly. Pointers...
-                glDeleteTextures(1, &registeredTextures[i]);
+                Log::log_render(INFO) << "Deleting Texture [" << texID << "]";
+                glDeleteTextures(1, &texID);
             }
         }
     }
