@@ -12,7 +12,7 @@ using namespace std;
 
 using namespace Swarm::Logging;
 
-#define PI 3.141592f
+#define PI  3.14159265358979323846f
 #define TWO_PI PI*2.0f
 
 // Keybindings
@@ -35,19 +35,39 @@ Input::Keybinding DEBUG_KEY;
 float light_color[3]{1.0f, 1.0f, 1.0f};
 float speed = 1.0f;
 
-// Position Settings
-float yaw = 0.0f;
-float pitch = 0.0f;
-
 // Custom Uniforms
 Render::Uniform uniform_light_ambient_color("_ambient_light_color");
 Render::Uniform uniform_light_ambient_direction("_ambient_light_direction");
+
+// Cameras
+Render::Camera* camera1;
+Render::Camera* camera2;
+
+// Camera Positions
+Render::CameraPosition cam_pos_1(
+0.0f, 4.0f, 9.0f,   // Position
+0.0f, 0.0f, 0.0f,   // LookAt
+0.0f, 1.0f, 0.0f);  // Up
+float cam_fov_1 = 45.0f;
+float cam_angle_1 = 0.0f;
+
+Render::CameraPosition cam_pos_2(
+0.0f, -4.0f, 9.0f,  // Position
+0.0f, 0.0f, 0.0f,   // LookAt
+0.0f, 1.0f, 0.0f);  // Up
+float cam_fov_2 = 45.0f;
+float cam_angle_2 = 0.0f;
 
 // Windows
 Render::Window window1;
 Render::Window window2;
 
 void main_cycle(double delta_time);
+
+void keypress_debug(int key) {
+    Log::log_core(DEBUG) << "Window 1 Stats { Visible=" << window1.visible() << ", Focused=" << window1.focused() << " }";
+    Log::log_core(DEBUG) << "Window 2 Stats { Visible=" << window2.visible() << ", Focused=" << window2.focused() << " }";
+}
 
 int main() {
 
@@ -84,17 +104,11 @@ int main() {
         window2.setClearColor(0.75f, 0.0f, 0.0f);
 
         // Cameras
-        Render::Camera* cam1 = Render::Camera::create(Render::CameraPosition(
-                0.0f, 4.0f, 9.0f,   // Position
-                0.0f, 0.0f, 0.0f,   // LookAt
-                0.0f, 1.0f, 0.0f)); // Up
-        Render::Camera* cam2 = Render::Camera::create(Render::CameraPosition(
-                0.0f, -4.0f, 9.0f,   // Position
-                0.0f, 0.0f, 0.0f,   // LookAt
-                0.0f, 1.0f, 0.0f)); // Up
+        camera1 = Render::Camera::create(cam_pos_1, 1.0f, Render::Camera::SMOOTH);
+        camera2 = Render::Camera::create(cam_pos_2, 1.0f, Render::Camera::SMOOTH);
 
-        window1.setCamera(cam1);
-        window2.setCamera(cam2);
+        window1.setCamera(camera1);
+        window2.setCamera(camera2);
 
         // Keybindings
         Config::RawConfigData keybindingConfig("keybinding.config");
@@ -112,6 +126,8 @@ int main() {
         SHOW_ALPHA = Input::Keybinding(   Input::KeyType::K_LEFT_CONTROL, keybindingConfig, "ShowAlpha");
         SHOW_BETA = Input::Keybinding(    Input::KeyType::K_RIGHT_CONTROL, keybindingConfig, "ShowBeta");
         DEBUG_KEY = Input::Keybinding(    Input::KeyType::K_KP_0,   keybindingConfig, "Debug");
+
+        Input::registerKeypressAction(Input::KeyType::K_KP_0, keypress_debug);
 
         // Load Texture
         Texture::TexMap tex_cube_diffuse  = Texture::loadTexFromFile("resources/textures/box_diffuse.png",  Texture::PNG);
@@ -188,30 +204,59 @@ int main() {
 void main_cycle(double delta_time) {
     bool input = false;
     if (LEFT) {
-        yaw -= 0.01f;
+        if(window1.focused()) {
+            cam_angle_1 += speed * 180.0f * delta_time;
+            if(cam_angle_1 > 360.0f) cam_angle_1 -= 360.0f;
+        }
+        if(window2.focused()) {
+            cam_angle_2 += speed * 180.0f * delta_time;
+            if(cam_angle_2 > 360.0f) cam_angle_2 -= 360.0f;
+        }
         input = true;
     }
     if (RIGHT) {
-        yaw += 0.01f;
+        if(window1.focused()) {
+            cam_angle_1 -= speed * 180.0f * delta_time;
+            if(cam_angle_1 < 0.0f) cam_angle_1 += 360.0f;
+        }
+        if(window2.focused()) {
+            cam_angle_2 -= speed * 180.0f * delta_time;
+            if(cam_angle_2 < 0.0f) cam_angle_2 += 360.0f;
+        }
         input = true;
     }
     if (FORWARD) {
-        pitch -= 0.01f;
+        if(window1.focused()) {
+            cam_fov_1 -= speed * 30.0f * delta_time;
+            if(cam_fov_1 < 30.0f) cam_fov_1 = 30.0f;
+        }
+        if(window2.focused()) {
+            cam_fov_2 -= speed * 30.0f * delta_time;
+            if(cam_fov_2 < 30.0f) cam_fov_2 = 30.0f;
+        }
         input = true;
     }
     if (BACKWARD) {
-        pitch += 0.01f;
+        if(window1.focused()) {
+            cam_fov_1 += speed * 30.0f * delta_time;
+            if(cam_fov_1 > 120.0f) cam_fov_1 = 120.0f;
+        }
+        if(window2.focused()) {
+            cam_fov_2 += speed * 30.0f * delta_time;
+            if(cam_fov_2 > 120.0f) cam_fov_2 = 120.0f;
+        }
         input = true;
     }
-    if (!input) {
-        yaw += 0.001f;
-        pitch -= 0.001f;
+    if(input) {
+        camera1->setFOV(cam_fov_1);
+        camera2->setFOV(cam_fov_2);
+        cam_pos_1.position.x = 9.0f * cos(cam_angle_1 * PI / 180.0f);
+        cam_pos_1.position.z = 9.0f * sin(cam_angle_1 * PI / 180.0f);
+        cam_pos_2.position.x = 9.0f * cos(cam_angle_2 * PI / 180.0f);
+        cam_pos_2.position.z = 9.0f * sin(cam_angle_2 * PI / 180.0f);
+        camera1->setPosition(cam_pos_1);
+        camera2->setPosition(cam_pos_2);
     }
-
-    if (yaw > TWO_PI) yaw = fmod(yaw, TWO_PI);
-    if (pitch > TWO_PI) pitch = fmod(pitch, TWO_PI);
-    if (yaw < 0.0f) yaw = TWO_PI - fmod(-yaw, TWO_PI);
-    if (pitch < 0.0f) pitch = TWO_PI - fmod(-pitch, TWO_PI);
 
     input = false;
     if (COLOR_R_UP) {
@@ -254,16 +299,11 @@ void main_cycle(double delta_time) {
                        (float)((cursorY - height / 2) / (height / 2)), 1.0f};
     uniform_light_ambient_direction.setf(1, 3, &light_dir[0]);
 
-    if (EXIT) Core::stop();
-    if(!(window1.visible() || window2.visible())) Core::stop();
-
     if (SHOW_ALPHA) window1.setVisible(true);
     if (SHOW_BETA) window2.setVisible(true);
 
-    if (DEBUG_KEY) {
-        Log::log_core(DEBUG) << "Window 1 Size: " << window1.width() << ", " << window1.height();
-        Log::log_core(DEBUG) << "Window 2 Size: " << window2.width() << ", " << window2.height();
-    }
+    if (EXIT) Core::stop();
+    if(!(window1.visible() || window2.visible())) Core::stop();
 
     //object.resetMatrix();
     //object.scale(3.0f, 3.0f, 3.0f);

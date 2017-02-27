@@ -1225,6 +1225,8 @@ namespace Swarm {
             int posY() const;
             std::string name() const;
 
+            bool focused() const;
+
             void setVisible(bool visible);
             bool visible() const;
 

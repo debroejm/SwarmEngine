@@ -6,6 +6,8 @@
 
 using namespace Swarm::Logging;
 
+#define PI  3.14159265358979323846f
+
 namespace Swarm {
     namespace Render {
 
@@ -72,7 +74,7 @@ namespace Swarm {
         }
 
         glm::mat4 CameraInternal::projectionMatrix(int width, int height) const {
-            return glm::perspective(_fov, (float)width / (float)height, 0.1f, _view_distance);
+            return glm::perspective(_fov * PI / 180.0f, (float)width / (float)height, 0.1f, _view_distance);
         }
 
     }

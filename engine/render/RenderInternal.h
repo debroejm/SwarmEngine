@@ -78,6 +78,8 @@ namespace Swarm {
             int posY() const { return _posY; }
             std::string name() const { return _name; }
 
+            bool focused() const { return _focused; }
+
             void setCamera(Camera* camera) { _camera = camera; }
             Camera* camera() const { return _camera; }
 
@@ -102,10 +104,13 @@ namespace Swarm {
             friend void callback_windowSize(GLFWwindow* window, int width, int height);
             friend void callback_windowPosition(GLFWwindow* window, int x, int y);
             friend void callback_framebufferSize(GLFWwindow* window, int width, int height);
+            friend void callback_windowFocus(GLFWwindow* window, int focused);
 
             std::atomic<int> _width, _height;
             std::atomic<int> _posX, _posY;
             std::string _name;
+
+            std::atomic<bool> _focused;
 
             std::atomic<int> _framebuffer_width, _framebuffer_height;
             std::atomic<bool> _queued_framebuffer_resize;

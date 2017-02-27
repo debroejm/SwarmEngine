@@ -72,6 +72,10 @@ namespace Swarm {
             _static_registered_windows[window]->_queued_framebuffer_resize = true;
         }
 
+        void callback_windowFocus(GLFWwindow* window, int focused) {
+            _static_registered_windows[window]->_focused = focused;
+        }
+
 
 
         // ****************************
@@ -168,7 +172,9 @@ namespace Swarm {
         }
 
         WindowInternal::WindowInternal(unsigned int width, unsigned int height, const std::string &name)
-                : _width(width), _height(height), _posX(0), _posY(0), _name(name), _queued_visible(false), _queued_framebuffer_resize(false) {
+                : _width(width), _height(height), _posX(0), _posY(0), _name(name),
+                  _queued_visible(false), _queued_framebuffer_resize(false),
+                  _focused(true) {
 
             // Context lock for Window Creation and Initialization
             boost::lock_guard<boost::mutex> lock(_static_window_context_mutex);
@@ -184,6 +190,7 @@ namespace Swarm {
             glfwSetWindowSizeCallback(_window, callback_windowSize);
             glfwSetWindowPosCallback(_window, callback_windowPosition);
             glfwSetFramebufferSizeCallback(_window, callback_framebufferSize);
+            glfwSetWindowFocusCallback(_window, callback_windowFocus);
 
             // Bind the Context
             glfwMakeContextCurrent(_window);
@@ -319,6 +326,8 @@ namespace Swarm {
         int         Window::posX()      const { return _window->posX(); }
         int         Window::posY()      const { return _window->posY(); }
         std::string Window::name()      const { return _window->name(); }
+
+        bool        Window::focused()   const { return _window->focused(); }
 
         void        Window::setVisible(bool visible)    { _window->setVisible(visible); }
         bool        Window::visible()   const { return _window->visible(); }

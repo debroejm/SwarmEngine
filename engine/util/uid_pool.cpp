@@ -22,5 +22,10 @@ namespace Swarm {
         void UIDPool::free(size_t id) {
             _free_ids.insert(id);
         }
+
+        void UIDPool::freeAll() {
+            _next = 0;
+            _free_ids.clear();
+        }
     }
 }

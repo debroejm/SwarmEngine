@@ -284,6 +284,7 @@ namespace Swarm {
             //! Get this Keybinding's key code.
             int key() const { return _key; }
             std::string keyName() const;
+
         protected:
             int _key;
             std::string _name;
@@ -291,6 +292,12 @@ namespace Swarm {
 
         void setKeyPressed(int key, bool pressed);
         bool keyPressed(int key);
+
+        typedef void (*KeypressFunc)(int key);
+
+        size_t registerKeypressAction(int key, KeypressFunc function);
+        void unregisterKeypressAction(size_t actionID);
+        void unregisterAllKeypressActions();
 
     }
 

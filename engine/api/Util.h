@@ -33,6 +33,7 @@ namespace Swarm {
         public:
             size_t next();
             void free(size_t id);
+            void freeAll();
         protected:
             size_t _next = 0;
             std::set<size_t> _free_ids;

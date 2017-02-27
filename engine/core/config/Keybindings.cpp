@@ -1,6 +1,8 @@
 #define SWARM_INCLUDE_GLFW
 #include "api/Core.h"
 
+#include "api/Util.h"
+
 #include <set>
 
 namespace Swarm {
@@ -127,11 +129,60 @@ namespace Swarm {
         KeyType KeyType::K_RIGHT_SUPER  (GLFW_KEY_RIGHT_SUPER);
         KeyType KeyType::K_MENU         (GLFW_KEY_MENU);
 
+        struct KeypressFuncData {
+            int key;
+            size_t uid;
+            KeypressFunc func;
+            bool operator<(const KeypressFuncData &rhs) const {
+                if(key == rhs.key) {
+                    if(uid == rhs.uid) return func < rhs.func;
+                    else return uid < rhs.uid;
+                } else return key < rhs.key;
+            }
+        };
+
+        std::unordered_map<int, std::set<KeypressFuncData>> _static_keypress_func_key_map;
+        std::unordered_map<size_t, KeypressFuncData> _static_keypress_func_uid_map;
+        Util::UIDPool _static_keypress_func_uid_pool;
+
+        size_t registerKeypressAction(int key, KeypressFunc function) {
+            std::set<KeypressFuncData> &list = _static_keypress_func_key_map[key];
+            for(KeypressFuncData data : list) if(data.func == function) return data.uid;
+            size_t uid = _static_keypress_func_uid_pool.next();
+            KeypressFuncData data{
+                    key,
+                    uid,
+                    function
+            };
+            list.insert(data);
+            _static_keypress_func_uid_map[uid] = data;
+            return uid;
+        }
+
+        void unregisterKeypressAction(size_t actionID) {
+            if(_static_keypress_func_uid_map.count(actionID)) {
+                KeypressFuncData data = _static_keypress_func_uid_map.at(actionID);
+                _static_keypress_func_key_map[data.key].erase(data);
+                _static_keypress_func_uid_map.erase(actionID);
+                _static_keypress_func_uid_pool.free(data.uid);
+            }
+        }
+
+        void unregisterAllKeypressActions() {
+            _static_keypress_func_key_map.clear();
+            _static_keypress_func_uid_map.clear();
+            _static_keypress_func_uid_pool.freeAll();
+        }
+
         std::unordered_map<int, bool> _static_key_press_map;
 
         void setKeyPressed(int key, bool pressed) {
             if(key == GLFW_KEY_UNKNOWN) return;
+            bool doAction = false;
+            if(!_static_key_press_map[key]) doAction = true;
             _static_key_press_map[key] = pressed;
+            if(doAction && _static_keypress_func_key_map.count(key))
+                for(KeypressFuncData data : _static_keypress_func_key_map[key]) data.func(key);
         }
 
         bool keyPressed(int key) {
