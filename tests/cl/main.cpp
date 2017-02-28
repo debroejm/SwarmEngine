@@ -14,9 +14,18 @@ int main() {
 
     if(CL::Device::getAll().empty()) { Log::log_cl(INFO) << "No CL Devices Found"; return 0; }
 
-
     // Get the Best Device
-    CL::Device* device = *CL::Device::getAll().rbegin();
+    CL::Device* device = nullptr;
+    for(CL::Device* d : CL::Device::getAll()) {
+        Log::log_cl(DEBUG)
+                << "Device '" << d->name()
+                << "' on Platform '" << d->platform()->name()
+                << "' with " << d->computeUnits()
+                << " compute cores";
+        if(device == nullptr) device = d;
+        else if(d->computeUnits() > device->computeUnits()) device = d;
+    }
+    if(device == nullptr) return 0;
     Log::log_cl(DEBUG) << "Auto-Selected CL Device: " << device->name();
 
     // Create Our Context
@@ -45,8 +54,8 @@ __kernel void SAXPY (__global float* x, __global float* y, float a)
     }
 
     // Put Our Data in Buffers
-    CL::Buffer<float> buff_a(context, true, false, sizeof(float) * testDataSize, &a[0]);
-    CL::Buffer<float> buff_b(context, true, true,  sizeof(float) * testDataSize, &b[0]);
+    CL::Buffer<float> buff_a(context, true, false, testDataSize, &a[0]);
+    CL::Buffer<float> buff_b(context, true, true,  testDataSize, &b[0]);
 
     // Create Our Command Queue
     CL::CommandQueue queue(context, device);

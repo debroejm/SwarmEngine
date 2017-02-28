@@ -74,7 +74,6 @@ namespace Swarm {
         void cleanup() {
             CommandQueueInternal::cleanup();
             KernelInternal::cleanup();
-            BufferInternalBase::cleanup();
             ProgramInternal::cleanup();
             ContextInternal::cleanup();
 

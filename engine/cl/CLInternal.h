@@ -68,23 +68,14 @@ namespace Swarm {
             static void cleanup();
         };
 
-        struct BufferInternalBase {
-            virtual ~BufferInternalBase() {}
-            static void cleanup();
-        };
-
-        template<typename T> struct BufferInternal : BufferInternalBase {
-
-            BufferInternal(const ContextInternal* ctx, bool read, bool write, size_t size);
-            BufferInternal(const ContextInternal* ctx, bool read, bool write, size_t size, T data[]);
-            virtual ~BufferInternal();
-            void resize(size_t size);
-
-            cl_mem _buffer;
-            size_t _size = 0;
-            T* _data = nullptr;
+        struct BufferInternal {
+            cl_mem _buffer = nullptr;
             const ContextInternal* _context = nullptr;
             cl_mem_flags _flags = 0;
+
+            BufferInternal(const ContextInternal* ctx, bool read, bool write);
+            virtual ~BufferInternal();
+            void recreateBuffer(size_t size_in_bytes, void* data);
         };
 
         struct KernelInternal {

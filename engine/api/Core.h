@@ -23,14 +23,13 @@
 //  Initialization Flags
 // **********************
 
-#define SWM_INIT_MINIMAL            0x0
-#define SWM_INIT_MULTITHREAD        0x1
-#define SWM_INIT_CL                 0x2
-#define SWM_INIT_MODEL              0x4
-#define SWM_INIT_RENDER             0x8  | SWM_INIT_MODEL | SWM_INIT_MULTITHREAD
-#define SWM_INIT_PHYSICS            0x10 | SWM_INIT_CL
+#define SWM_INIT_MINIMAL            0b00000000
+#define SWM_INIT_CL                 0b00000001
+#define SWM_INIT_MODEL              0b00000100
+#define SWM_INIT_RENDER             0b00000110
+#define SWM_INIT_PHYSICS            0b00001001
 
-#define SWM_INIT_ALL                SWM_INIT_RENDER | SWM_INIT_PHYSICS
+#define SWM_INIT_ALL                0b11111111
 
 
 

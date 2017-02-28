@@ -21,7 +21,7 @@ namespace Swarm {
 
         bool init(size_t flags) {
 
-            if(flags & SWM_INIT_RENDER) {
+            if(flags & 0b00000010) {
 
                 // Initialize GLFW
                 Log::log_core(INFO) << "Initializing GLFW";
@@ -35,7 +35,7 @@ namespace Swarm {
                 Render::init();
             }
 
-            if(flags & SWM_INIT_CL) {
+            if(flags & 0b00000001) {
                 CL::init();
             }
 

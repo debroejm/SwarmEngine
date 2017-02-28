@@ -25,8 +25,8 @@ namespace Swarm {
             clEnqueueNDRangeKernel(_command_queue->_command_queue, kernel.kernel(), 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
         }
 
-        template<typename T> void CommandQueue::enqueueRead(const Buffer<T> &buffer, bool blocking) {
-            clEnqueueReadBuffer(_command_queue->_command_queue, buffer.buffer(), blocking ? CL_TRUE : CL_FALSE, 0, buffer.size(), buffer.data(), 0, nullptr, nullptr);
+        void CommandQueue::enqueueReadInternal(const BufferBase &buffer, bool blocking, size_t size, void* data) {
+            clEnqueueReadBuffer(_command_queue->_command_queue, buffer.buffer(), blocking ? CL_TRUE : CL_FALSE, 0, size, data, 0, nullptr, nullptr);
         }
 
         cl_command_queue CommandQueue::queue() const {

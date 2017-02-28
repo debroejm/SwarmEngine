@@ -42,7 +42,7 @@ namespace Swarm {
                 return;
             }
 
-            Log::log_cl(INFO) << "Creating CL Context...";
+            Log::log_cl(DEBUG) << "Creating CL Context...";
 
             // Create the context properties array
             const cl_context_properties props[] = {

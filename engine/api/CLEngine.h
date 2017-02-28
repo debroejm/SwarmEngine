@@ -92,7 +92,21 @@ namespace Swarm {
             friend class ContextInternal;
         };
 
-        template<typename T> struct BufferInternal;
+        template<typename T> class Buffer;
+        struct BufferInternal;
+        class BufferBase {
+        private:
+            template<typename T> friend class Buffer;
+            BufferBase(const Context* ctx, bool read, bool write);
+            virtual ~BufferBase();
+            void recreate(size_t size, void* data);
+            BufferInternal* _buffer;
+        public:
+            #if defined(SWARM_INCLUDE_CL)
+            cl_mem buffer() const;
+            operator cl_mem() const { return buffer(); }
+            #endif
+        };
 
         //! API Representation of a CL Buffer
         /*!
@@ -106,26 +120,55 @@ namespace Swarm {
          *
          * \sa Buffer::create()
          */
-        template<typename T> class Buffer {
+        template<typename T> class Buffer : public BufferBase {
         public:
-            Buffer(const Context* ctx, bool read, bool write, size_t size);
-            Buffer(const Context* ctx, bool read, bool write, size_t size, T data[]);
 
-            size_t size() const;
-            void insert(size_t index, const T &value);
-            const T &at(size_t index) const;
-            T &operator[](size_t index);
-            void resize(size_t size);
-            T* data() const;
+            Buffer(const Context* ctx, bool read, bool write, size_t size)
+                    : _size(size), BufferBase(ctx, read, write) {
+                _data = new T[_size];
+                recreate(sizeof(T) * _size, _data);
+            }
 
-            #if defined(SWARM_INCLUDE_CL)
-            cl_mem buffer() const;
-            operator cl_mem() const { return buffer(); }
-            #endif
+            Buffer(const Context* ctx, bool read, bool write, size_t size, T data[])
+                    : _size(size), _data(data), BufferBase(ctx, read, write) {
+                recreate(sizeof(T) * _size, _data);
+            }
+
+            virtual ~Buffer() {
+                if(_data != nullptr) delete [] _data;
+            }
+
+            size_t size() const { return _size; }
+
+            void insert(size_t index, const T &value) {
+                if(index >= _size) throw std::out_of_range("Buffer::insert");
+                _data[index] = value;
+            }
+
+            const T &at(size_t index) const {
+                if(index >= _size) throw std::out_of_range("Buffer::at");
+                return _data[index];
+            }
+
+            T &operator[](size_t index) {
+                if(index >= _size) throw std::out_of_range("Buffer::operator[]");
+                return _data[index];
+            }
+
+            void resize(size_t size) {
+                T* newData = new T[size];
+                for(size_t i = 0; i < _size && i < size; i++) newData[i] = _data[i];
+                _size = size;
+                recreate(sizeof(T) * _size, newData);
+                delete [] _data;
+                _data = newData;
+            }
+
+            T* data() const { return _data; }
 
         protected:
-            friend struct BufferInternal<T>;
-            BufferInternal<T>* _buffer;
+            size_t _size = 0;
+            T* _data = nullptr;
         };
 
         struct KernelInternal;
@@ -135,8 +178,13 @@ namespace Swarm {
         public:
             Kernel() : _kernel(nullptr) {}
 
-            template<typename T> void argument(unsigned int index, const Buffer<T> &buffer);
-            template<typename T> void argument(unsigned int index, size_t size, T* data);
+            template<typename T> void argument(unsigned int index, const Buffer<T> &buffer) {
+                argumentInternalBuffer(index, buffer);
+            }
+
+            template<typename T> void argument(unsigned int index, size_t size, const T* data) {
+                argumentInternal(index, sizeof(T), data);
+            }
 
             #if defined(SWARM_INCLUDE_CL)
             cl_kernel kernel() const;
@@ -146,6 +194,9 @@ namespace Swarm {
         protected:
             friend struct KernelInternal;
             KernelInternal* _kernel;
+
+            void argumentInternalBuffer(unsigned int index, const BufferBase &buffer);
+            void argumentInternal(unsigned int index, size_t size, const void* data);
 
         private:
             friend class Program;
@@ -187,7 +238,10 @@ namespace Swarm {
 
             // TODO: Error Checking and Event Handling on CL Enqueues
             void enqueueCommand(const Kernel &kernel, size_t size);
-            template<typename T> void enqueueRead(const Buffer<T> &buffer, bool blocking);
+
+            template<typename T> void enqueueRead(const Buffer<T> &buffer, bool blocking) {
+                enqueueReadInternal(buffer, blocking, sizeof(T) * buffer.size(), buffer.data());
+            }
 
             #if defined(SWARM_INCLUDE_CL)
             cl_command_queue queue() const;
@@ -197,6 +251,8 @@ namespace Swarm {
         protected:
             friend struct CommandQueueInternal;
             CommandQueueInternal* _command_queue;
+
+            void enqueueReadInternal(const BufferBase &buffer, bool blocking, size_t size, void* data);
         };
 
 

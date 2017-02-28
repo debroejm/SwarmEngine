@@ -43,6 +43,8 @@ namespace Swarm {
             size_t lengths[1]{ src.size() };
             const char* srcs[1]{ src.data() };
 
+            Log::log_cl(DEBUG) << "Creating CL Program...";
+
             // Create Program
             cl_int err = 0;
             _program = clCreateProgramWithSource(ctx->context(), 1, srcs, lengths, &err);
@@ -81,14 +83,15 @@ namespace Swarm {
             _static_registered_kernels.insert(_kernel);
         }
 
-        template<typename T> void Kernel::argument(unsigned int index, const Buffer<T> &buffer) {
+        void Kernel::argumentInternal(unsigned int index, size_t size, const void* data) {
             if(_kernel == nullptr) return;
-            clSetKernelArg(_kernel->_kernel, index, sizeof(cl_mem), buffer.buffer());
+            clSetKernelArg(_kernel->_kernel, index, size, data);
         }
 
-        template<typename T> void Kernel::argument(unsigned int index, size_t size, T* data) {
+        void Kernel::argumentInternalBuffer(unsigned int index, const BufferBase &buffer) {
             if(_kernel == nullptr) return;
-            clSetKernelArg(_kernel->_kernel, index, sizeof(T)*size, data);
+            cl_mem buff = buffer.buffer();
+            clSetKernelArg(_kernel->_kernel, index, sizeof(cl_mem), &buff);
         }
 
         cl_kernel Kernel::kernel() const {
@@ -101,6 +104,8 @@ namespace Swarm {
         KernelInternal::KernelInternal(const Program &program, const std::string &name) {
 
             //if(program == nullptr) throw Exception::CLObjectCreationException::Kernel(CL_INVALID_PROGRAM, name);
+
+            Log::log_cl(DEBUG) << "Creating CL Kernel...";
 
             cl_int err = 0;
             _kernel = clCreateKernel(program.program(), name.c_str(), &err);
