@@ -1,18 +1,21 @@
 cmake_minimum_required(VERSION 3.3)
-project(SwarmEngine)
 
-# Versioning
-set(SwarmEngine_VERSION_MAJOR 1)
-set(SwarmEngine_VERSION_MINOR 0)
+project(SwarmEngineAll)
 
-# Library Type for the Main Engine
+# Library DataType for the Main Engine
 set (LIB_TYPE STATIC)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -static-libgcc -static-libstdc++")
 
+option(SWARM_BUILD_TESTS "Build the Swarm test programs" ON)
+
+set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set (CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set (CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
 
 ###############################################################
-# FIND OPENGL
+# ADD OPENGL
 ###############################################################
 find_package(OpenGL REQUIRED)
 include_directories(${OpenGL_INCLUDE_DIRS})
@@ -24,33 +27,72 @@ endif(NOT OPENGL_FOUND)
 
 
 ###############################################################
-# ADD INCLUDES
+# ADD OPENCL
 ###############################################################
-include_directories("external/glew/include")
-include_directories("external/glfw/include")
-include_directories("external/glm")
-include_directories("external/lodepng")
+include_directories(external/CL)
+file(COPY ${CMAKE_SOURCE_DIR}/external/CL DESTINATION ${CMAKE_SOURCE_DIR}/external/CL-IDC-Loader/inc)
+add_subdirectory(external/CL-IDC-Loader)
 
 
 ###############################################################
-# BUILD FUNCTION
+# ADD GLFW
 ###############################################################
-function(BuildEngine SystemName)
-    set(CMAKE_SYSTEM_NAME ${SystemName})
-    #add_subdirectory("external/lhg" out-${SystemName})
-    #add_subdirectory("external/glfw" out-${SystemName})
-    #add_subdirectory("engine" out-${SystemName})
-    #add_subdirectory("test" out-${SystemName})
-    add_subdirectory("external/glfw")
-    add_subdirectory("engine")
-    include_directories("engine")
-    add_subdirectory("tests/generic")
-    add_subdirectory("tests/model")
-endfunction(BuildEngine)
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+add_subdirectory(external/glfw)
+include_directories(external/glfw/include)
 
 
-BuildEngine(${CMAKE_SYSTEM_NAME})
-# I'll get these working at some point...
-#BuildEngine("Windows")
-#BuildEngine("Linux")
-#BuildEngine("Darwin")
+###############################################################
+# ADD GLFW
+###############################################################
+include_directories(external/glm)
+
+
+###############################################################
+# ADD BOOST
+###############################################################
+set(Boost_USE_STATIC_LIBS ON)
+set(Boost_USE_MULTITHREADED ON)
+find_package(Boost COMPONENTS thread system REQUIRED)
+include_directories(${Boost_INCLUDE_DIRS})
+link_directories(${Boost_LIBRARY_DIRS})
+
+if(NOT Boost_FOUND)
+    message(STATUS " BOOST not found!")
+endif(NOT Boost_FOUND)
+
+if(WIN32 AND __COMPILER_GNU)
+    add_definitions(-DBOOST_THREAD_USE_LIB)
+endif(WIN32 AND __COMPILER_GNU)
+
+
+###############################################################
+# ADD MISC
+###############################################################
+include_directories(external/glew/include)
+include_directories(external/lodepng)
+include_directories(external)
+
+
+set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set (CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set (CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+
+###############################################################
+# BUILD ENGINE
+###############################################################
+add_subdirectory(engine)
+
+
+###############################################################
+# BUILD TESTS
+###############################################################
+if(SWARM_BUILD_TESTS)
+    include_directories(engine)
+    add_subdirectory(tests/generic)
+    add_subdirectory(tests/model)
+    add_subdirectory(tests/CL)
+endif()

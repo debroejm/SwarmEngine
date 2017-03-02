@@ -20,6 +20,7 @@ void main(){
 
     //gl_Position = vec4(vertex * 0.5,1);
 	gl_Position = _p * _v * _m * vec4(vertex,1);
+	//gl_Position = vec4(vertex.x*0.1, vertex.y*0.1, 0, 1);
 
 	mat4 _mv = _v * _m;
 
