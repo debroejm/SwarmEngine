@@ -44,6 +44,7 @@ namespace Swarm {
         Log Log::log_core("Core");
         Log Log::log_render("Render");
         Log Log::log_cl("CL");
+        Log Log::log_physics("Physics");
 
         void Log::setDefaultFilepath(const std::string &path) {
             _static_default_filepath = path;

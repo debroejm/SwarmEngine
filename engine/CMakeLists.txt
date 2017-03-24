@@ -37,6 +37,9 @@ set(ENGINE_SOURCE_CORE
         exception/ex_texture.cpp
         exception/ex_window.cpp
 
+        physics/init.cpp
+        physics/physics_object.cpp
+
         render/camera.cpp
         render/init.cpp
         render/renderer.cpp

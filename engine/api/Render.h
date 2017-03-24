@@ -1160,6 +1160,13 @@ namespace Swarm {
             #endif
             bool operator==(const CameraPosition &rhs) { return position == rhs.position && look_at == rhs.look_at && up == rhs.up; }
             bool operator!=(const CameraPosition &rhs) { return !operator==(rhs); }
+
+            friend std::ostream &operator<<(std::ostream &stream, const CameraPosition &pos) {
+                stream << std::string("{ (") << std::to_string(pos.position.x) << std::string(", ") << std::to_string(pos.position.y) << std::string(", ") << std::to_string(pos.position.z) << std::string("), (")
+                        << std::to_string(pos.look_at.x) << std::string(", ") << std::to_string(pos.look_at.y) << std::string(", ") << std::to_string(pos.look_at.z) << std::string("), (")
+                        << std::to_string(pos.up.x) << std::string(", ") << std::to_string(pos.up.y) << std::string(", ") << std::to_string(pos.up.z) << std::string(") }");
+                return stream;
+            }
         };
 
         class Camera {
@@ -1187,6 +1194,8 @@ namespace Swarm {
             virtual CameraPosition position(bool instant = false) = 0;
 
             virtual void update(double delta_time) = 0;
+
+            static void printBuffers();
 
             static Camera* create(float speed = 1.0f, MoveType type = INSTANT);
             static Camera* create(const CameraPosition &pos, float speed = 1.0f, MoveType type = INSTANT);
