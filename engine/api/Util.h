@@ -98,6 +98,27 @@ namespace Swarm {
             size_t capacity() const { return _buffer_write.size(); }
             size_t size() const { return _buffer_write.size() - _free_indices.size(); }
 
+            void reserve(size_t capacity) {
+
+                // Can only grow, not shrink
+                if(capacity < _max_capacity || capacity < _buffer_write.size()) return;
+
+                // Lock
+                lock();
+                lock_shared_explicit();
+
+                // Resize and Flush
+                if(_max_capacity != 0) _max_capacity = capacity;
+                _buffer_write.resize(capacity);
+                if(_buffer_read != nullptr) delete [] _buffer_read;
+                _buffer_read = new T[capacity];
+                std::memcpy(_buffer_read, _buffer_write.data(), sizeof(T) * _buffer_write.size());
+
+                // Unlock
+                unlock();
+                unlock_shared_explicit();
+            }
+
             void flush() {
 
                 // Lock
