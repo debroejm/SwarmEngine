@@ -197,42 +197,42 @@ namespace Swarm {
         public:
 
             BufferVector(const Context* ctx, bool read, bool write, size_t initial_size)
-                    : Buffer(ctx, read, write, initial_size, calculateCapacity(initial_size)) {}
+                    : Buffer<T>(ctx, read, write, initial_size, calculateCapacity(initial_size)) {}
 
             BufferVector(const Context* ctx, bool read, bool write, size_t initial_size, T data[])
-                    : Buffer(ctx, read, write, initial_size, calculateCapacity(initial_size)) {
+                    : Buffer<T>(ctx, read, write, initial_size, calculateCapacity(initial_size)) {
                 // Copy initial data
-                for(size_t i = 0; i < _size; i++) _data[i] = data[i];
+                for(size_t i = 0; i < this->_size; i++) this->_data[i] = data[i];
             }
 
             virtual void resize(size_t size) {
                 size_t cap = calculateCapacity(size);
-                if(cap > _capacity) Buffer::resize(cap);
-                else _size = size;
+                if(cap > this->_capacity) Buffer<T>::resize(cap);
+                else this->_size = size;
             }
 
             void push_back(const T &value) {
-                size_t endIndex = _size;
-                resize(_size+1);
-                _data[endIndex] = value;
+                size_t endIndex = this->_size;
+                resize(this->_size+1);
+                this->_data[endIndex] = value;
             }
 
             void pop_back() {
-                if(_size > 0) resize(_size-1);
+                if(this->_size > 0) resize(this->_size-1);
             }
 
-            T &front() { return _data[0]; }
-            const T &front() const { return _data[0]; }
+            T &front() { return this->_data[0]; }
+            const T &front() const { return this->_data[0]; }
 
-            T &back() { return _data[_size-1]; }
-            const T &back() const { return _data[_size-1]; }
+            T &back() { return this->_data[this->_size-1]; }
+            const T &back() const { return this->_data[this->_size-1]; }
 
             void reserve(size_t capacity) {
                 size_t cap = calculateCapacity(capacity);
-                if(cap > _capacity) {
-                    size_t size = _size;
-                    Buffer::resize(cap);
-                    _size = size;
+                if(cap > this->_capacity) {
+                    size_t size = this->_size;
+                    Buffer<T>::resize(cap);
+                    this->_size = size;
                 }
             }
         };
