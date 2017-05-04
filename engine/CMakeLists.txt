@@ -14,11 +14,14 @@ set(ENGINE_API_HEADERS
         api/Exception.h
         api/Logging.h
         api/Util.h
+        api/VHE.h
 )
 
 set(ENGINE_HEADERS_CORE
         cl/CLInternal.h
         render/RenderInternal.h
+        vhe/BytecodeDefines.h
+        vhe/VHEInternal.h
 )
 
 set(ENGINE_SOURCE_CORE
@@ -68,6 +71,12 @@ set(ENGINE_SOURCE_CORE
         util/delta_time_controller.cpp
         util/read_write_buffer.cpp
         util/uid_pool.cpp
+
+        vhe/init.cpp
+
+        vhe/environment/environment.cpp
+        vhe/environment/memory.cpp
+        vhe/environment/program.cpp
 )
 
 set(ENGINE_EXTERNAL_SOURCES
