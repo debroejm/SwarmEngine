@@ -21,6 +21,8 @@ set(ENGINE_HEADERS_CORE
         cl/CLInternal.h
         render/RenderInternal.h
         vhe/BytecodeDefines.h
+        vhe/Compiler.h
+        vhe/Optimizer.h
         vhe/VHEInternal.h
 )
 
@@ -73,6 +75,8 @@ set(ENGINE_SOURCE_CORE
         util/uid_pool.cpp
 
         vhe/init.cpp
+        vhe/compiler.cpp
+        vhe/optimizer.cpp
 
         vhe/environment/environment.cpp
         vhe/environment/memory.cpp

@@ -214,6 +214,53 @@ namespace Swarm {
 
         namespace Environment {
 
+            struct Register {
+                VariableValue _data;
+                BitWidth _width;
+
+                Register() : _data((int64_t)0, BIT_8), _width(BIT_8) {}
+                Register(BitWidth width) : _data((int64_t)0, width), _width(width) {}
+
+                void clear() { _data = 0; }
+
+                Register &operator=(const VariableValue &rhs) {
+                    _data = rhs.get();
+                    return *this;
+                }
+
+                Register &operator=(uint64_t rhs) {
+                    _data = rhs;
+                    return *this;
+                }
+
+                Register &operator++() {
+                    ++_data;
+                    return *this;
+                }
+
+                uint64_t operator++(int) {
+                    uint64_t result = _data.getu();
+                    ++_data;
+                    return result;
+                }
+
+                Register &operator--() {
+                    --_data;
+                    return *this;
+                }
+
+                uint64_t operator--(int) {
+                    uint64_t result = _data.getu();
+                    --_data;
+                    return result;
+                }
+
+                void operator+=(int64_t rhs) { _data += rhs; }
+                void operator-=(int64_t rhs) { _data -= rhs; }
+
+                operator uint64_t() { return _data.getu(); }
+            };
+
             struct MemoryInternal;
             class VirtualEnvironment;
             class Memory {
@@ -271,53 +318,6 @@ namespace Swarm {
 
             private:
                 ProgramInternal* _program;
-            };
-
-            struct Register {
-                VariableValue _data;
-                BitWidth _width;
-
-                Register() : _data((int64_t)0, BIT_8), _width(BIT_8) {}
-                Register(BitWidth width) : _data((int64_t)0, width), _width(width) {}
-
-                void clear() { _data = 0; }
-
-                Register &operator=(const VariableValue &rhs) {
-                    _data = rhs.get();
-                    return *this;
-                }
-
-                Register &operator=(uint64_t rhs) {
-                    _data = rhs;
-                    return *this;
-                }
-
-                Register &operator++() {
-                    ++_data;
-                    return *this;
-                }
-
-                uint64_t operator++(int) {
-                    uint64_t result = _data.getu();
-                    ++_data;
-                    return result;
-                }
-
-                Register &operator--() {
-                    --_data;
-                    return *this;
-                }
-
-                uint64_t operator--(int) {
-                    uint64_t result = _data.getu();
-                    --_data;
-                    return result;
-                }
-
-                void operator+=(int64_t rhs) { _data += rhs; }
-                void operator-=(int64_t rhs) { _data -= rhs; }
-
-                operator uint64_t() { return _data.getu(); }
             };
 
         }

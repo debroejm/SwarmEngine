@@ -27,6 +27,7 @@
 #define SWM_INIT_CL                 0x01
 #define SWM_INIT_RENDER             0x02
 #define SWM_INIT_PHYSICS            0x04
+#define SWM_INIT_VHE                0x08
 
 #define SWM_INIT_ALL                0xFF
 

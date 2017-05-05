@@ -10,6 +10,8 @@ namespace Swarm {
         void cleanup() {
 
             Environment::Memory::cleanup();
+            Environment::Program::cleanup();
+            Environment::VirtualEnvironment::cleanup();
 
         }
     }

@@ -5,6 +5,7 @@
 #include "api/CLEngine.h"
 #include "render/RenderInternal.h"
 #include "physics/PhysicsInternal.h"
+#include "vhe/VHEInternal.h"
 #include "api/Util.h"
 
 using namespace Swarm::Logging;
@@ -52,6 +53,11 @@ namespace Swarm {
             }
              */
 
+            // VHE Init
+            if(flags & SWM_INIT_VHE) {
+                VHE::init();
+            }
+
             _static_state = STOPPED;
 
             return true;
@@ -63,6 +69,7 @@ namespace Swarm {
             Model::cleanup();
             Render::cleanup();
             CL::cleanup();
+            VHE::cleanup();
 
             glfwTerminate();
 

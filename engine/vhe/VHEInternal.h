@@ -13,13 +13,13 @@
 namespace Swarm {
     namespace VHE {
 
-        struct compiler_command;
-        typedef std::list<compiler_command*> cc_list;
-        typedef std::list<compiler_command*>::iterator cc_iter;
+        namespace Compiler { struct CompilerCommand; }
+        typedef std::list<Compiler::CompilerCommand*> CCList;
+        typedef std::list<Compiler::CompilerCommand*>::iterator CCIter;
 
-        struct abstract_statement;
-        typedef std::list<abstract_statement*> stmt_list;
-        typedef std::list<abstract_statement*>::iterator stmt_iter;
+        namespace Optimizer { struct AbstractStatement; }
+        typedef std::list<Optimizer::AbstractStatement*> ASList;
+        typedef std::list<Optimizer::AbstractStatement*>::iterator ASIter;
 
         namespace Environment {
 
@@ -80,7 +80,7 @@ namespace Swarm {
             struct VEInternal {
 
                 Memory _memory;
-                Register _registers[];
+                Register* _registers;
                 vbyte _register_count;
                 size_t _stack_size_in_bytes;
                 BitWidth _max_bit_width;

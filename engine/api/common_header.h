@@ -42,6 +42,8 @@
 #ifndef SWARM_TYPEDEF_INCLUDE_GUARD
 #define SWARM_TYPEDEF_INCLUDE_GUARD
 
+#include <string>
+
 // *****************
 //  Engine Typedefs
 // *****************
