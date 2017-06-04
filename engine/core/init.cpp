@@ -4,6 +4,8 @@
 #include "api/Logging.h"
 #include "api/CLEngine.h"
 #include "render/RenderInternal.h"
+#include "physics/PhysicsInternal.h"
+#include "vhe/VHEInternal.h"
 #include "api/Util.h"
 
 using namespace Swarm::Logging;
@@ -21,9 +23,14 @@ namespace Swarm {
 
         bool init(size_t flags) {
 
-            if(flags & 0b00000010) {
+            // Scan for Dependencies
+            if(flags & SWM_INIT_PHYSICS) flags |= SWM_INIT_CL;
+
+            // Render Init
+            if(flags & SWM_INIT_RENDER) {
 
                 // Initialize GLFW
+                // TODO: Move GLFW Initialization to Render::init()
                 Log::log_core(INFO) << "Initializing GLFW";
                 glfwSetErrorCallback(callback_error);
                 if (!glfwInit()) {
@@ -31,12 +38,24 @@ namespace Swarm {
                     return false;
                 }
 
-                // Might need to move this to renderer init
                 Render::init();
             }
 
-            if(flags & 0b00000001) {
+            // CL Init
+            if(flags & SWM_INIT_CL) {
                 CL::init();
+            }
+
+            // Physics Init
+            /*
+            if(flags & SWM_INIT_PHYSICS) {
+                Physics::init();
+            }
+             */
+
+            // VHE Init
+            if(flags & SWM_INIT_VHE) {
+                VHE::init();
             }
 
             _static_state = STOPPED;
@@ -50,6 +69,7 @@ namespace Swarm {
             Model::cleanup();
             Render::cleanup();
             CL::cleanup();
+            VHE::cleanup();
 
             glfwTerminate();
 

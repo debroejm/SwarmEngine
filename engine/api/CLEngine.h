@@ -6,6 +6,7 @@
 //  STD Libraries
 // ***************
 
+#include <math.h>
 #include <set>
 #include <string>
 #include <unordered_map>
@@ -92,15 +93,15 @@ namespace Swarm {
             friend class ContextInternal;
         };
 
-        template<typename T> class Buffer;
+        //template<typename T> class BufferTemplateBase;
         struct BufferInternal;
         class BufferBase {
-        private:
-            template<typename T> friend class Buffer;
+            //template<typename T> friend class BufferTemplateBase;
+        protected:
+            BufferInternal* _buffer;
             BufferBase(const Context* ctx, bool read, bool write);
             virtual ~BufferBase();
             void recreate(size_t size, void* data);
-            BufferInternal* _buffer;
         public:
             #if defined(SWARM_INCLUDE_CL)
             cl_mem buffer() const;
@@ -108,67 +109,132 @@ namespace Swarm {
             #endif
         };
 
-        //! API Representation of a CL Buffer
-        /*!
-         * The Buffer class is a pure-virtual API representation of an OpenCL Buffer. It cannot be instantiated or
-         * extended from. A Buffer object can be created by using the static function Buffer::create(). A Buffer
-         * created this way has a static size determined at creation time, and is typed with the type of value used to
-         * initially create the Buffer. Buffer types must be able to default construct with an empty parameter set.
-         * Buffer contents can be modified using with standard container functions, but the Buffer's size cannot change.
-         * For more information on CL Buffers in general, see the
-         * <a href="https://www.khronos.org/registry/cl/specs/opencl-1.1.pdf">OpenCL Specification</a>
-         *
-         * \sa Buffer::create()
-         */
         template<typename T> class Buffer : public BufferBase {
+        protected:
+            size_t _size = 0;
+            size_t _capacity = 0;
+            T* _data = nullptr;
+
+            virtual void checkBounds(size_t index) {
+                if(index >= _size) throw std::out_of_range("Buffer::checkBounds");
+            }
+
+            virtual void checkBounds(size_t index) const {
+                if(index >= _size) throw std::out_of_range("Buffer::checkBounds");
+            }
+
+            Buffer(const Context* ctx, bool read, bool write, size_t size, size_t capacity)
+                    : _size(size), _capacity(capacity), BufferBase(ctx, read, write) {
+                _data = new T[_capacity];
+                recreate(sizeof(T) * _capacity, _data);
+            }
+
+            Buffer(const Context* ctx, bool read, bool write, size_t size, size_t capacity, T data[])
+                    : _size(size), _capacity(capacity), _data(data), BufferBase(ctx, read, write) {
+                recreate(sizeof(T) * _capacity, _data);
+            }
+
         public:
 
             Buffer(const Context* ctx, bool read, bool write, size_t size)
-                    : _size(size), BufferBase(ctx, read, write) {
-                _data = new T[_size];
-                recreate(sizeof(T) * _size, _data);
-            }
+                    : Buffer(ctx, read, write, size, size) {}
 
             Buffer(const Context* ctx, bool read, bool write, size_t size, T data[])
-                    : _size(size), _data(data), BufferBase(ctx, read, write) {
-                recreate(sizeof(T) * _size, _data);
-            }
+                    : Buffer(ctx, read, write, size, size, data) {}
 
             virtual ~Buffer() {
                 if(_data != nullptr) delete [] _data;
             }
 
             size_t size() const { return _size; }
+            size_t capacity() const { return _capacity; }
 
-            void insert(size_t index, const T &value) {
-                if(index >= _size) throw std::out_of_range("Buffer::insert");
+            void set(size_t index, const T &value) {
+                checkBounds(index);
                 _data[index] = value;
             }
 
+            T &at(size_t index) {
+                checkBounds(index);
+                return _data[index];
+            }
+
             const T &at(size_t index) const {
-                if(index >= _size) throw std::out_of_range("Buffer::at");
+                checkBounds(index);
                 return _data[index];
             }
 
             T &operator[](size_t index) {
-                if(index >= _size) throw std::out_of_range("Buffer::operator[]");
                 return _data[index];
             }
 
-            void resize(size_t size) {
+            const T &operator[](size_t index) const {
+                return _data[index];
+            }
+
+            virtual void resize(size_t size) {
                 T* newData = new T[size];
                 for(size_t i = 0; i < _size && i < size; i++) newData[i] = _data[i];
                 _size = size;
-                recreate(sizeof(T) * _size, newData);
+                _capacity = size;
+                recreate(sizeof(T) * _capacity, newData);
                 delete [] _data;
                 _data = newData;
             }
 
-            T* data() const { return _data; }
+            T* data() { return _data; }
+            const T* data() const { return _data; }
+        };
 
+        template<typename T> class BufferVector : public Buffer<T> {
         protected:
-            size_t _size = 0;
-            T* _data = nullptr;
+
+            size_t calculateCapacity(size_t size) {
+                float base = ceil(log2((float)size));
+                return (size_t)pow(2.0f, base);
+            }
+
+        public:
+
+            BufferVector(const Context* ctx, bool read, bool write, size_t initial_size)
+                    : Buffer<T>(ctx, read, write, initial_size, calculateCapacity(initial_size)) {}
+
+            BufferVector(const Context* ctx, bool read, bool write, size_t initial_size, T data[])
+                    : Buffer<T>(ctx, read, write, initial_size, calculateCapacity(initial_size)) {
+                // Copy initial data
+                for(size_t i = 0; i < this->_size; i++) this->_data[i] = data[i];
+            }
+
+            virtual void resize(size_t size) {
+                size_t cap = calculateCapacity(size);
+                if(cap > this->_capacity) Buffer<T>::resize(cap);
+                else this->_size = size;
+            }
+
+            void push_back(const T &value) {
+                size_t endIndex = this->_size;
+                resize(this->_size+1);
+                this->_data[endIndex] = value;
+            }
+
+            void pop_back() {
+                if(this->_size > 0) resize(this->_size-1);
+            }
+
+            T &front() { return this->_data[0]; }
+            const T &front() const { return this->_data[0]; }
+
+            T &back() { return this->_data[this->_size-1]; }
+            const T &back() const { return this->_data[this->_size-1]; }
+
+            void reserve(size_t capacity) {
+                size_t cap = calculateCapacity(capacity);
+                if(cap > this->_capacity) {
+                    size_t size = this->_size;
+                    Buffer<T>::resize(cap);
+                    this->_size = size;
+                }
+            }
         };
 
         struct KernelInternal;

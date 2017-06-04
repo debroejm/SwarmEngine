@@ -91,7 +91,7 @@ namespace Swarm {
         boost::mutex _static_window_context_mutex;
         boost::mutex &getWindowContextMutex() { return _static_window_context_mutex; }
 
-        bool _static_run_render_thread = false;
+        std::atomic<bool> _static_run_render_thread(false);
         struct ThreadFunctr_WindowRender {
             void operator()() {
                 try {

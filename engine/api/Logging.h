@@ -222,6 +222,10 @@ namespace Swarm {
             static Log log_render;
             //! CL Log, used to document CL commands and lifecycle
             static Log log_cl;
+            //! Physics Log, used to document the physics cycle.
+            static Log log_physics;
+            //! Virtual Hardware Environment Log, used to document VHE scripting.
+            static Log log_vhe;
 
         protected:
 

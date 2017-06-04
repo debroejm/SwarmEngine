@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <atomic>
 #include <cstring>
+#include <iostream>
 #include <set>
 #include <vector>
 
@@ -79,14 +80,44 @@ namespace Swarm {
             std::vector<T> _buffer_write;
             T* _buffer_read = nullptr;
             std::set<size_t> _free_indices;
+            size_t _next_index = 0;
+            size_t _max_capacity = 0;
         public:
+            ReadWriteBuffer() : ReadWriteBufferBase() { /* NOOP */ }
+            ReadWriteBuffer(size_t capacity) : ReadWriteBufferBase(),
+                                               _buffer_write(capacity),
+                                               _max_capacity(capacity) {
+                _buffer_read = new T[capacity];
+            }
+
             virtual ~ReadWriteBuffer() {
                 _buffer_write.clear();
-                delete [] _buffer_read;
+                if(_buffer_read != nullptr) delete [] _buffer_read;
             }
 
             size_t capacity() const { return _buffer_write.size(); }
             size_t size() const { return _buffer_write.size() - _free_indices.size(); }
+
+            void reserve(size_t capacity) {
+
+                // Can only grow, not shrink
+                if(capacity < _max_capacity || capacity < _buffer_write.size()) return;
+
+                // Lock
+                lock();
+                lock_shared_explicit();
+
+                // Resize and Flush
+                if(_max_capacity != 0) _max_capacity = capacity;
+                _buffer_write.resize(capacity);
+                if(_buffer_read != nullptr) delete [] _buffer_read;
+                _buffer_read = new T[capacity];
+                std::memcpy(_buffer_read, _buffer_write.data(), sizeof(T) * _buffer_write.size());
+
+                // Unlock
+                unlock();
+                unlock_shared_explicit();
+            }
 
             void flush() {
 
@@ -103,6 +134,23 @@ namespace Swarm {
                 unlock();
                 unlock_shared_explicit();
             }
+
+            void printBuffers() {
+
+                // Lock
+                lock();
+                lock_shared_explicit();
+
+                std::cout << "Size of Buffer: " << _buffer_write.size() << std::endl;
+                for(int i = 0; i < _buffer_write.size(); i++) {
+                    std::cout << "[Write-" << i << "] " << _buffer_write[i] << std::endl;
+                    std::cout << "[Read -" << i << "] " << _buffer_read[i]  << std::endl;
+                }
+
+                // Unlock
+                unlock();
+                unlock_shared_explicit();
+            }
         };
 
         template<typename T> class BufferData {
@@ -111,51 +159,32 @@ namespace Swarm {
             size_t _index;
 
         public:
-            BufferData(ReadWriteBuffer<T> &buffer) : _buffer(buffer) {
+            BufferData(ReadWriteBuffer<T> &buffer, const T &val = T()) : _buffer(buffer) {
 
                 // Lock
                 _buffer.lock();
                 _buffer.lock_shared_explicit();
 
-                // Modify
+                // Get the next free Index
                 if(_buffer._free_indices.empty()) {
-                    _index = _buffer._buffer_write.size();
-                    _buffer._buffer_write.push_back(T());
+                    if(_buffer._max_capacity > 0 && _buffer._next_index >= _buffer._max_capacity) throw std::out_of_range("ReadWriteBuffer at maximum capacity");
+                    else {
+                        _index = _buffer._next_index++;
+                        if(_buffer._max_capacity == 0) {
+                            _buffer._buffer_write.resize(_buffer._next_index);
+
+                            // Recreate read buffer
+                            if(_buffer._buffer_read != nullptr) delete [] _buffer._buffer_read;
+                            _buffer._buffer_read = new T[_buffer._buffer_write.size()];
+                        }
+                    }
                 } else {
                     _index = *_buffer._free_indices.begin();
                     _buffer._free_indices.erase(_buffer._free_indices.begin());
-                    _buffer._buffer_write[_index] = T();
                 }
 
-                // Flush
-                if(_buffer._buffer_read != nullptr) delete [] _buffer._buffer_read;
-                _buffer._buffer_read = new T[_buffer._buffer_write.size()];
-                std::memcpy(_buffer._buffer_read,_buffer. _buffer_write.data(), sizeof(T) * _buffer._buffer_write.size());
-
-                // Unlock
-                _buffer.unlock();
-                _buffer.unlock_shared_explicit();
-            }
-
-            BufferData(ReadWriteBuffer<T> &buffer, const T &val) : _buffer(buffer) {
-
-                // Lock
-                _buffer.lock();
-                _buffer.lock_shared_explicit();
-
-                // Modify
-                if(_buffer._free_indices.empty()) {
-                    _index = _buffer._buffer_write.size();
-                    _buffer._buffer_write.push_back(val);
-                } else {
-                    _index = *_buffer._free_indices.begin();
-                    _buffer._free_indices.erase(_buffer._free_indices.begin());
-                    _buffer._buffer_write[_index] = val;
-                }
-
-                // Flush
-                if(_buffer._buffer_read != nullptr) delete [] _buffer._buffer_read;
-                _buffer._buffer_read = new T[_buffer._buffer_write.size()];
+                // Add value and flush
+                _buffer._buffer_write[_index] = val;
                 std::memcpy(_buffer._buffer_read, _buffer._buffer_write.data(), sizeof(T) * _buffer._buffer_write.size());
 
                 // Unlock
@@ -167,23 +196,18 @@ namespace Swarm {
                 _buffer._free_indices.insert(_index);
             }
 
+            size_t index() { return _index; }
+
             void set(const T &val) {
                 _buffer.lock();
                 _buffer._buffer_write[_index] = val;
                 _buffer.unlock();
             }
 
-            const T get() const {
+            T get() const {
                 _buffer.lock_shared();
                 T val = _buffer._buffer_read[_index];
                 _buffer.unlock_shared();
-                return val;
-            }
-
-            T getModified() {
-                _buffer.lock();
-                T val = _buffer._buffer_write[_index];
-                _buffer.unlock();
                 return val;
             }
 
@@ -197,12 +221,12 @@ namespace Swarm {
                 return *this;
             }
 
-            T operator*() { return get(); }
+            operator T() { return get(); }
 
             #if defined(SWARM_BOOST_AVAILABLE)
             void set(const T &val, boost::lock_guard<boost::mutex>&) { _buffer._buffer_write[_index] = val; }
-            const T get(boost::shared_lock<boost::shared_mutex>&) const { return _buffer._buffer_read[_index]; }
-            T &getModified(boost::lock_guard<boost::mutex>&) { return _buffer._buffer_write[_index]; }
+            T get(boost::shared_lock<boost::shared_mutex>&) const { return _buffer._buffer_read[_index]; }
+            T &getWriteAccess(boost::lock_guard<boost::mutex>&) { return _buffer._buffer_write[_index]; }
             #endif
 
         };

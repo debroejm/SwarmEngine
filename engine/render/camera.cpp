@@ -51,8 +51,8 @@ namespace Swarm {
                 case LERP: {
                     // TODO: Introduce Actual Lerp
                     boost::lock_guard<boost::mutex> write_lock(_static_camera_position_buffer.write_mutex());
-                    CameraPosition &current = _position_current.getModified(write_lock);
-                    CameraPosition &target  = _position_target.getModified(write_lock);
+                    CameraPosition &current = _position_current.getWriteAccess(write_lock);
+                    CameraPosition &target  = _position_target.getWriteAccess(write_lock);
                     if (current.position != target.position)
                         current.position = Util::movePoint(current.position.vec(),
                                                                       target.position.vec(),
@@ -75,6 +75,10 @@ namespace Swarm {
 
         glm::mat4 CameraInternal::projectionMatrix(int width, int height) const {
             return glm::perspective(_fov * PI / 180.0f, (float)width / (float)height, 0.1f, _view_distance);
+        }
+
+        void Camera::printBuffers() {
+            _static_camera_position_buffer.printBuffers();
         }
 
     }

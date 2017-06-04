@@ -151,7 +151,7 @@ namespace Swarm {
             virtual void setViewDistance(float distance) { _view_distance = distance; }
 
             virtual void setPosition(const CameraPosition &pos, bool instant = false) { (instant ? _position_current : _position_target) = pos; }
-            virtual CameraPosition position(bool instant = false) { return (instant ? _position_current : _position_target).getModified(); }
+            virtual CameraPosition position(bool instant = false) { return (instant ? _position_current : _position_target).get(); }
 
             virtual void update(double delta_time);
 
