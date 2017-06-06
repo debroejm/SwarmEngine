@@ -1,8 +1,6 @@
 #define SWARM_INCLUDE_GLFW
 #include "render/RenderInternal.h"
 
-#include "api/Logging.h"
-
 using namespace Swarm::Logging;
 
 namespace Swarm {
@@ -22,15 +20,17 @@ namespace Swarm {
 
             // Cleanup Buffers
             for(GLuint buffer : registeredBuffers) {
-                Log::log_render(INFO) << "Deleting Buffer [" << buffer << "]";
+                Render::log_render(DEBUG) << "Deleting GL Buffer [" << buffer << "]";
                 glDeleteBuffers(1, &buffer);
             }
+            Render::log_render().flush();
 
             // Cleanup VAOs
             for(GLuint vao : registeredVAOs) {
-                Log::log_render(INFO) << "Deleting VAO [" << vao << "]";
+                Render::log_render(DEBUG) << "Deleting VAO [" << vao << "]" << Flush();
                 glDeleteVertexArrays(1, &vao);
             }
+            Render::log_render().flush();
 
         }
 
@@ -121,9 +121,10 @@ namespace Swarm {
 
             glfwSwapBuffers(glfwGetCurrentContext());
 
-            Log::log_render(INFO) << "Model Created [Buffers: ";
-            for(BufferEntry entry : _data_buffers) Log::log_render << entry.buffer << ", ";
-            Log::log_render << "ElementCount: " << _element_count << "]";
+            Render::log_render(DEBUG) << "Model Created [Buffers: ";
+            for(BufferEntry entry : _data_buffers) Render::log_render() << entry.buffer << ", ";
+            Render::log_render() << "ElementCount: " << _element_count << "]";
+            Render::log_render().flush();
 
             _loaded = true;
         }
@@ -134,7 +135,7 @@ namespace Swarm {
             GLFWwindow* window = glfwGetCurrentContext();
             if(window == nullptr || !_loaded) return;
 
-            Log::log_render(DEBUG) << "VAO Generating...";
+            Render::log_render(DEBUG) << "VAO Generating..." << Flush();
 
             // Create new VAO object
             GLuint vao;
@@ -160,6 +161,7 @@ namespace Swarm {
             glBindVertexArray(0);
 
             static_vao_map[window][_element_buffer] = vao;
+            Render::log_render() << " Done! [" << vao << "]" << Flush();
         }
 
         /*

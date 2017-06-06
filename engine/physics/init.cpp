@@ -23,7 +23,7 @@ namespace Swarm {
 
             // Check if there are any Devices
             if(CL::Device::getAll().empty()) {
-                Log::log_physics(ERR) << "No CL Devices Found to run Physics on (not even a CPU ?!)";
+                //Log::log_physics(ERR) << "No CL Devices Found to run Physics on (not even a CPU ?!)";
                 // TODO: Throw Physics Init Exception
                 return;
             }
@@ -35,7 +35,7 @@ namespace Swarm {
                 if(device == nullptr) device = d;
                 else if(d->computeUnits() > device->computeUnits()) device = d;
             }
-            Log::log_physics(DEBUG) << "CL Device Selected for PHysics Calculations: " << device->name();
+            //Log::log_physics(DEBUG) << "CL Device Selected for PHysics Calculations: " << device->name();
 
             // Create the Context
             const CL::Device* ctx_device_listing[]{ device };
@@ -67,7 +67,7 @@ namespace Swarm {
             void operator()() {
                 try {
 
-                    Log::log_physics(DEBUG) << "Starting Physics Thread";
+                    //Log::log_physics(DEBUG) << "Starting Physics Thread";
                     while (_static_run_physics_thread) {
 
 
@@ -75,7 +75,7 @@ namespace Swarm {
                     }
 
                 } catch(std::exception &e) {
-                    Log::log_physics(ERR) << "Physics Thread Fatal Error: " << e.what();
+                    //Log::log_physics(ERR) << "Physics Thread Fatal Error: " << e.what();
                 }
             }
         };

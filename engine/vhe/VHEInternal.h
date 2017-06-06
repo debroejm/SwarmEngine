@@ -2,6 +2,8 @@
 
 #include "api/VHE.h"
 
+#include "api/Logging.h"
+
 #include <list>
 #include <math.h>
 #include <set>
@@ -12,6 +14,9 @@
 
 namespace Swarm {
     namespace VHE {
+
+        Logging::Log &log_vhe();
+        Logging::Log &log_vhe(Logging::LogSeverity severity);
 
         namespace Compiler { struct CompilerCommand; }
         typedef std::list<Compiler::CompilerCommand*> CCList;

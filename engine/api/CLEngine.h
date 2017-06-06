@@ -321,7 +321,7 @@ namespace Swarm {
             // TODO: Error Checking and Event Handling on CL Enqueues
             void enqueueCommand(const Kernel &kernel, size_t size);
 
-            template<typename T> void enqueueRead(const Buffer<T> &buffer, bool blocking) {
+            template<typename T> void enqueueRead(Buffer<T> &buffer, bool blocking) {
                 enqueueReadInternal(buffer, blocking, sizeof(T) * buffer.size(), buffer.data());
             }
 

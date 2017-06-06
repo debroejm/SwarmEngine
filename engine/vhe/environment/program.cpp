@@ -1,8 +1,6 @@
 #include "../VHEInternal.h"
 #include "../BytecodeDefines.h"
 
-#include "api/Logging.h"
-
 using namespace Swarm::Logging;
 
 namespace Swarm {
@@ -39,7 +37,7 @@ namespace Swarm {
                 _program->_counter._data = 0;
                 _program->_stack = Register(ve.maxBitWidth());
 
-                Log::log_vhe(INFO) << "Starting VHE Program of size: " << _program->_size << " bytes";
+                log_vhe(INFO) << "Starting VHE Program of size: " << _program->_size << " bytes" << Flush();
 
                 while(_program->_counter <_program->_size) {
                     vbyte cmd = _program->_exec[_program->_counter];

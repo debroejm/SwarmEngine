@@ -18,15 +18,16 @@ namespace Swarm {
                 // Create the program byte array
                 vbyte* program_data = new vbyte[program_size];
 
-                Log::log_vhe(INFO) << "Compiling VHE Program of size " << program_size << " bytes:\n";
+                log_vhe(INFO) << "Compiling VHE Program of size " << program_size << " bytes" << Flush();
 
                 // Compile the commands into the byte array
                 size_t index = 0;
                 for(CompilerCommand* cmd : cmds) {
-                    Log::log_vhe << "  " << cmd->to_string() << "\n";
+                    log_vhe(DEBUG) << "  " << cmd->to_string();
                     cmd->compile(program_data, index);
                     index += cmd->size();
                 }
+                log_vhe().flush();
 
                 return Environment::Program(program_size, program_data, required_memory_size);
             }

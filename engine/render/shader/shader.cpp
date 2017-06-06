@@ -1,6 +1,5 @@
 #include "render/RenderInternal.h"
 
-#include "api/Logging.h"
 #include "api/Exception.h"
 
 using namespace Swarm::Logging;
@@ -21,7 +20,7 @@ namespace Swarm {
         Shader* Shader::compileFromFile(const std::string &path, const ShaderType &type) {
 
             // Create File Input Stream
-            Log::log_render(DEBUG) << "Loading " << type.name() << " Shader From File: " << path;
+            Render::log_render(DEBUG) << "Loading " << type.name() << " Shader From File: " << path << Flush();
             std::string src("");
             std::ifstream src_input(path, std::ios::in);
 
@@ -46,7 +45,7 @@ namespace Swarm {
 
             // Create ID
             _ID = glCreateShader(type.type());
-            Log::log_render(DEBUG) << "Compiling " << type.name() << " Shader with ID '" << _ID << "'";
+            Render::log_render(DEBUG) << "Compiling " << type.name() << " Shader with ID '" << _ID << "'" << Flush();
 
             // Compile Shader
             const GLchar *source = (const GLchar*)src.c_str();
@@ -62,7 +61,7 @@ namespace Swarm {
             glGetShaderInfoLog(_ID, log_length, nullptr, &log_contents[0]);
             if(!result) throw Exception::RenderShaderException::Compile(_ID, std::string(&log_contents[0]));
 
-            Log::log_render(DEBUG) << "Successfully Compiled " << type.name() << " Shader with ID '" << _ID << "'";
+            Render::log_render(DEBUG) << "Successfully Compiled " << type.name() << " Shader with ID '" << _ID << "'" << Flush();
         }
     }
 }

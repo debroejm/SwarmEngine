@@ -8,12 +8,17 @@ using namespace Swarm;
 using namespace Swarm::Logging;
 using namespace Swarm::VHE;
 
+// Logger
+Log log_test("Test");
+
 int main() {
 
     // Initialization
     if(!Core::init(SWM_INIT_VHE)) {
         return -1;
     }
+    
+    log_test.initFile();
 
     try {
         ASList stmts;
@@ -81,9 +86,10 @@ int main() {
         Environment::VirtualEnvironment ve(BIT_64, 32, 1, MEM_KB, 128, MEM_BYTE);
         retcode result = program.run(ve);
 
-        Log::log_vhe(INFO) << "RetCode=" << result;
-        Log::log_vhe(INFO) << "Registers:\n" << ve.printRegisters() << "\n";
-        Log::log_vhe(INFO) << "Memory:\n" << ve.printMemory() << "\n";
+        log_test(INFO) << "RetCode=" << result;
+        log_test(INFO) << "Registers:\n" << ve.printRegisters() << "\n";
+        log_test(INFO) << "Memory:\n" << ve.printMemory() << "\n";
+        log_test.flush();
 
         // Delete Heap-Allocated Lists
         for (Optimizer::AbstractStatement *stmt : stmts)
@@ -91,7 +97,7 @@ int main() {
         for (Compiler::CompilerCommand *cmd : cmds)
             delete cmd;
     } catch(std::exception &e) {
-        Log::log_vhe(ERR) << e.what();
+        log_test(ERR) << e.what() << Flush();
         return -1;
     }
 

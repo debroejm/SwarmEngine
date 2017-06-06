@@ -2,26 +2,32 @@
 #include "api/Core.h"
 
 #include "api/Logging.h"
-#include "api/CLEngine.h"
+#include "../cl/CLInternal.h"
 #include "render/RenderInternal.h"
 #include "physics/PhysicsInternal.h"
 #include "vhe/VHEInternal.h"
-#include "api/Util.h"
 
 using namespace Swarm::Logging;
 
 namespace Swarm {
     namespace Core {
 
+        Log _static_log_core("Core");
+
+        Log &log_core() { return _static_log_core; }
+        Log &log_core(Logging::LogSeverity severity) { return _static_log_core(severity); }
+
         void callback_error(int error, const char* description)
         {
-            Log::log_render(ERR) <<  "GLFW ERROR '" << error << "': " << description;
+            log_core(ERR) <<  "GLFW ERROR '" << error << "': " << description << Flush();
         }
 
         State _static_state = UNINITIALIZED;
         State state() { return _static_state; }
 
         bool init(size_t flags) {
+
+            log_core().initFile();
 
             // Scan for Dependencies
             if(flags & SWM_INIT_PHYSICS) flags |= SWM_INIT_CL;
@@ -31,10 +37,10 @@ namespace Swarm {
 
                 // Initialize GLFW
                 // TODO: Move GLFW Initialization to Render::init()
-                Log::log_core(INFO) << "Initializing GLFW";
+                log_core(INFO) << "Initializing GLFW" << Flush();
                 glfwSetErrorCallback(callback_error);
                 if (!glfwInit()) {
-                    Log::log_core(FATAL) << "Failed to Initialize GLFW!";
+                    log_core(FATAL) << "Failed to Initialize GLFW!" << Flush();
                     return false;
                 }
 
@@ -96,6 +102,9 @@ namespace Swarm {
                 glfwPollEvents();
                 Render::checkWindowCloseFlags();
                 Render::CameraInternal::updateAll(delta_time);
+                log_core().flushAll();
+                CL::log_cl().flushAll();
+                VHE::log_vhe().flushAll();
 
             }
         }

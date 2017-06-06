@@ -1,7 +1,6 @@
 #define SWARM_INCLUDE_GLM
-#include "api/Render.h"
+#include "../RenderInternal.h"
 
-#include "api/Logging.h"
 #include "api/Exception.h"
 
 #include <regex>
@@ -19,7 +18,7 @@ namespace Swarm {
 
         RawModelData loadFromOBJ(const char * path, const Type::DataType &vertex_type, const Type::DataType &uv_type, const Type::DataType &normal_type) {
 
-            Log::log_render(INFO) << "Loading OBJ File: " << path;
+            Render::log_render(DEBUG) << "Loading OBJ File: " << path << Flush();
 
             FILE * file = fopen(path, "r");
             if( file == NULL ) {

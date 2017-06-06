@@ -16,12 +16,13 @@ namespace Swarm {
                 MemoryMap mem;
                 Scope scope(nullptr);
 
-                Log::log_vhe(INFO) << "Optimizing VHE Program with " << stmts.size() << " top-level statements:\n";
+                log_vhe(INFO) << "Optimizing VHE Program with " << stmts.size() << " top-level statements" << Flush();
 
                 for(AbstractStatement* stmt : stmts) {
-                    Log::log_vhe << stmt->to_string(1) << "\n";
+                    log_vhe(DEBUG) << stmt->to_string(1);
                     stmt->compile(output, scope, settings, mem, ids);
                 }
+                log_vhe().flush();
 
                 std::unordered_set<vbyte> empty_reg_set;
                 scope.calculateRegisters(output, settings, mem, empty_reg_set);

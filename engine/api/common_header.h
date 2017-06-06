@@ -49,6 +49,10 @@
 #include <boost/thread/shared_mutex.hpp>
 #endif
 
+#if defined(SWARM_REQUEST_BOOST_THREAD)
+#include <boost/thread.hpp>
+#endif
+
 #endif
 
 

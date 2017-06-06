@@ -1,6 +1,5 @@
 #include "render/RenderInternal.h"
 
-#include "api/Logging.h"
 #include "api/Exception.h"
 
 using namespace Swarm::Logging;
@@ -12,9 +11,10 @@ namespace Swarm {
 
         void ProgramInternal::cleanup() {
             for(ProgramInternal* program : registered_programs) {
-                Log::log_render(DEBUG) << "Deleting Program with ID '" << program->ID() << "'";
+                Render::log_render(DEBUG) << "Deleting Program with ID '" << program->ID() << "'";
                 delete program;
             }
+            Render::log_render().flush();
         }
 
         ProgramInternal::~ProgramInternal() {
@@ -31,15 +31,16 @@ namespace Swarm {
 
             // Create ID
             _ID = glCreateProgram();
-            Log::log_render(DEBUG) << "Linking Program with ID '" << _ID << "'";
+            Render::log_render(DEBUG) << "Linking Program with ID '" << _ID << "'" << Flush();
 
             // Attach Shaders
             for(size_t i = 0; i < count; i++) {
                 if(shaders[i] != nullptr) {
                     glAttachShader(_ID, shaders[i]->ID());
-                    Log::log_render(DEBUG) << "Attaching " << shaders[i]->type().name() << " Shader with ID '" << shaders[i]->ID() << "'";
+                    Render::log_render(DEBUG) << "Attaching " << shaders[i]->type().name() << " Shader with ID '" << shaders[i]->ID() << "'";
                 }
             }
+            Render::log_render().flush();
 
             // Link Program
             glLinkProgram(_ID);
@@ -55,7 +56,7 @@ namespace Swarm {
 
             glUseProgram(0);
 
-            Log::log_render(DEBUG) << "Successfully Linked Program with ID '" << _ID << "'";
+            Render::log_render(DEBUG) << "Successfully Linked Program with ID '" << _ID << "'" << Flush();
         }
 
         SWMint ProgramInternal::uniform(const std::string &name) {

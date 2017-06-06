@@ -5,6 +5,9 @@
 using namespace Swarm;
 using namespace Swarm::Logging;
 
+// Logger
+Log log_test("Test");
+
 int main() {
 
     // Initialization
@@ -12,12 +15,18 @@ int main() {
         return -1;
     }
 
-    if(CL::Device::getAll().empty()) { Log::log_cl(INFO) << "No CL Devices Found"; return 0; }
+    log_test.initFile();
+
+    if(CL::Device::getAll().empty()) {
+        log_test(WARNING) << "No CL Devices Found, Exiting Test" << Flush();
+        Core::cleanup();
+        return 0;
+    }
 
     // Get the Best Device
     CL::Device* device = nullptr;
     for(CL::Device* d : CL::Device::getAll()) {
-        Log::log_cl(DEBUG)
+        log_test(DEBUG)
                 << "Device '" << d->name()
                 << "' on Platform '" << d->platform()->name()
                 << "' with " << d->computeUnits()
@@ -25,8 +34,9 @@ int main() {
         if(device == nullptr) device = d;
         else if(d->computeUnits() > device->computeUnits()) device = d;
     }
-    if(device == nullptr) return 0;
-    Log::log_cl(DEBUG) << "Auto-Selected CL Device: " << device->name();
+    log_test.flush();
+    if(device == nullptr) { Core::cleanup(); return 0; }
+    log_test(INFO) << "Auto-Selected CL Device: " << device->name() << Flush();
 
     // Create Our Context
     const CL::Device* ctx_device_listing[]{ device };
@@ -71,9 +81,10 @@ __kernel void SAXPY (__global float* x, __global float* y, float a)
     queue.enqueueRead(buff_b, true);
 
     // Print the Resulting Data
-    Log::log_core(INFO) << "SAXPY Results:\n";
+    log_test(INFO) << "SAXPY Results:";
     for(int i = 0; i < testDataSize; i++)
-        Log::log_core << "\t" << b[i] << "\n";
+        log_test(INFO) << "\t" << b[i];
+    log_test.flush();
 
     // Cleanup Everything Up When Done
     Core::cleanup();

@@ -1,7 +1,5 @@
 #include "RenderInternal.h"
 
-#include "api/Logging.h"
-
 using namespace Swarm::Logging;
 
 namespace Swarm {

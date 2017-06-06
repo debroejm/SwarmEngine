@@ -1,7 +1,6 @@
 #include "GLFWCallbacks.h"
 
-#include "api/Core.h"
-#include "api/Logging.h"
+#include "CoreInternal.h"
 
 using namespace Swarm::Logging;
 
@@ -10,7 +9,7 @@ namespace Swarm {
 
         void error_callback(int error, const char* description)
         {
-            Log::log_core(ERR) << " " << error << ": " << description;
+            Core::log_core(ERR) << " " << error << ": " << description << Flush();
         }
 
     }

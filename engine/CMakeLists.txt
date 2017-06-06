@@ -29,7 +29,7 @@ set(ENGINE_HEADERS_CORE
 set(ENGINE_SOURCE_CORE
 
         core/init.cpp
-        core/Logging.cpp
+        logging/Logging.cpp
 
         core/config/Configuration.cpp
         core/config/Keybindings.cpp

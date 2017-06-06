@@ -43,7 +43,7 @@ namespace Swarm {
             size_t lengths[1]{ src.size() };
             const char* srcs[1]{ src.data() };
 
-            Log::log_cl(DEBUG) << "Creating CL Program...";
+            log_cl(DEBUG) << "Creating CL Program..." << Flush();
 
             // Create Program
             cl_int err = 0;
@@ -105,7 +105,7 @@ namespace Swarm {
 
             //if(program == nullptr) throw Exception::CLObjectCreationException::Kernel(CL_INVALID_PROGRAM, name);
 
-            Log::log_cl(DEBUG) << "Creating CL Kernel...";
+            log_cl(DEBUG) << "Creating CL Kernel..." << Flush();
 
             cl_int err = 0;
             _kernel = clCreateKernel(program.program(), name.c_str(), &err);

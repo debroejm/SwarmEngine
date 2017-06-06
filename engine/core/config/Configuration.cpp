@@ -1,8 +1,5 @@
-#include "api/Core.h"
+#include "../CoreInternal.h"
 
-#include "api/Logging.h"
-
-#include <fstream>
 #include <iostream>
 #include <sstream>
 
@@ -12,7 +9,7 @@ namespace Swarm {
     namespace Config {
 
         RawConfigData::RawConfigData(const char * filepath) {
-            Log::log_core(INFO) << "Reading configuration file '" << filepath << "'";
+            Core::log_core(INFO) << "Reading configuration file '" << filepath << "'" << Flush();
             this->filepath = filepath;
             std::ifstream dataStream(filepath, std::ios::in);
             if(dataStream.is_open()) {
@@ -31,7 +28,7 @@ namespace Swarm {
                 }
                 dataStream.close();
             } else {
-                Log::log_core(WARNING) << "Failed to open '" << filepath << "'";
+                Core::log_core(WARNING) << "Failed to open '" << filepath << "'" << Flush();
                 return;
             }
         }

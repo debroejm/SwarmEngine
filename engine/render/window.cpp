@@ -1,7 +1,6 @@
 #include "RenderInternal.h"
 
 #include "api/Core.h"
-#include "api/Logging.h"
 #include "api/Exception.h"
 
 using namespace Swarm::Logging;
@@ -94,8 +93,8 @@ namespace Swarm {
         std::atomic<bool> _static_run_render_thread(false);
         struct ThreadFunctr_WindowRender {
             void operator()() {
+                log_render(INFO) << "Starting Render Thread" << Flush();
                 try {
-                    Log::log_render(DEBUG) << "Starting Render Thread";
                     while (_static_run_render_thread) {
 
 
@@ -103,7 +102,7 @@ namespace Swarm {
 
                         for (WindowInternal *window : _static_window_queue_hide) {
                             if (window == nullptr) continue;
-                            Log::log_render(DEBUG) << "Hiding Window '" << window->name() << "'";
+                            log_render(INFO) << "Hiding Window '" << window->name() << "'" << Flush();
                             glfwHideWindow(window->window());
                             _static_visible_windows.erase(window);
                         }
@@ -111,7 +110,7 @@ namespace Swarm {
 
                         for (WindowInternal *window : _static_window_queue_show) {
                             if (window == nullptr) continue;
-                            Log::log_render(DEBUG) << "Showing Window '" << window->name() << "'";
+                            log_render(INFO) << "Showing Window '" << window->name() << "'" << Flush();
                             glfwShowWindow(window->window());
                             _static_visible_windows.insert(window);
                         }
@@ -130,11 +129,14 @@ namespace Swarm {
                         glfwMakeContextCurrent(nullptr);
                         _static_window_context_mutex.unlock();
 
+                        log_render().flushAll();
+
                         boost::this_thread::interruption_point();
                     }
                 } catch(std::exception &e) {
-                    Log::log_render(ERR) << "Render Thread Fatal Error: " << e.what();
+                    log_render(ERR) << "Render Thread Fatal Error: " << e.what() << Flush();
                 }
+                log_render(INFO) << "Stopping Render Thread" << Flush();
             }
         };
 

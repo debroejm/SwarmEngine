@@ -1,7 +1,5 @@
 #include "RenderInternal.h"
 
-#include "api/Logging.h"
-
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/transform.hpp>
 

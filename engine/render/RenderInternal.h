@@ -5,6 +5,7 @@
 #define SWARM_BOOST_AVAILABLE
 #include "api/Render.h"
 
+#include "api/Logging.h"
 #include "api/Util.h"
 
 #include <boost/thread.hpp>
@@ -16,6 +17,9 @@
 
 namespace Swarm {
     namespace Render {
+
+        Logging::Log &log_render();
+        Logging::Log &log_render(Logging::LogSeverity severity);
 
         class RenderObjectStatic : public RenderObject {
         public:

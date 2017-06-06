@@ -64,9 +64,13 @@ Render::Window window2;
 
 void main_cycle(double delta_time);
 
+// Logger
+Log log_test("Test");
+
 void keypress_debug(int key) {
-    Log::log_core(DEBUG) << "Window 1 Stats { Visible=" << window1.visible() << ", Focused=" << window1.focused() << " }";
-    Log::log_core(DEBUG) << "Window 2 Stats { Visible=" << window2.visible() << ", Focused=" << window2.focused() << " }";
+    log_test(DEBUG) << "Window 1 Stats { Visible=" << window1.visible() << ", Focused=" << window1.focused() << " }";
+    log_test(DEBUG) << "Window 2 Stats { Visible=" << window2.visible() << ", Focused=" << window2.focused() << " }";
+    log_test.flush();
 }
 
 int main() {
@@ -78,10 +82,13 @@ int main() {
             return -1;
         }
 
+        log_test.initFile();
+
         std::set<CL::Device*> all_devices = CL::Device::getAll();
         CL::Device* best_device = *all_devices.rbegin();
-        if (all_devices.empty()) Log::log_cl(DEBUG) << "No CL Devices Found";
-        else Log::log_cl(DEBUG) << "Auto-Selected CL Device: " << best_device->name();
+        if (all_devices.empty()) log_test(INFO) << "No CL Devices Found";
+        else log_test(INFO) << "Auto-Selected CL Device: " << best_device->name();
+        log_test.flush();
 
         Render::RenderObjectCollection all_render_objects;
 
@@ -183,13 +190,13 @@ int main() {
 
         // A thing
 
-        Log::log_core(DEBUG) << "Starting Main Cycle Loop";
+        log_test(INFO) << "Starting Main Cycle Loop" << Flush();
 
         // Main runtime loop
         Core::start(main_cycle);
 
         // Clean everything up
-        Log::log_core(DEBUG) << "Cleaning Up";
+        log_test(INFO) << "Cleaning Up" << Flush();
         Core::cleanup();
 
         keybindingConfig.writeConfigData();
@@ -301,6 +308,8 @@ void main_cycle(double delta_time) {
 
     if (SHOW_ALPHA) window1.setVisible(true);
     if (SHOW_BETA) window2.setVisible(true);
+
+    log_test.flushAll();
 
     if (EXIT) Core::stop();
     if(!(window1.visible() || window2.visible())) Core::stop();

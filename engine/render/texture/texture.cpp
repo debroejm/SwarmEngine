@@ -1,8 +1,5 @@
 #define SWARM_INCLUDE_GLEW
 #include "api/Render.h"
-#include "api/Logging.h"
-
-using namespace Swarm::Logging;
 
 namespace Swarm {
     namespace Texture {

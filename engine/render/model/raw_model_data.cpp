@@ -2,12 +2,6 @@
 #define SWARM_INCLUDE_GLEW
 #include "api/Render.h"
 
-#include "api/Logging.h"
-
-#include <set>
-
-using namespace Swarm::Logging;
-
 namespace Swarm {
     namespace Model {
 

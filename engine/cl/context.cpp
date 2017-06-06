@@ -22,7 +22,7 @@ namespace Swarm {
                 if(devices[i] == nullptr) continue;
                 if(chosen_platform == nullptr) chosen_platform = devices[i]->_platform.platform();
                 else if(devices[i]->_platform.platform() != chosen_platform) {
-                    Log::log_cl(WARNING) << "Attempted to create CL Context using Devices with mismatched Platforms; ignoring Device '"
+                    log_cl(WARNING) << "Attempted to create CL Context using Devices with mismatched Platforms; ignoring Device '"
                                          << devices[i]->name() << "' from Platform '" << devices[i]->_platform.name() << "'.";
                     continue;
                 }
@@ -31,18 +31,19 @@ namespace Swarm {
                 cl_int result = clGetDeviceInfo(devices[i]->device(), CL_DEVICE_AVAILABLE, 4, &available, nullptr);
                 if(result == CL_SUCCESS && available) valid_devices.push_back(devices[i]);
                 else {
-                    Log::log_cl(WARNING) << "Attempted to create CL Context using unavailable Device '" << devices[i]->name()
+                    log_cl(WARNING) << "Attempted to create CL Context using unavailable Device '" << devices[i]->name()
                                          << "'; ignoring Device.";
                 }
             }
+            log_cl().flush();
 
             // Check for no valid platform (most likely from having no devices passed in)
             if(chosen_platform == nullptr) {
-                Log::log_cl(WARNING) << "Attempted to create CL Context with no Devices; aborting creation.";
+                log_cl(WARNING) << "Attempted to create CL Context with no Devices; aborting creation." << Flush();
                 return;
             }
 
-            Log::log_cl(DEBUG) << "Creating CL Context...";
+            log_cl(DEBUG) << "Creating CL Context..." << Flush();
 
             // Create the context properties array
             const cl_context_properties props[] = {
@@ -67,24 +68,25 @@ namespace Swarm {
             if(error != CL_SUCCESS) {
                 switch(error) {
                     case CL_INVALID_PLATFORM:
-                        Log::log_cl(ERR) << "Invalid Platform to create CL Context with";
+                        log_cl(ERR) << "Invalid Platform to create CL Context with";
                         break;
                     case CL_INVALID_VALUE:
-                        Log::log_cl(ERR) << "Invalid Value when creating CL Context; unsupported Property name, no/null Devices, or failure to provide callback with user_data";
+                        log_cl(ERR) << "Invalid Value when creating CL Context; unsupported Property name, no/null Devices, or failure to provide callback with user_data";
                         break;
                     case CL_INVALID_DEVICE:
-                        Log::log_cl(ERR) << "Invalid Device or Device not associated with Platform when creating CL Context";
+                        log_cl(ERR) << "Invalid Device or Device not associated with Platform when creating CL Context";
                         break;
                     case CL_DEVICE_NOT_AVAILABLE:
-                        Log::log_cl(ERR) << "Device Not Available to create CL Context with";
+                        log_cl(ERR) << "Device Not Available to create CL Context with";
                         break;
                     case CL_OUT_OF_HOST_MEMORY:
-                        Log::log_cl(ERR) << "Host out of Memory when creating CL Context";
+                        log_cl(ERR) << "Host out of Memory when creating CL Context";
                         break;
                     default:
-                        Log::log_cl(ERR) << "Unknown Error when creating CL Context; '" << error << "'";
+                        log_cl(ERR) << "Unknown Error when creating CL Context; '" << error << "'";
                         break;
                 }
+                log_cl().flush();
                 _context = nullptr;
                 _devices.clear();
                 return;

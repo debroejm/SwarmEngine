@@ -4,10 +4,6 @@
 #include "api/Render.h"
 #undef SWARM_REQUEST_BOOST_MUTEX
 
-#include "api/Logging.h"
-
-using namespace Swarm::Logging;
-
 namespace Swarm {
     namespace Render {
 

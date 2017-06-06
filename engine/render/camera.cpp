@@ -1,7 +1,5 @@
 #include "RenderInternal.h"
 
-#include "api/Logging.h"
-
 #include <glm/gtc/matrix_transform.hpp>
 
 using namespace Swarm::Logging;

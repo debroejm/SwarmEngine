@@ -3,6 +3,7 @@
 #define SWARM_INCLUDE_CL
 #include "api/CLEngine.h"
 
+#include "api/Logging.h"
 
 
 #include <map>
@@ -15,6 +16,9 @@
 
 namespace Swarm {
     namespace CL {
+
+        Logging::Log &log_cl();
+        Logging::Log &log_cl(Logging::LogSeverity severity);
 
         class PlatformInternal : public Platform {
         public:
