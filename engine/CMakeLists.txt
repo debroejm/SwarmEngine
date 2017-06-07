@@ -7,12 +7,13 @@ set(SwarmEngine_VERSION_MINOR "1")
 set(SwarmEngine_VERSION_PATCH "0")
 
 set(ENGINE_API_HEADERS
-        api/common_header.h
         api/CLEngine.h
+        api/common_header.h
         api/Core.h
-        api/Render.h
         api/Exception.h
         api/Logging.h
+        api/Render.h
+        api/Synchronization.h
         api/Util.h
         api/VHE.h
 )
